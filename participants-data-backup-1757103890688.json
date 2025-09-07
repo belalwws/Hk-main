@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Belal Ahmed",
+    "email": "belal.ahmed121sq1@gmail.com",
+    "phone": "01128300607",
+    "city": "جدة",
+    "nationality": "مصر",
+    "teamType": "INDIVIDUAL",
+    "preferredRole": "مطور واجهات أمامية",
+    "id": "1756994658424",
+    "registeredAt": "2025-09-04T14:04:18.424Z",
+    "status": "APPROVED"
+  },
+  {
+    "name": "Belal Ahmed",
+    "email": "admin@hackathon.gov.sa",
+    "passwordHash": "$2b$12$/JSUL3sA52.mQtJhgVLqf.bIa3fwC56n6nVan3eGA6f330T/ystY2",
+    "phone": "01128300607",
+    "city": "جدة",
+    "nationality": "سوريا",
+    "teamType": "INDIVIDUAL",
+    "preferredRole": "قائد الفريق",
+    "id": "1756994973077",
+    "registeredAt": "2025-09-04T14:09:33.077Z",
+    "status": "REJECTED"
+  },
+  {
+    "name": "Belal Ahmed",
+    "email": "belal.ahmed121sq6@gmail.com",
+    "passwordHash": "$2b$12$mBk.ySNw.tV4EMSxy1tiEutdjpCvFSzh5.o8vPsK1XfU.zHdb/9bW",
+    "phone": "01128300607",
+    "city": "جدة",
+    "nationality": "قطر",
+    "teamType": "INDIVIDUAL",
+    "preferredRole": "مصمم جرافيك",
+    "id": "1757014126198",
+    "registeredAt": "2025-09-04T19:28:46.198Z",
+    "status": "APPROVED"
+  },
+  {
+    "name": "belal ahmed",
+    "email": "game.overtnt.123@gmail.com",
+    "passwordHash": "$2b$12$.zzTB/OOA3Ww1XlkmfamjOKLkMC5Pzh4438zkE5phSYrmq/wb4QQW",
+    "phone": "01128300607",
+    "city": "الظهران",
+    "nationality": "مصر",
+    "teamType": "INDIVIDUAL",
+    "preferredRole": "قائد الفريق",
+    "id": "1757102055140",
+    "registeredAt": "2025-09-05T19:54:15.140Z",
+    "status": "PENDING"
+  }
+]

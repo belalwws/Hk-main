@@ -1,0 +1,9 @@
+{
+    "[shellscript]": {
+        "files.eol": "\n",
+        "editor.defaultColorDecorators": "never",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "never"
+        }
+    }
+}

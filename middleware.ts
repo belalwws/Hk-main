@@ -1,0 +1,100 @@
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { verifyToken } from "@/lib/auth"
+
+// Define protected route prefixes and their required roles
+const protectedRoutes: { prefix: string; roles: ("admin" | "judge")[] }[] = [
+  { prefix: "/api/teams", roles: ["judge"] },
+  { prefix: "/api/submit-score", roles: ["judge"] },
+  { prefix: "/api/results", roles: ["admin"] },
+  { prefix: "/api/admin", roles: ["admin"] },
+  { prefix: "/judge", roles: ["judge"] },
+  { prefix: "/admin", roles: ["admin"] },
+]
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Skip Next.js internals and static assets
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/assets") ||
+    pathname.startsWith("/static")
+  ) {
+    return NextResponse.next()
+  }
+
+  // Find matching protected route by prefix
+  const route = protectedRoutes.find((r) => pathname.startsWith(r.prefix))
+  if (!route) {
+    return NextResponse.next()
+  }
+
+  // Get token from Authorization header or cookie
+  let token = request.headers.get("authorization")?.replace("Bearer ", "")
+
+  if (!token) {
+    token = request.cookies.get("auth-token")?.value
+  }
+
+  if (!token) {
+    // For API routes, return 401
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 401 })
+    }
+
+    // For pages, redirect to login page only
+    if (!pathname.startsWith('/login')) {
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
+    return NextResponse.next()
+  }
+
+  // Verify token - now async
+  const payload = await verifyToken(token)
+  if (!payload) {
+    // For API routes, return 401
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "رمز المصادقة غير صالح" }, { status: 401 })
+    }
+
+    // For pages, redirect to login page
+    if (!pathname.startsWith('/login')) {
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
+    return NextResponse.next()
+  }
+
+  // Check if user has required role
+  if (!route.roles.includes(payload.role)) {
+    // For API routes, return 403
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "غير مصرح بالوصول - صلاحيات غير كافية" }, { status: 403 })
+    }
+
+    // For pages, redirect based on role
+    const redirectUrl = payload.role === "admin" ? "/admin/dashboard" : "/judge"
+    return NextResponse.redirect(new URL(redirectUrl, request.url))
+  }
+
+  // Add user info to headers for API routes
+  if (pathname.startsWith("/api/")) {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set("x-user-id", payload.userId)
+    requestHeaders.set("x-user-role", payload.role)
+    requestHeaders.set("x-user-email", payload.email)
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+  }
+
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*"],
+}

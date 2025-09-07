@@ -1,0 +1,105 @@
+type MailOptions = {
+  to: string | string[]
+  subject: string
+  text?: string
+  html?: string
+}
+
+let cachedTransporter: any | null = null
+let cachedStatus: { installed: boolean; provider: 'smtp' | 'gmail' | null; configured: boolean } | null = null
+const FORCE_SEND = String(process.env.EMAIL_FORCE_SEND || '').toLowerCase() === 'true'
+
+async function getMailer() {
+  if (cachedTransporter) return cachedTransporter
+
+  // Attempt to dynamically import nodemailer only if available
+  let nodemailer: any
+  try {
+    // @ts-ignore - dynamic import at runtime; avoids build-time dependency
+    nodemailer = (await import('nodemailer')).default
+  } catch {
+    cachedStatus = { installed: false, provider: null, configured: false }
+    if (FORCE_SEND) throw new Error('[mailer] nodemailer not installed')
+    return null
+  }
+
+  const host = process.env.SMTP_HOST
+  const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined
+  const smtpUser = process.env.SMTP_USER
+  const smtpPass = process.env.SMTP_PASS
+  const gmailUser = process.env.GMAIL_USER
+  const gmailPass = process.env.GMAIL_PASS
+
+  // Debug environment variables
+  console.log('🔍 [mailer] Environment check:')
+  console.log('🔍 [mailer] GMAIL_USER:', gmailUser ? 'SET' : 'NOT SET')
+  console.log('🔍 [mailer] GMAIL_PASS:', gmailPass ? 'SET' : 'NOT SET')
+  console.log('🔍 [mailer] SMTP_HOST:', host ? 'SET' : 'NOT SET')
+
+  // 1) Preferred: explicit SMTP settings
+  if (host && port && smtpUser && smtpPass) {
+    const secure = Number(port) === 465
+    cachedTransporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user: smtpUser, pass: smtpPass },
+    })
+    cachedStatus = { installed: true, provider: 'smtp', configured: true }
+    return cachedTransporter
+  }
+
+  // 2) Fallback: Gmail service if provided
+  if (gmailUser && gmailPass) {
+    cachedTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: gmailUser, pass: gmailPass },
+    })
+    cachedStatus = { installed: true, provider: 'gmail', configured: true }
+    return cachedTransporter
+  }
+
+  // 3) Not configured
+  cachedStatus = { installed: true, provider: null, configured: false }
+  if (FORCE_SEND) throw new Error('[mailer] SMTP not configured')
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('[mailer] SMTP not configured. Set SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS or GMAIL_USER/GMAIL_PASS')
+  }
+  return null
+
+  return cachedTransporter
+}
+
+export async function sendMail(options: MailOptions) {
+  console.log('📧 [mailer] Attempting to send email to:', options.to)
+
+  const transporter = await getMailer()
+  const from = process.env.MAIL_FROM || `Hackathon <${process.env.SMTP_USER || process.env.GMAIL_USER || 'no-reply@example.com'}>`
+
+  // If mailer not available (no nodemailer or env), log and noop so build/dev works
+  if (!transporter) {
+    console.warn('❌ [mailer] No transporter available! SMTP not configured properly.')
+    console.warn('❌ [mailer] GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET')
+    console.warn('❌ [mailer] GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET' : 'NOT SET')
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[mailer] Logging email instead of sending:')
+      console.info('[mailer] To:', options.to)
+      console.info('[mailer] Subject:', options.subject)
+      if (options.text) console.info('[mailer] Text:', options.text?.substring(0, 100) + '...')
+    }
+    if (FORCE_SEND) throw new Error('[mailer] Mailer not configured and EMAIL_FORCE_SEND=true')
+    return { messageId: `dev-${Date.now()}`, mocked: true, actuallyMailed: false }
+  }
+
+  console.log('✅ [mailer] Transporter ready, sending real email...')
+  const result = await transporter.sendMail({ from, ...options })
+  console.log('✅ [mailer] Email sent successfully:', result.messageId)
+  return Object.assign(result || {}, { actuallyMailed: true })
+}
+
+export function mailerStatus() {
+  const status = cachedStatus || { installed: !!cachedTransporter, provider: null as any, configured: !!cachedTransporter }
+  const mode = FORCE_SEND ? 'force' : (process.env.NODE_ENV === 'production' ? 'prod' : 'dev')
+  return { ...status, mode }
+}
