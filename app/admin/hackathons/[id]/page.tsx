@@ -25,6 +25,7 @@ interface Participant {
     nationality: string
   }
   teamName?: string
+  teamId?: string
   projectTitle?: string
   projectDescription?: string
   teamRole?: string
