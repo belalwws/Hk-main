@@ -4,9 +4,24 @@ import { useAuth } from "@/hooks/use-auth"
 import { LoginForm } from "@/components/login-form"
 import { AdminDashboard } from "@/components/admin-dashboard"
 import { Loader2 } from "lucide-react"
+import { useState } from "react"
 
 export default function AdminPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, login } = useAuth()
+  const [loginError, setLoginError] = useState("")
+  const [loginLoading, setLoginLoading] = useState(false)
+
+  const handleLogin = async (email: string, password: string) => {
+    setLoginLoading(true)
+    setLoginError("")
+    try {
+      await login(email, password)
+    } catch (error: any) {
+      setLoginError(error.message || "حدث خطأ في تسجيل الدخول")
+    } finally {
+      setLoginLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -20,7 +35,13 @@ export default function AdminPage() {
   }
 
   if (!user) {
-    return <LoginForm />
+    return (
+      <LoginForm
+        onLogin={handleLogin}
+        loading={loginLoading}
+        error={loginError}
+      />
+    )
   }
 
   if (user.role !== "admin") {
