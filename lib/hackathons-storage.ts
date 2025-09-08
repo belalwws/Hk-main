@@ -9,7 +9,7 @@ export interface Hackathon {
   endDate: string
   registrationDeadline: string
   maxParticipants?: number
-  status: 'DRAFT' | 'OPEN' | 'CLOSED' | 'COMPLETED'
+  status: 'draft' | 'open' | 'closed' | 'completed'
   prizes: {
     first: string
     second: string
@@ -30,7 +30,7 @@ export interface HackathonParticipant {
   projectTitle?: string
   projectDescription?: string
   githubRepo?: string
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'pending' | 'approved' | 'rejected'
   submittedAt: string
   approvedAt?: string
   rejectedAt?: string
@@ -76,7 +76,7 @@ export function getActiveHackathons(): Hackathon[] {
   const hackathons = getAllHackathons()
   const now = new Date().toISOString()
   return hackathons.filter(h => 
-    h.status === 'OPEN' && 
+    h.status === 'open' &&
     h.registrationDeadline > now
   )
 }

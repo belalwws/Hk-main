@@ -8,9 +8,9 @@ export async function GET(request: NextRequest) {
     
     // Calculate statistics
     const totalParticipants = participants.length
-    const pendingParticipants = participants.filter(p => p.status === 'PENDING').length
-    const approvedParticipants = participants.filter(p => p.status === 'APPROVED').length
-    const rejectedParticipants = participants.filter(p => p.status === 'REJECTED').length
+    const pendingParticipants = participants.filter(p => p.status === 'pending').length
+    const approvedParticipants = participants.filter(p => p.status === 'approved').length
+    const rejectedParticipants = participants.filter(p => p.status === 'rejected').length
     
     // Get recent participants (last 5)
     const recentParticipants = participants

@@ -135,7 +135,7 @@ export async function PATCH(
     const body = await request.json()
     const { status } = body
 
-    if (!status || !['DRAFT', 'OPEN', 'CLOSED', 'COMPLETED'].includes(status)) {
+    if (!status || !['draft', 'open', 'closed', 'completed'].includes(status)) {
       return NextResponse.json({ error: 'حالة غير صحيحة' }, { status: 400 })
     }
 

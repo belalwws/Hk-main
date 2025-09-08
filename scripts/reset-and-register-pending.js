@@ -34,7 +34,7 @@ async function resetAndRegisterPending() {
     // 3. Register all users as PENDING participants
     console.log('📝 Registering all users as PENDING participants...')
     
-    const teamTypes = ['INDIVIDUAL', 'TEAM']
+    const teamTypes = ['individual', 'team']
     let registeredCount = 0
     
     for (const user of users) {
@@ -47,13 +47,13 @@ async function resetAndRegisterPending() {
             hackathonId: hackathonId,
             teamType: teamType,
             teamRole: user.preferredRole || 'مطور',
-            status: 'PENDING', // All as PENDING
+            status: 'pending', // All as pending
             registeredAt: new Date()
           }
         })
         
         registeredCount++
-        console.log(`✅ Registered ${registeredCount}/${users.length}: ${user.name} - PENDING`)
+        console.log(`✅ Registered ${registeredCount}/${users.length}: ${user.name} - pending`)
         
       } catch (error) {
         console.error(`❌ Failed to register ${user.email}:`, error.message)

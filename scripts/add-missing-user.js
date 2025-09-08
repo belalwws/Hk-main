@@ -22,7 +22,7 @@ async function addMissingUser() {
         skills: null,
         experience: null,
         preferredRole: 'مطور واجهات أمامية',
-        role: 'PARTICIPANT'
+        role: 'participant'
       }
     })
 

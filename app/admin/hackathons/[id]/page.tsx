@@ -28,7 +28,7 @@ interface Participant {
   projectTitle?: string
   projectDescription?: string
   teamRole?: string
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'pending' | 'approved' | 'rejected'
   registeredAt: string
 }
 
@@ -40,8 +40,9 @@ interface Hackathon {
   endDate: string
   registrationDeadline: string
   maxParticipants?: number
-  status: 'DRAFT' | 'OPEN' | 'CLOSED' | 'COMPLETED'
+  status: 'draft' | 'open' | 'closed' | 'completed'
   isPinned?: boolean
+  evaluationOpen?: boolean
   participants: Participant[]
   stats: {
     totalParticipants: number

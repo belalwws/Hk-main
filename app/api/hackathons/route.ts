@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // Get hackathons based on filter
     const whereClause = includeAll ? {} : {
       status: {
-        in: ['OPEN', 'CLOSED', 'COMPLETED']
+        in: ['open', 'closed', 'completed']
       }
     }
 

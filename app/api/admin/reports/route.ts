@@ -37,18 +37,18 @@ export async function GET(request: NextRequest) {
     const totalHackathons = await prismaClient.hackathon.count()
     const totalParticipants = await prismaClient.participant.count()
     const activeHackathons = await prismaClient.hackathon.count({
-      where: { status: 'OPEN' }
+      where: { status: 'open' }
     })
 
     // Participant status breakdown
     const pendingParticipants = await prismaClient.participant.count({
-      where: { status: 'PENDING' }
+      where: { status: 'pending' }
     })
     const approvedParticipants = await prismaClient.participant.count({
-      where: { status: 'APPROVED' }
+      where: { status: 'approved' }
     })
     const rejectedParticipants = await prismaClient.participant.count({
-      where: { status: 'REJECTED' }
+      where: { status: 'rejected' }
     })
 
     // Users by city

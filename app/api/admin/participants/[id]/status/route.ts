@@ -4,7 +4,7 @@ import { verifyToken } from '@/lib/auth'
 import { z } from 'zod'
 
 const statusUpdateSchema = z.object({
-  status: z.enum(['PENDING', 'APPROVED', 'REJECTED'])
+  status: z.enum(['pending', 'approved', 'rejected'])
 })
 
 // PUT /api/admin/participants/[id]/status - Update participant status

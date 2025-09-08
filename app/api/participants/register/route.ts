@@ -10,7 +10,7 @@ const registerSchema = z.object({
   phone: z.string().min(10, 'رقم الهاتف غير صحيح'),
   city: z.string().min(2, 'المدينة مطلوبة'),
   nationality: z.string().min(2, 'الجنسية مطلوبة'),
-  teamType: z.enum(['INDIVIDUAL', 'TEAM']),
+  teamType: z.enum(['individual', 'team']),
   preferredRole: z.string().min(1, 'يجب اختيار الدور المفضل في الفريق'),
   teamPreference: z.string().optional(),
   experience: z.string().optional(),

@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       endDate,
       registrationDeadline,
       maxParticipants,
-      status = 'DRAFT',
+      status = 'draft',
       prizes,
       settings
     } = body

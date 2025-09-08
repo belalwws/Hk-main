@@ -11,7 +11,7 @@ export interface ParticipantData {
   phone: string
   city: string
   nationality: string
-  teamType: 'INDIVIDUAL' | 'TEAM'
+  teamType: 'individual' | 'team'
   preferredRole: string
   teamPreference?: string
   experience?: string
@@ -19,7 +19,7 @@ export interface ParticipantData {
   skills?: string
   passwordHash: string
   registeredAt: string
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'pending' | 'approved' | 'rejected'
 }
 
 export function saveParticipant(participant: Omit<ParticipantData, 'id' | 'registeredAt' | 'status'>): ParticipantData {
@@ -72,7 +72,7 @@ export function getAllParticipants(): ParticipantData[] {
   return []
 }
 
-export function updateParticipantStatus(id: string, status: 'PENDING' | 'APPROVED' | 'REJECTED'): boolean {
+export function updateParticipantStatus(id: string, status: 'pending' | 'approved' | 'rejected'): boolean {
   try {
     const participants = getAllParticipants()
     const participantIndex = participants.findIndex(p => p.id === id)

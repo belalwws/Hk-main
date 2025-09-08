@@ -21,7 +21,7 @@ model Hackathon {
   endDate               DateTime
   registrationDeadline  DateTime
   maxParticipants       Int?
-  status                HackathonStatus @default(DRAFT)
+  status                HackathonStatus @default(draft)
   prizes                Json?    // {first: "", second: "", third: ""}
   settings              Json?    // Store hackathon-specific settings
   isPinned              Boolean  @default(false)  // للعرض في الصفحة الرئيسية
@@ -42,10 +42,10 @@ model Hackathon {
 }
 
 enum HackathonStatus {
-  DRAFT
-  OPEN
-  CLOSED
-  COMPLETED
+  draft
+  open
+  closed
+  completed
 }
 
 // User model - Base user entity
@@ -88,9 +88,9 @@ model Participant {
   projectTitle        String?         // عنوان المشروع
   projectDescription  String?         // وصف المشروع
   githubRepo          String?         // رابط المستودع
-  teamType            TeamType        @default(INDIVIDUAL)
+  teamType            TeamType        @default(individual)
   teamRole            String?         // قائد، مصمم، مبرمج، إلخ
-  status              ParticipantStatus @default(PENDING)
+  status              ParticipantStatus @default(pending)
   score               Float?          // النتيجة النهائية
   feedback            String?         // ملاحظات المحكمين
   registeredAt        DateTime        @default(now())
@@ -108,14 +108,14 @@ model Participant {
 }
 
 enum TeamType {
-  INDIVIDUAL
-  TEAM
+  individual
+  team
 }
 
 enum ParticipantStatus {
-  PENDING
-  APPROVED
-  REJECTED
+  pending
+  approved
+  rejected
 }
 
 // Judge model - Links users to hackathons as judges

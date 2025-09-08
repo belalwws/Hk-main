@@ -23,7 +23,7 @@ async function createSampleHackathon() {
         endDate: new Date('2024-12-17T18:00:00Z'),
         registrationDeadline: new Date('2024-12-10T23:59:59Z'),
         maxParticipants: 100,
-        status: 'OPEN', // مفتوح للتسجيل
+        status: 'open', // مفتوح للتسجيل
         createdBy: adminUser.id,
         prizes: {
           first: '50,000 ريال سعودي',

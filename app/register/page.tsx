@@ -96,7 +96,7 @@ export default function RegisterPage() {
     nationality: '',
 
     // Participation Type
-    teamType: 'INDIVIDUAL', // INDIVIDUAL or TEAM
+    teamType: 'individual', // individual or team
     preferredRole: '' // Required field for preferred role in team
   })
 
@@ -315,7 +315,7 @@ export default function RegisterPage() {
                       onValueChange={(value) => setFormData({...formData, teamType: value})}
                     >
                       <div className="flex items-center space-x-2 rtl:space-x-reverse p-4 border rounded-lg">
-                        <RadioGroupItem value="INDIVIDUAL" id="individual" />
+                        <RadioGroupItem value="individual" id="individual" />
                         <Label htmlFor="individual" className="cursor-pointer flex-1">
                           <div className="flex items-center">
                             <User className="w-5 h-5 text-[#01645e] ml-2" />
@@ -328,7 +328,7 @@ export default function RegisterPage() {
                       </div>
 
                       <div className="flex items-center space-x-2 rtl:space-x-reverse p-4 border rounded-lg">
-                        <RadioGroupItem value="TEAM" id="team" />
+                        <RadioGroupItem value="team" id="team" />
                         <Label htmlFor="team" className="cursor-pointer flex-1">
                           <div className="flex items-center">
                             <Users className="w-5 h-5 text-[#3ab666] ml-2" />

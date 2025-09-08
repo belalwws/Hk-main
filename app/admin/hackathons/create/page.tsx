@@ -178,10 +178,10 @@ export default function CreateHackathonPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="DRAFT">مسودة</SelectItem>
-                      <SelectItem value="OPEN">مفتوح للتسجيل</SelectItem>
-                      <SelectItem value="CLOSED">مغلق</SelectItem>
-                      <SelectItem value="COMPLETED">مكتمل</SelectItem>
+                      <SelectItem value="draft">مسودة</SelectItem>
+                      <SelectItem value="open">مفتوح للتسجيل</SelectItem>
+                      <SelectItem value="closed">مغلق</SelectItem>
+                      <SelectItem value="completed">مكتمل</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
