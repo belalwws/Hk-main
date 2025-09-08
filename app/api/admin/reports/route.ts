@@ -95,15 +95,15 @@ export async function GET(request: NextRequest) {
       pendingParticipants,
       approvedParticipants,
       rejectedParticipants,
-      usersByCity: usersByCity.map(item => ({
+      usersByCity: usersByCity.map((item: any) => ({
         city: item.city || 'غير محدد',
         count: item._count.city
       })),
-      usersByNationality: usersByNationality.map(item => ({
+      usersByNationality: usersByNationality.map((item: any) => ({
         nationality: item.nationality || 'غير محدد',
         count: item._count.nationality
       })),
-      hackathonsByStatus: hackathonsByStatus.map(item => ({
+      hackathonsByStatus: hackathonsByStatus.map((item: any) => ({
         status: item.status,
         count: item._count.status
       }))

@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform data for frontend
-    const transformedUsers = users.map(user => ({
+    const transformedUsers = users.map((user: any) => ({
       id: user.id,
       name: user.name,
       email: user.email,

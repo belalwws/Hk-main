@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send emails to all selected users
-    const emailPromises = users.map(async (user) => {
+    const emailPromises = users.map(async (user: any) => {
       const emailSubject = subject
       
       let emailContent = `مرحباً ${user.name},
@@ -106,7 +106,7 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
         <div style="padding: 30px;">
             <p>مرحباً <strong>${user.name}</strong>,</p>
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                ${message.split('\n').map(line => `<p style="margin: 10px 0;">${line}</p>`).join('')}
+                ${message.split('\n').map((line: string) => `<p style="margin: 10px 0;">${line}</p>`).join('')}
             </div>
             
             ${includeHackathonDetails && hackathon ? `

@@ -11,7 +11,7 @@ async function computeResults() {
   })
 
   const teamsWithAverages = await Promise.all(
-    results.map(async (avg) => {
+    results.map(async (avg: any) => {
       const team = await prisma.team.findUnique({ where: { id: avg.team_id } })
       return {
         team_id: avg.team_id,
