@@ -16,9 +16,10 @@ const transporter = nodemailer.createTransport({
 // POST /api/admin/hackathons/[id]/teams/[teamId]/send-emails - Send emails to team members
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; teamId: string } }
+  context: { params: Promise<{ id: string; teamId: string }> }
 ) {
   try {
+    const params = await context.params
     const { teamId } = params
 
     // Get team with members and hackathon info

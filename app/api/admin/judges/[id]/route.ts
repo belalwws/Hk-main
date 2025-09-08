@@ -5,8 +5,9 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 // PATCH /api/admin/judges/[id] - Update judge status
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const params = await context.params
     const token = request.cookies.get('auth-token')?.value
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
@@ -60,8 +61,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 // DELETE /api/admin/judges/[id] - Delete judge
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const params = await context.params
     const token = request.cookies.get('auth-token')?.value
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 

@@ -20,8 +20,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const params = await context.params
     const token = request.headers.get("authorization")?.replace("Bearer ", "") || request.cookies.get("auth-token")?.value
     if (!token) return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 401 })
     const payload = await verifyToken(token)

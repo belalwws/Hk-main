@@ -16,9 +16,10 @@ const transporter = nodemailer.createTransport({
 // PATCH /api/admin/hackathons/[id]/participants/bulk-update - Bulk update participant status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params
     const { participantIds, status } = await request.json()
     const hackathonId = params.id
 

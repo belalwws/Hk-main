@@ -5,8 +5,9 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 // PATCH /api/admin/judges/[id]/toggle - Toggle judge active status
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const params = await context.params
     const token = request.cookies.get('auth-token')?.value
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
