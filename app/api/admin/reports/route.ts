@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
+import { HackathonStatus, ParticipantStatus } from '@prisma/client'
 
 // Lazy import prisma to avoid build-time errors
 let prisma: any = null
@@ -37,18 +38,18 @@ export async function GET(request: NextRequest) {
     const totalHackathons = await prismaClient.hackathon.count()
     const totalParticipants = await prismaClient.participant.count()
     const activeHackathons = await prismaClient.hackathon.count({
-      where: { status: 'open' }
+      where: { status: HackathonStatus.open as any }
     })
 
     // Participant status breakdown
     const pendingParticipants = await prismaClient.participant.count({
-      where: { status: 'pending' }
+      where: { status: ParticipantStatus.pending as any }
     })
     const approvedParticipants = await prismaClient.participant.count({
-      where: { status: 'approved' }
+      where: { status: ParticipantStatus.approved as any }
     })
     const rejectedParticipants = await prismaClient.participant.count({
-      where: { status: 'rejected' }
+      where: { status: ParticipantStatus.rejected as any }
     })
 
     // Users by city

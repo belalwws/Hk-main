@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, UserRole } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -34,6 +34,11 @@ export async function GET(request: NextRequest) {
             id: true,
             title: true,
             status: true
+          }
+        },
+        _count: {
+          select: {
+            scores: true
           }
         }
       },
@@ -114,7 +119,7 @@ export async function POST(request: NextRequest) {
           email,
           password_hash: passwordHash,
           phone: phone || null,
-          role: 'JUDGE'
+          role: UserRole.judge as any
         }
       })
 
