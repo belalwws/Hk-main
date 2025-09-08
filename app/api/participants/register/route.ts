@@ -39,10 +39,14 @@ export async function POST(request: NextRequest) {
       try {
         const { prisma } = await import('@/lib/prisma')
         try {
-          const existingJudge = await prisma.judge.findUnique({
-            where: { email: data.email }
+          const existingJudge = await prisma.judge.findFirst({
+            where: {
+              user: {
+                email: data.email
+              }
+            }
           })
-  
+
           const existingAdmin = await prisma.admin.findUnique({
             where: { email: data.email }
           })
