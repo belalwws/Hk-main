@@ -18,9 +18,10 @@ const transporter = nodemailer.createTransport({
 // PATCH /api/admin/hackathons/[id]/participants/[participantId] - Update participant status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; participantId: string } }
+  context: { params: Promise<{ id: string; participantId: string }> }
 ) {
   try {
+    const params = await context.params
     const token = request.cookies.get('auth-token')?.value
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 

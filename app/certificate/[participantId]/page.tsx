@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import Certificate from '@/components/Certificate'
-import { Download, Print, Share } from 'lucide-react'
+import { Download, Printer, Share } from 'lucide-react'
 import { drawCertificateText, DEFAULT_CERTIFICATE_CONFIG } from '@/lib/certificate-config'
 
 interface ParticipantData {
@@ -170,7 +169,7 @@ export default function CertificatePage() {
             onClick={() => window.print()}
             className="bg-gradient-to-r from-[#3ab666] to-[#c3e956] text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all duration-300 hover:scale-105 flex items-center gap-2"
           >
-            <Print className="w-5 h-5" />
+            <Printer className="w-5 h-5" />
             طباعة
           </button>
           
@@ -186,13 +185,23 @@ export default function CertificatePage() {
         {/* Certificate */}
         <div className="flex justify-center">
           <div className="bg-white rounded-2xl shadow-2xl p-8">
-            <Certificate
-              participantName={participant.name}
-              hackathonTitle={participant.hackathonTitle}
-              date={participant.date || currentDate}
-              rank={participant.rank}
-              isWinner={participant.isWinner}
-            />
+            <div className="relative">
+              <img
+                src="/row-certificat.png"
+                alt="شهادة تقدير"
+                className="w-full max-w-4xl mx-auto"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-4xl font-bold text-[#01645e] mb-4">
+                    {participant.name}
+                  </h2>
+                  <p className="text-xl text-[#8b7632]">
+                    {participant.hackathonTitle}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
