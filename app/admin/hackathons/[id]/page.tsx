@@ -464,12 +464,12 @@ export default function HackathonManagementPage() {
   }
 
   const toggleHackathonStatus = async () => {
-    const newStatus = hackathon?.status === 'DRAFT' ? 'OPEN' :
-                     hackathon?.status === 'OPEN' ? 'CLOSED' : 'OPEN'
+    const newStatus = hackathon?.status === 'draft' ? 'open' :
+                     hackathon?.status === 'open' ? 'closed' : 'open'
 
     const confirmMessage = `هل أنت متأكد من تغيير حالة الهاكاثون إلى "${
-      newStatus === 'OPEN' ? 'مفتوح' :
-      newStatus === 'CLOSED' ? 'مغلق' : 'مسودة'
+      newStatus === 'open' ? 'مفتوح' :
+      newStatus === 'closed' ? 'مغلق' : 'مسودة'
     }"؟`
 
     if (!confirm(confirmMessage)) return
@@ -613,13 +613,13 @@ export default function HackathonManagementPage() {
             <p className="text-[#8b7632] text-lg">{hackathon.description}</p>
           </div>
           <Badge className={`${
-            hackathon.status === 'OPEN' ? 'bg-green-500' :
-            hackathon.status === 'CLOSED' ? 'bg-red-500' :
-            hackathon.status === 'COMPLETED' ? 'bg-blue-500' : 'bg-gray-500'
+            hackathon.status === 'open' ? 'bg-green-500' :
+            hackathon.status === 'closed' ? 'bg-red-500' :
+            hackathon.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
           } text-white`}>
-            {hackathon.status === 'OPEN' ? 'مفتوح' :
-             hackathon.status === 'CLOSED' ? 'مغلق' :
-             hackathon.status === 'COMPLETED' ? 'مكتمل' : 'مسودة'}
+            {hackathon.status === 'open' ? 'مفتوح' :
+             hackathon.status === 'closed' ? 'مغلق' :
+             hackathon.status === 'completed' ? 'مكتمل' : 'مسودة'}
           </Badge>
         </motion.div>
 
@@ -1193,8 +1193,8 @@ export default function HackathonManagementPage() {
                           onClick={() => toggleHackathonStatus()}
                           variant="outline"
                         >
-                          {hackathon.status === 'DRAFT' ? 'نشر الهاكاثون' :
-                           hackathon.status === 'OPEN' ? 'إغلاق التسجيل' : 'إعادة فتح'}
+                          {hackathon.status === 'draft' ? 'نشر الهاكاثون' :
+                           hackathon.status === 'open' ? 'إغلاق التسجيل' : 'إعادة فتح'}
                         </Button>
                       </div>
 
