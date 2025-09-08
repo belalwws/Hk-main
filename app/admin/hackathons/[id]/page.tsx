@@ -23,6 +23,7 @@ interface Participant {
     phone: string
     city: string
     nationality: string
+    preferredRole?: string
   }
   teamName?: string
   teamId?: string
