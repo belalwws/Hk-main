@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform recent hackathons data
-    const transformedRecentHackathons = recentHackathons.map(hackathon => ({
+    const transformedRecentHackathons = recentHackathons.map((hackathon: any) => ({
       id: hackathon.id,
       title: hackathon.title,
       status: hackathon.status,
