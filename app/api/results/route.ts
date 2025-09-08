@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     // Get team details and combine with scores
     const teamsWithScores = await Promise.all(
-      results.map(async (result) => {
+      results.map(async (result: any) => {
         const team = await prisma.team.findUnique({
           where: { id: result.teamId },
         })

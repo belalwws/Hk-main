@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     // Get team details and combine with averages
     const teamsWithAverages = await Promise.all(
-      teamAverages.map(async (avg: { team_id: string; _avg: { score: number | null }; _count: { score: number } }) => {
+      teamAverages.map(async (avg: { teamId: string; _avg: { score: number | null }; _count: { score: number } }) => {
         const team = await prisma.team.findUnique({
           where: { id: avg.teamId },
         })
