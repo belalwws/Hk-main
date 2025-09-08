@@ -200,7 +200,7 @@ export default function HackathonManagementPage() {
   const sendProjectEmails = async () => {
     if (!hackathon) return
 
-    const teamsWithMembers = hackathon.teams?.filter(team => team.participants?.length > 0) || []
+    const teamsWithMembers = hackathon.teams?.filter(team => team.participants && team.participants.length > 0) || []
 
     if (teamsWithMembers.length === 0) {
       alert('لا توجد فرق لإرسال الإيميلات إليها')

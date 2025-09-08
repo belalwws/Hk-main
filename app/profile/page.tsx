@@ -33,7 +33,7 @@ interface UserProfile {
     teamName?: string
     projectTitle?: string
     teamRole?: string
-    status: 'PENDING' | 'APPROVED' | 'REJECTED'
+    status: 'pending' | 'approved' | 'rejected'
     registeredAt: string
     approvedAt?: string
     rejectedAt?: string
@@ -92,12 +92,12 @@ export default function ProfilePage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      PENDING: { label: 'في الانتظار', color: 'bg-yellow-500', icon: Clock },
-      APPROVED: { label: 'مقبول', color: 'bg-green-500', icon: CheckCircle },
-      REJECTED: { label: 'مرفوض', color: 'bg-red-500', icon: XCircle }
+      pending: { label: 'في الانتظار', color: 'bg-yellow-500', icon: Clock },
+      approved: { label: 'مقبول', color: 'bg-green-500', icon: CheckCircle },
+      rejected: { label: 'مرفوض', color: 'bg-red-500', icon: XCircle }
     }
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
     
     return (
       <Badge className={`${config.color} text-white flex items-center gap-1`}>
@@ -198,7 +198,7 @@ export default function ProfilePage() {
                 <div>
                   <p className="text-sm opacity-90">المقبولة</p>
                   <p className="text-2xl font-bold">
-                    {profile.participations?.filter(p => p.status === 'APPROVED').length || 0}
+                    {profile.participations?.filter(p => p.status === 'approved').length || 0}
                   </p>
                 </div>
                 <CheckCircle className="w-8 h-8 opacity-80" />
@@ -212,7 +212,7 @@ export default function ProfilePage() {
                 <div>
                   <p className="text-sm opacity-90">في الانتظار</p>
                   <p className="text-2xl font-bold">
-                    {profile.participations?.filter(p => p.status === 'PENDING').length || 0}
+                    {profile.participations?.filter(p => p.status === 'pending').length || 0}
                   </p>
                 </div>
                 <Clock className="w-8 h-8 opacity-80" />
@@ -302,12 +302,12 @@ export default function ProfilePage() {
                 <div className="space-y-3">
                   {profile.participations && profile.participations.length > 0 ? (
                     <>
-                      {profile.participations.filter(p => p.status === 'PENDING').length > 0 && (
+                      {profile.participations.filter(p => p.status === 'pending').length > 0 && (
                         <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-yellow-600" />
                             <span className="text-sm font-medium text-yellow-800">
-                              {profile.participations.filter(p => p.status === 'PENDING').length} طلب في الانتظار
+                              {profile.participations.filter(p => p.status === 'pending').length} طلب في الانتظار
                             </span>
                           </div>
                         </div>
@@ -427,12 +427,12 @@ export default function ProfilePage() {
                             {/* Review */}
                             <div className="flex items-center">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                participation.status === 'PENDING' ? 'bg-yellow-500' :
-                                participation.status === 'APPROVED' ? 'bg-[#3ab666]' : 'bg-red-500'
+                                participation.status === 'pending' ? 'bg-yellow-500' :
+                                participation.status === 'approved' ? 'bg-[#3ab666]' : 'bg-red-500'
                               }`}>
-                                {participation.status === 'PENDING' ? (
+                                {participation.status === 'pending' ? (
                                   <Clock className="w-4 h-4 text-white" />
-                                ) : participation.status === 'APPROVED' ? (
+                                ) : participation.status === 'approved' ? (
                                   <CheckCircle className="w-4 h-4 text-white" />
                                 ) : (
                                   <XCircle className="w-4 h-4 text-white" />
@@ -440,11 +440,11 @@ export default function ProfilePage() {
                               </div>
                               <div className="mr-3">
                                 <p className={`text-xs font-medium ${
-                                  participation.status === 'PENDING' ? 'text-yellow-600' :
-                                  participation.status === 'APPROVED' ? 'text-[#3ab666]' : 'text-red-600'
+                                  participation.status === 'pending' ? 'text-yellow-600' :
+                                  participation.status === 'approved' ? 'text-[#3ab666]' : 'text-red-600'
                                 }`}>
-                                  {participation.status === 'PENDING' ? 'قيد المراجعة' :
-                                   participation.status === 'APPROVED' ? 'تم القبول' : 'تم الرفض'}
+                                  {participation.status === 'pending' ? 'قيد المراجعة' :
+                                   participation.status === 'approved' ? 'تم القبول' : 'تم الرفض'}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {participation.approvedAt ? formatDate(participation.approvedAt) :
@@ -454,7 +454,7 @@ export default function ProfilePage() {
                             </div>
 
                             {/* Arrow */}
-                            {participation.status === 'APPROVED' && (
+                            {participation.status === 'approved' && (
                               <>
                                 <div className="w-8 h-0.5 bg-gray-300"></div>
 
@@ -521,7 +521,7 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Status Messages */}
-                        {participation.status === 'APPROVED' && participation.approvedAt && (
+                        {participation.status === 'approved' && participation.approvedAt && (
                           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                             <div className="flex items-center gap-2">
                               <CheckCircle className="w-5 h-5 text-green-600" />
@@ -535,7 +535,7 @@ export default function ProfilePage() {
                           </div>
                         )}
 
-                        {participation.status === 'REJECTED' && participation.rejectedAt && (
+                        {participation.status === 'rejected' && participation.rejectedAt && (
                           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                             <div className="flex items-center gap-2">
                               <XCircle className="w-5 h-5 text-red-600" />
@@ -549,7 +549,7 @@ export default function ProfilePage() {
                           </div>
                         )}
 
-                        {participation.status === 'PENDING' && (
+                        {participation.status === 'pending' && (
                           <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <div className="flex items-center gap-2">
                               <Clock className="w-5 h-5 text-yellow-600" />
