@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform dates to ISO strings
-    const publicHackathons = hackathons.map(hackathon => ({
+    const publicHackathons = hackathons.map((hackathon: any) => ({
       ...hackathon,
       startDate: hackathon.startDate.toISOString(),
       endDate: hackathon.endDate.toISOString(),
