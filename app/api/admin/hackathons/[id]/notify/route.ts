@@ -87,7 +87,7 @@ export async function POST(
       // جميع المستخدمين المسجلين في المنصة
       const allUsers = await prisma.user.findMany({
         where: {
-          role: 'PARTICIPANT' // فقط المستخدمين العاديين، مش الأدمن أو المحكمين
+          role: 'participant' // فقط المستخدمين العاديين، مش الأدمن أو المحكمين
         }
       })
       targetUsers = allUsers

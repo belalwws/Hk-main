@@ -428,17 +428,17 @@ export default function ParticipantsManagement() {
                             </DialogContent>
                           </Dialog>
                           
-                          {participant.status === 'PENDING' && (
+                          {participant.status === 'pending' && (
                             <>
                               <Button
-                                onClick={() => handleStatusChange(participant.id, 'APPROVED')}
+                                onClick={() => handleStatusChange(participant.id, 'approved')}
                                 size="sm"
                                 className="bg-green-600 hover:bg-green-700"
                               >
                                 <Check className="w-4 h-4" />
                               </Button>
                               <Button
-                                onClick={() => handleStatusChange(participant.id, 'REJECTED')}
+                                onClick={() => handleStatusChange(participant.id, 'rejected')}
                                 size="sm"
                                 variant="destructive"
                               >
