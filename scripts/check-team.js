@@ -65,7 +65,7 @@ async function checkTeamStructure() {
         const anyMembership = await prisma.participant.findFirst({
           where: {
             userId: currentUser.id,
-            status: 'APPROVED'
+            status: 'approved'
           },
           include: {
             team: true
