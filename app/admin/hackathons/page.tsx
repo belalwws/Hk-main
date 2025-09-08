@@ -123,13 +123,13 @@ export default function AdminHackathonsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      DRAFT: { label: 'مسودة', color: 'bg-gray-500' },
-      OPEN: { label: 'مفتوح', color: 'bg-green-500' },
-      CLOSED: { label: 'مغلق', color: 'bg-red-500' },
-      COMPLETED: { label: 'مكتمل', color: 'bg-blue-500' }
+      draft: { label: 'مسودة', color: 'bg-gray-500' },
+      open: { label: 'مفتوح', color: 'bg-green-500' },
+      closed: { label: 'مغلق', color: 'bg-red-500' },
+      completed: { label: 'مكتمل', color: 'bg-blue-500' }
     }
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.DRAFT
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
 
     return (
       <Badge className={`${config.color} text-white`}>
@@ -194,7 +194,7 @@ export default function AdminHackathonsPage() {
             },
             {
               title: 'الهاكاثونات المفتوحة',
-              value: hackathons.filter(h => h.status === 'OPEN').length,
+              value: hackathons.filter(h => h.status === 'open').length,
               icon: Calendar,
               color: 'from-[#3ab666] to-[#c3e956]'
             },
