@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       try {
         const participants = getAllParticipants()
-        const found = participants.find(p => p.email.toLowerCase() === email.toLowerCase())
+        const found = participants.find((p: any) => p.email.toLowerCase() === email.toLowerCase())
         if (found) {
           fileParticipant = found
         }
@@ -95,24 +95,24 @@ export async function POST(request: NextRequest) {
 
     if (user && user.role === 'admin') {
       // Check if super admin or hackathon admin
-      const isSuperAdmin = user.adminActions.some(admin => admin.hackathonId === null)
+      const isSuperAdmin = user.adminActions.some((admin: any) => admin.hackathonId === null)
       permissions = {
         isSuperAdmin,
         canManageHackathons: isSuperAdmin,
         canManageUsers: isSuperAdmin,
-        hackathonIds: user.adminActions.map(admin => admin.hackathonId).filter(Boolean)
+        hackathonIds: user.adminActions.map((admin: any) => admin.hackathonId).filter(Boolean)
       }
     } else if (user && user.role === 'judge') {
       activeHackathons = user.judgeAssignments
-        .filter(judge => judge.isActive && judge.hackathon.isActive)
-        .map(judge => ({
+        .filter((judge: any) => judge.isActive && judge.hackathon.isActive)
+        .map((judge: any) => ({
           id: judge.hackathon.id,
           title: judge.hackathon.title
         }))
     } else if (user && user.role === 'participant') {
       activeHackathons = user.participations
-        .filter(participation => participation.status === 'approved' && participation.hackathon.isActive)
-        .map(participation => ({
+        .filter((participation: any) => participation.status === 'approved' && participation.hackathon.isActive)
+        .map((participation: any) => ({
           id: participation.hackathon.id,
           title: participation.hackathon.title
         }))
