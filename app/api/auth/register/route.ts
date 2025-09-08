@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       console.log('✅ Welcome email sent successfully to:', user.email)
     } catch (emailError) {
       console.error('❌ Failed to send welcome email:', emailError)
-      console.error('❌ Email error details:', emailError.message)
+      console.error('❌ Email error details:', emailError instanceof Error ? emailError.message : String(emailError))
       // Don't fail registration if email fails
     }
 
@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Error in registration:', error)
-    console.error('❌ Error details:', error.message)
-    console.error('❌ Error stack:', error.stack)
+    console.error('❌ Error details:', error instanceof Error ? error.message : String(error))
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json({ error: 'خطأ في التسجيل' }, { status: 500 })
   }
 }
