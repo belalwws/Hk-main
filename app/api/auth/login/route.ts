@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     let permissions = {}
     let activeHackathons = []
 
-    if (user && user.role === 'ADMIN') {
+    if (user && user.role === 'admin') {
       // Check if super admin or hackathon admin
       const isSuperAdmin = user.adminActions.some(admin => admin.hackathonId === null)
       permissions = {

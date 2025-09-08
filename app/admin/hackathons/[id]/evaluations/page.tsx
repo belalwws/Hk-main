@@ -58,7 +58,7 @@ export default function EvaluationsPage({ params }: { params: Promise<{ id: stri
   }, [params])
 
   useEffect(() => {
-    if (!user || user.role !== 'ADMIN') {
+    if (!user || user.role !== 'admin') {
       router.push('/login')
       return
     }

@@ -22,8 +22,8 @@ async function deleteAllUsersExceptAdmin() {
     })
 
     // Find admin users
-    const adminUsers = allUsers.filter(user => user.role === 'ADMIN')
-    const nonAdminUsers = allUsers.filter(user => user.role !== 'ADMIN')
+    const adminUsers = allUsers.filter(user => user.role === 'admin')
+    const nonAdminUsers = allUsers.filter(user => user.role !== 'admin')
 
     console.log(`\n🛡️  Admin users (will be kept): ${adminUsers.length}`)
     adminUsers.forEach(admin => {
@@ -79,7 +79,7 @@ async function deleteAllUsersExceptAdmin() {
     const deletedUsers = await prisma.user.deleteMany({
       where: {
         role: {
-          not: 'ADMIN'
+          not: 'admin'
         }
       }
     })
