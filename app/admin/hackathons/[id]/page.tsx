@@ -248,11 +248,11 @@ export default function HackathonManagementPage() {
   // حساب الإحصائيات من بيانات الهاكاثون
   const stats = hackathon ? {
     totalParticipants: hackathon.participants.length,
-    pendingParticipants: hackathon.participants.filter(p => p.status === 'PENDING').length,
-    approvedParticipants: hackathon.participants.filter(p => p.status === 'APPROVED').length,
-    rejectedParticipants: hackathon.participants.filter(p => p.status === 'REJECTED').length,
-    approvedWithoutTeam: hackathon.participants.filter(p => p.status === 'APPROVED' && !p.teamId).length,
-    approvedWithTeam: hackathon.participants.filter(p => p.status === 'APPROVED' && p.teamId).length
+    pendingParticipants: hackathon.participants.filter(p => p.status === 'pending').length,
+    approvedParticipants: hackathon.participants.filter(p => p.status === 'approved').length,
+    rejectedParticipants: hackathon.participants.filter(p => p.status === 'rejected').length,
+    approvedWithoutTeam: hackathon.participants.filter(p => p.status === 'approved' && !p.teamId).length,
+    approvedWithTeam: hackathon.participants.filter(p => p.status === 'approved' && p.teamId).length
   } : {
     totalParticipants: 0,
     pendingParticipants: 0,
@@ -262,7 +262,7 @@ export default function HackathonManagementPage() {
     approvedWithTeam: 0
   }
 
-  const updateParticipantStatus = async (participantId: string, status: 'APPROVED' | 'REJECTED', feedback?: string) => {
+  const updateParticipantStatus = async (participantId: string, status: 'approved' | 'rejected', feedback?: string) => {
     try {
       const response = await fetch(`/api/admin/hackathons/${params.id}/participants/${participantId}`, {
         method: 'PATCH',
@@ -272,9 +272,9 @@ export default function HackathonManagementPage() {
 
       if (response.ok) {
         await refreshData() // Refresh data
-        alert(`تم ${status === 'APPROVED' ? 'قبول' : 'رفض'} المشارك بنجاح`)
+        alert(`تم ${status === 'approved' ? 'قبول' : 'رفض'} المشارك بنجاح`)
       } else {
-        alert(`فشل في ${status === 'APPROVED' ? 'قبول' : 'رفض'} المشارك`)
+        alert(`فشل في ${status === 'approved' ? 'قبول' : 'رفض'} المشارك`)
       }
     } catch (error) {
       console.error('Error updating participant status:', error)
@@ -282,8 +282,8 @@ export default function HackathonManagementPage() {
     }
   }
 
-  const bulkUpdateStatus = async (status: 'APPROVED' | 'REJECTED') => {
-    const pendingParticipants = filteredParticipants.filter(p => p.status === 'PENDING')
+  const bulkUpdateStatus = async (status: 'approved' | 'rejected') => {
+    const pendingParticipants = filteredParticipants.filter(p => p.status === 'pending')
     const count = pendingParticipants.length
 
     if (count === 0) {
@@ -291,7 +291,7 @@ export default function HackathonManagementPage() {
       return
     }
 
-    const action = status === 'APPROVED' ? 'قبول' : 'رفض'
+    const action = status === 'approved' ? 'قبول' : 'رفض'
     const confirmMessage = `هل أنت متأكد من ${action} جميع المشاركين المفلترين؟\n\nسيتم ${action} ${count} مشارك`
 
     if (!confirm(confirmMessage)) return
@@ -319,7 +319,7 @@ export default function HackathonManagementPage() {
   }
 
   const previewTeamFormation = async () => {
-    const approvedParticipants = hackathon?.participants.filter(p => p.status === 'APPROVED' && !p.teamId) || []
+    const approvedParticipants = hackathon?.participants.filter(p => p.status === 'approved' && !p.teamId) || []
 
     if (approvedParticipants.length === 0) {
       alert('لا توجد مشاركين مقبولين بدون فرق لتكوين فرق جديدة')
@@ -742,25 +742,25 @@ export default function HackathonManagementPage() {
                   </div>
 
                   {/* Bulk Actions */}
-                  {filteredParticipants.filter(p => p.status === 'PENDING').length > 0 && (
+                  {filteredParticipants.filter(p => p.status === 'pending').length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-lg font-semibold text-[#01645e] mb-1">إجراءات جماعية</h3>
                           <p className="text-sm text-[#8b7632]">
-                            {filteredParticipants.filter(p => p.status === 'PENDING').length} مشارك في الانتظار من النتائج المفلترة
+                            {filteredParticipants.filter(p => p.status === 'pending').length} مشارك في الانتظار من النتائج المفلترة
                           </p>
                         </div>
                         <div className="flex gap-2">
                           <Button
-                            onClick={() => bulkUpdateStatus('APPROVED')}
+                            onClick={() => bulkUpdateStatus('approved')}
                             className="bg-green-600 hover:bg-green-700 text-white"
                           >
                             <UserCheck className="w-4 h-4 ml-1" />
-                            قبول الكل ({filteredParticipants.filter(p => p.status === 'PENDING').length})
+                            قبول الكل ({filteredParticipants.filter(p => p.status === 'pending').length})
                           </Button>
                           <Button
-                            onClick={() => bulkUpdateStatus('REJECTED')}
+                            onClick={() => bulkUpdateStatus('rejected')}
                             variant="outline"
                             className="text-red-600 hover:text-red-700 border-red-600"
                           >
@@ -788,11 +788,11 @@ export default function HackathonManagementPage() {
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-lg font-bold text-[#01645e]">{participant.user.name}</h3>
                                 <Badge className={`${
-                                  participant.status === 'APPROVED' ? 'bg-green-500' :
-                                  participant.status === 'REJECTED' ? 'bg-red-500' : 'bg-yellow-500'
+                                  participant.status === 'approved' ? 'bg-green-500' :
+                                  participant.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'
                                 } text-white`}>
-                                  {participant.status === 'APPROVED' ? 'مقبول' :
-                                   participant.status === 'REJECTED' ? 'مرفوض' : 'في الانتظار'}
+                                  {participant.status === 'approved' ? 'مقبول' :
+                                   participant.status === 'rejected' ? 'مرفوض' : 'في الانتظار'}
                                 </Badge>
                               </div>
                               
@@ -848,12 +848,12 @@ export default function HackathonManagementPage() {
                               )}
                             </div>
                             
-                            {participant.status === 'PENDING' && (
+                            {participant.status === 'pending' && (
                               <div className="flex gap-2 mr-4">
                                 <Button
                                   size="sm"
                                   className="bg-green-500 hover:bg-green-600 text-white"
-                                  onClick={() => updateParticipantStatus(participant.id, 'APPROVED')}
+                                  onClick={() => updateParticipantStatus(participant.id, 'approved')}
                                 >
                                   <UserCheck className="w-4 h-4 ml-1" />
                                   قبول
@@ -862,7 +862,7 @@ export default function HackathonManagementPage() {
                                   size="sm"
                                   variant="outline"
                                   className="text-red-600 hover:text-red-700 border-red-600"
-                                  onClick={() => updateParticipantStatus(participant.id, 'REJECTED')}
+                                  onClick={() => updateParticipantStatus(participant.id, 'rejected')}
                                 >
                                   <UserX className="w-4 h-4 ml-1" />
                                   رفض
