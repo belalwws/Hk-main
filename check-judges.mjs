@@ -5,12 +5,20 @@ const prisma = new PrismaClient()
 async function main() {
     console.log("التحقق من المحكمين الموجودين:")
     const judges = await prisma.judge.findMany({
-        orderBy: { email: 'asc' }
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    email: true
+                }
+            }
+        },
+        orderBy: { user: { email: 'asc' } }
     })
-    
+
     console.log(`عدد المحكمين: ${judges.length}`)
     judges.forEach((judge, index) => {
-        console.log(`${index + 1}. ${judge.name} - ${judge.email} (نشط: ${judge.isActive})`)
+        console.log(`${index + 1}. ${judge.user.name} - ${judge.user.email} (نشط: ${judge.isActive})`)
     })
     
     // التحقق من المحكمين المطلوبين
@@ -24,7 +32,7 @@ async function main() {
     
     console.log("\nالتحقق من وجود المحكمين المطلوبين:")
     for (const email of requiredEmails) {
-        const judge = judges.find(j => j.email === email)
+        const judge = judges.find(j => j.user.email === email)
         if (judge) {
             console.log(`✅ ${email} - موجود`)
         } else {

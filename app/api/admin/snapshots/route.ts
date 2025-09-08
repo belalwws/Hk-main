@@ -25,8 +25,17 @@ async function computeResults() {
   teamsWithAverages.sort((a, b) => (b.average_score || 0) - (a.average_score || 0))
 
   const allScores = await prisma.score.findMany({
-    include: { team: true, judge: { select: { id: true, name: true, email: true } } },
-    orderBy: [{ team: { teamNumber: "asc" } }, { judge: { name: "asc" } }],
+    include: {
+      team: true,
+      judge: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true }
+          }
+        }
+      }
+    },
+    orderBy: [{ team: { teamNumber: "asc" } }, { judge: { user: { name: "asc" } } }],
   })
 
   const detailedResults = teamsWithAverages.map((team) => {
@@ -35,8 +44,8 @@ async function computeResults() {
       ...team,
       individual_scores: teamScores.map((s) => ({
         judge_id: s.judgeId,
-        judge_name: s.judge.name,
-        judge_email: s.judge.email,
+        judge_name: s.judge.user.name,
+        judge_email: s.judge.user.email,
         score: s.score,
         created_at: s.createdAt,
       })),
@@ -54,8 +63,8 @@ async function computeResults() {
     team_averages: teamsWithAverages,
     detailed_results: detailedResults,
     all_individual_scores: allScores.map((s) => ({
-      team_number: s.team.team_number,
-      judge_name: s.judge.name,
+      team_number: s.team.teamNumber,
+      judge_name: s.judge.user.name,
       score: s.score,
       created_at: s.createdAt,
     })),

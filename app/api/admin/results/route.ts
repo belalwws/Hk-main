@@ -36,16 +36,20 @@ export async function GET(request: NextRequest) {
       include: {
         team: true,
         judge: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            }
+          }
         },
       },
       orderBy: [
         { team: { teamNumber: "asc" } },
-        { judge: { name: "asc" } },
+        { judge: { user: { name: "asc" } } },
       ],
     })
 
@@ -89,9 +93,9 @@ export async function GET(request: NextRequest) {
       return {
         ...team,
         individual_scores: teamScores.map((score: typeof allScores[0]) => ({
-          judge_id: score.judge_id,
-          judge_name: score.judge.name,
-          judge_email: score.judge.email,
+          judge_id: score.judgeId,
+          judge_name: score.judge.user.name,
+          judge_email: score.judge.user.email,
           score: score.score,
           created_at: score.createdAt,
         })),
@@ -108,7 +112,7 @@ export async function GET(request: NextRequest) {
       detailed_results: detailedResults,
       all_individual_scores: allScores.map((score: typeof allScores[0]) => ({
         team_number: score.team.teamNumber,
-        judge_name: score.judge.name,
+        judge_name: score.judge.user.name,
         score: score.score,
         created_at: score.createdAt,
       })),
