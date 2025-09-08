@@ -946,7 +946,7 @@ export default function HackathonManagementPage() {
                     </div>
 
                     {/* Teams Display */}
-                    <TeamsDisplay hackathonId={params.id} />
+                    <TeamsDisplay hackathonId={params.id as string} />
                   </div>
                 </CardContent>
               </Card>

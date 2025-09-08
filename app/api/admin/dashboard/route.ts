@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
+import { HackathonStatus, ParticipantStatus } from '@prisma/client'
 
 // GET /api/admin/dashboard - Get dashboard statistics
 export async function GET(request: NextRequest) {
@@ -40,19 +41,19 @@ export async function GET(request: NextRequest) {
 
     // Get active hackathons count
     const activeHackathons = await prisma.hackathon.count({
-      where: { status: 'open' }
+      where: { status: HackathonStatus.open as any }
     })
 
     // Get participants statistics
     const totalParticipants = await prisma.participant.count()
     const pendingParticipants = await prisma.participant.count({
-      where: { status: 'pending' }
+      where: { status: ParticipantStatus.pending as any }
     })
     const approvedParticipants = await prisma.participant.count({
-      where: { status: 'approved' }
+      where: { status: ParticipantStatus.approved as any }
     })
     const rejectedParticipants = await prisma.participant.count({
-      where: { status: 'rejected' }
+      where: { status: ParticipantStatus.rejected as any }
     })
 
     // Get users statistics

@@ -119,6 +119,12 @@ export default function AdminDashboard() {
                 إنشاء هاكاثون جديد
               </Button>
             </Link>
+            <Link href="/admin/create-judge">
+              <Button className="bg-gradient-to-r from-[#8b7632] to-[#c3e956] hover:from-[#6d5a28] hover:to-[#a8c247]">
+                <Star className="w-5 h-5 ml-2" />
+                إنشاء محكم جديد
+              </Button>
+            </Link>
             <Link href="/admin/hackathons">
               <Button variant="outline">
                 <Trophy className="w-5 h-5 ml-2" />
@@ -314,6 +320,16 @@ export default function AdminDashboard() {
                 <Settings className="w-12 h-12 text-[#01645e] mx-auto mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-[#01645e] mb-2">إعدادات الشهادة</h3>
                 <p className="text-[#8b7632] text-sm">تخصيص موضع النصوص على الشهادة</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/create-judge">
+            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
+              <CardContent className="p-6 text-center">
+                <Star className="w-12 h-12 text-[#8b7632] mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-bold text-[#01645e] mb-2">إنشاء محكم جديد</h3>
+                <p className="text-[#8b7632] text-sm">إضافة محكم جديد لتقييم المشاريع</p>
               </CardContent>
             </Card>
           </Link>
