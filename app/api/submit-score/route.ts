@@ -35,17 +35,21 @@ export async function POST(request: NextRequest) {
     // Upsert score (update if exists, create if not)
     const savedScore = await prisma.score.upsert({
       where: {
-        judge_id_team_id: {
-          judge_id: payload.userId,
-          team_id: team_id,
+        judgeId_teamId_criterionId_hackathonId: {
+          judgeId: payload.userId,
+          teamId: team_id,
+          criterionId: criterion_id,
+          hackathonId: hackathon_id,
         },
       },
       update: {
         score: score,
       },
       create: {
-        judge_id: payload.userId,
-        team_id: team_id,
+        judgeId: payload.userId,
+        teamId: team_id,
+        criterionId: criterion_id,
+        hackathonId: hackathon_id,
         score: score,
       },
     })
