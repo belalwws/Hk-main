@@ -8,8 +8,8 @@ export async function GET(request: NextRequest) {
     try {
       const { prisma } = await import('@/lib/prisma')
       activeHackathons = await prisma.hackathon.findMany({
-        where: { 
-          isActive: true,
+        where: {
+          status: 'open',
           endDate: {
             gte: new Date()
           }
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
           description: true,
           startDate: true,
           endDate: true,
-          isActive: true,
+          status: true,
           requirements: true,
           settings: true
         }
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       description: hackathon.description,
       startDate: hackathon.startDate.toISOString(),
       endDate: hackathon.endDate.toISOString(),
-      isActive: hackathon.isActive,
+      status: hackathon.status,
       requirements: hackathon.requirements,
       settings: hackathon.settings
     }))
