@@ -29,7 +29,7 @@ export async function POST(
         teams: {
           include: {
             participants: {
-              where: { status: 'APPROVED' },
+              where: { status: 'approved' as any },
               include: {
                 user: {
                   select: {
@@ -136,7 +136,7 @@ export async function POST(
           return { success: true, email: participant.user.email }
         } catch (error) {
           console.error(`❌ Error sending email to ${participant.user.email}:`, error)
-          return { success: false, email: participant.user.email, error: error.message }
+          return { success: false, email: participant.user.email, error: (error as any).message }
         }
       })
 

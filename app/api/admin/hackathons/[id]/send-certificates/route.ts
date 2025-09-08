@@ -40,7 +40,7 @@ export async function POST(
         teams: {
           include: {
             participants: {
-              where: { status: 'APPROVED' },
+              where: { status: 'approved' as any },
               include: {
                 user: {
                   select: {
@@ -170,7 +170,7 @@ export async function POST(
             team: team.name,
             rank: team.rank,
             status: 'failed',
-            error: error.message
+            error: (error as any).message
           }
         }
       })

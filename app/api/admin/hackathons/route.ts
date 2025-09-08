@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     } = body
     
     // Get admin user ID from token
-    const adminId = payload.userId || payload.id
+    const adminId = payload.userId
 
     if (!title || !startDate || !endDate || !registrationDeadline) {
       return NextResponse.json({ error: 'الحقول المطلوبة غير مكتملة' }, { status: 400 })
@@ -179,4 +179,3 @@ export async function POST(request: NextRequest) {
 }
 
 export const dynamic = 'force-dynamic'
-

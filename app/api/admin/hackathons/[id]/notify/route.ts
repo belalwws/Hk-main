@@ -61,7 +61,7 @@ export async function POST(
       const approvedParticipants = await prisma.participant.findMany({
         where: {
           hackathonId: hackathonId,
-          status: 'approved'
+          status: 'approved' as any
         },
         include: {
           user: true

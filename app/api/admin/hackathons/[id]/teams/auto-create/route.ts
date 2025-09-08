@@ -36,7 +36,7 @@ export async function POST(
     const approvedParticipants = await prisma.participant.findMany({
       where: {
         hackathonId: hackathonId,
-        status: 'APPROVED',
+        status: 'approved' as any,
         teamId: null // Only participants not already in a team
       },
       include: {
@@ -79,6 +79,7 @@ export async function POST(
     const teamSize = 4
     const teams: Array<{
       name: string
+      teamNumber: number
       members: typeof approvedParticipants
     }> = []
 
@@ -115,8 +116,8 @@ export async function POST(
     console.log('🔄 Team formation completed')
 
     // Create teams in database and assign participants
-    const createdTeams = []
-    const emailPromises = []
+    const createdTeams: any[] = []
+    const emailPromises: Promise<any>[] = []
 
     for (let i = 0; i < teams.length; i++) {
       const teamData = teams[i]

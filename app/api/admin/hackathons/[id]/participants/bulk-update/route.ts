@@ -65,7 +65,7 @@ export async function PATCH(
         hackathonId: hackathonId
       },
       data: {
-        status: status,
+        status: (status === 'APPROVED' ? 'approved' : 'rejected') as any,
         ...(status === 'APPROVED' ? { approvedAt: new Date() } : { rejectedAt: new Date() })
       }
     })
@@ -90,7 +90,7 @@ export async function PATCH(
         return { success: true, email: participant.user.email }
       } catch (error) {
         console.error(`❌ Failed to send email to ${participant.user.email}:`, error)
-        return { success: false, email: participant.user.email, error: error.message }
+        return { success: false, email: participant.user.email, error: (error as any).message }
       }
     })
 

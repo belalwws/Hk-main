@@ -27,7 +27,7 @@ export function saveParticipant(participant: Omit<ParticipantData, 'id' | 'regis
     ...participant,
     id: Date.now().toString(),
     registeredAt: new Date().toISOString(),
-    status: 'PENDING'
+    status: 'pending'
   }
 
   let participants: ParticipantData[] = []

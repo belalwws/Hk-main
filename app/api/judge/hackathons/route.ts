@@ -32,13 +32,13 @@ export async function GET(request: NextRequest) {
               where: {
                 participants: {
                   some: {
-                    status: 'APPROVED'
+                    status: 'approved' as any
                   }
                 }
               },
               include: {
                 participants: {
-                  where: { status: 'APPROVED' },
+                  where: { status: 'approved' as any },
                   include: {
                     user: {
                       select: {

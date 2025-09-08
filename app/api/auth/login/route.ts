@@ -102,16 +102,16 @@ export async function POST(request: NextRequest) {
         canManageUsers: isSuperAdmin,
         hackathonIds: user.adminActions.map(admin => admin.hackathonId).filter(Boolean)
       }
-    } else if (user && user.role === 'JUDGE') {
+    } else if (user && user.role === 'judge') {
       activeHackathons = user.judgeAssignments
         .filter(judge => judge.isActive && judge.hackathon.isActive)
         .map(judge => ({
           id: judge.hackathon.id,
           title: judge.hackathon.title
         }))
-    } else if (user && user.role === 'PARTICIPANT') {
+    } else if (user && user.role === 'participant') {
       activeHackathons = user.participations
-        .filter(participation => participation.status === 'APPROVED' && participation.hackathon.isActive)
+        .filter(participation => participation.status === 'approved' && participation.hackathon.isActive)
         .map(participation => ({
           id: participation.hackathon.id,
           title: participation.hackathon.title

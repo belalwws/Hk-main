@@ -104,9 +104,9 @@ export async function GET(
         totalParticipants: hackathon._count.participants,
         totalTeams: hackathon._count.teams,
         totalJudges: hackathon._count.judges,
-        pendingParticipants: hackathon.participants.filter(p => p.status === 'PENDING').length,
-        approvedParticipants: hackathon.participants.filter(p => p.status === 'APPROVED').length,
-        rejectedParticipants: hackathon.participants.filter(p => p.status === 'REJECTED').length
+        pendingParticipants: (hackathon.participants as any).filter((p: any) => p.status === 'pending').length,
+        approvedParticipants: (hackathon.participants as any).filter((p: any) => p.status === 'approved').length,
+        rejectedParticipants: (hackathon.participants as any).filter((p: any) => p.status === 'rejected').length
       }
     }
 
@@ -195,7 +195,6 @@ export async function PUT(
       maxParticipants,
       status,
       prizes,
-      isActive,
       settings
     } = body
 
@@ -229,7 +228,6 @@ export async function PUT(
         maxParticipants: maxParticipants || existingHackathon.maxParticipants,
         status: status || existingHackathon.status,
         prizes: prizes || existingHackathon.prizes,
-        isActive: isActive ?? existingHackathon.isActive,
         settings: settings || existingHackathon.settings
       },
       include: {
@@ -249,7 +247,6 @@ export async function PUT(
       description: updatedHackathon.description,
       startDate: updatedHackathon.startDate.toISOString(),
       endDate: updatedHackathon.endDate.toISOString(),
-      isActive: updatedHackathon.isActive,
       participantCount: updatedHackathon._count.participants,
       teamCount: updatedHackathon._count.teams,
       judgeCount: updatedHackathon._count.judges

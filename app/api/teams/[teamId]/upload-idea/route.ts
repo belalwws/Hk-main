@@ -37,7 +37,7 @@ export async function POST(
       where: {
         userId: payload.userId,
         teamId: teamId,
-        status: 'APPROVED'
+        status: 'approved' as any
       },
       include: {
         user: true,
@@ -56,7 +56,7 @@ export async function POST(
       const anyParticipant = await prisma.participant.findFirst({
         where: {
           userId: payload.userId,
-          status: 'APPROVED'
+          status: 'approved' as any
         },
         include: {
           user: true,

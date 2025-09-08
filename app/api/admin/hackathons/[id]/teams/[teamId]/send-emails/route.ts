@@ -28,7 +28,7 @@ export async function POST(
         id: teamId
       },
       include: {
-        members: {
+        participants: {
           include: {
             user: {
               select: {
@@ -51,17 +51,17 @@ export async function POST(
       return NextResponse.json({ error: 'الفريق غير موجود' }, { status: 404 })
     }
 
-    if (team.members.length === 0) {
+    if (team.participants.length === 0) {
       return NextResponse.json({ error: 'لا توجد أعضاء في الفريق' }, { status: 400 })
     }
 
     // Prepare team members list for email
-    const teamMembersList = team.members.map(member => 
+    const teamMembersList = team.participants.map(member => 
       `${member.user.name} (${member.user.preferredRole || 'مطور'})`
     ).join('\n')
 
     // Send emails to all team members
-    const emailPromises = team.members.map(async (member) => {
+    const emailPromises = team.participants.map(async (member) => {
       try {
         await transporter.sendMail({
           from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
@@ -80,7 +80,7 @@ export async function POST(
         return { success: true, email: member.user.email }
       } catch (error) {
         console.error(`❌ Failed to send email to ${member.user.email}:`, error)
-        return { success: false, email: member.user.email, error: error.message }
+        return { success: false, email: member.user.email, error: (error as any).message }
       }
     })
 

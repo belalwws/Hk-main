@@ -47,7 +47,7 @@ export async function GET(
       where: { hackathonId },
       include: {
         participants: {
-          where: { status: 'APPROVED' },
+          where: { status: 'approved' as any },
           include: {
             user: {
               select: {

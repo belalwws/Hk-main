@@ -53,7 +53,7 @@ export async function PATCH(
     const updatedParticipant = await prisma.participant.update({
       where: { id: params.participantId },
       data: {
-        status,
+        status: (status === 'APPROVED' ? 'approved' : 'rejected') as any,
         feedback: feedback || null,
         approvedAt: status === 'APPROVED' ? new Date() : null,
         rejectedAt: status === 'REJECTED' ? new Date() : null

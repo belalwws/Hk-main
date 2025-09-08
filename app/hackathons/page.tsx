@@ -109,7 +109,7 @@ export default function HackathonsPage() {
   const isRegistrationOpen = (hackathon: Hackathon) => {
     const now = new Date()
     const deadline = new Date(hackathon.registrationDeadline)
-    return hackathon.status === 'OPEN' && now < deadline
+    return hackathon.status === 'open' && now < deadline
   }
 
   const getUserParticipationStatus = (hackathonId: string) => {

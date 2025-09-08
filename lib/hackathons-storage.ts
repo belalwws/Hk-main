@@ -168,7 +168,7 @@ export function registerForHackathon(
     id: generateId(),
     hackathonId,
     userId,
-    status: 'PENDING',
+    status: 'pending',
     submittedAt: new Date().toISOString(),
     ...data
   }
@@ -193,9 +193,9 @@ export function updateHackathonParticipant(
   }
   
   // Add timestamp for status changes
-  if (updates.status === 'APPROVED') {
+  if (updates.status === 'approved') {
     participants[index].approvedAt = new Date().toISOString()
-  } else if (updates.status === 'REJECTED') {
+  } else if (updates.status === 'rejected') {
     participants[index].rejectedAt = new Date().toISOString()
   }
   
@@ -214,8 +214,8 @@ export function getHackathonStats(hackathonId: string) {
   
   return {
     total: participants.length,
-    pending: participants.filter(p => p.status === 'PENDING').length,
-    approved: participants.filter(p => p.status === 'APPROVED').length,
-    rejected: participants.filter(p => p.status === 'REJECTED').length
+    pending: participants.filter(p => p.status === 'pending').length,
+    approved: participants.filter(p => p.status === 'approved').length,
+    rejected: participants.filter(p => p.status === 'rejected').length
   }
 }
