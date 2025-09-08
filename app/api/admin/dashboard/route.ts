@@ -41,19 +41,19 @@ export async function GET(request: NextRequest) {
 
     // Get active hackathons count
     const activeHackathons = await prisma.hackathon.count({
-      where: { status: 'open' as any }
+      where: { status: 'open' }
     })
 
     // Get participants statistics
     const totalParticipants = await prisma.participant.count()
     const pendingParticipants = await prisma.participant.count({
-      where: { status: 'pending' as any }
+      where: { status: 'pending' }
     })
     const approvedParticipants = await prisma.participant.count({
-      where: { status: 'approved' as any }
+      where: { status: 'approved' }
     })
     const rejectedParticipants = await prisma.participant.count({
-      where: { status: 'rejected' as any }
+      where: { status: 'rejected' }
     })
 
     // Get users statistics
