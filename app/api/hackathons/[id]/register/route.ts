@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // Check if hackathon is open for registration
-    if (hackathon.status !== 'OPEN') {
+    if (hackathon.status !== 'open') {
       return NextResponse.json({
         error: 'التسجيل غير متاح لهذا الهاكاثون حالياً'
       }, { status: 400 })
@@ -131,7 +131,7 @@ export async function POST(
           projectDescription: projectDescription || null,
           githubRepo: githubRepo || null,
           teamRole: teamRole,
-          status: 'PENDING',
+          status: 'pending',
           registeredAt: new Date()
         }
       })

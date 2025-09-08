@@ -51,9 +51,9 @@ export async function GET(request: NextRequest) {
       createdAt: h.createdAt.toISOString(),
       stats: {
         total: h._count.participants,
-        pending: h.participants.filter((p: any) => p.status === 'PENDING').length,
-        approved: h.participants.filter((p: any) => p.status === 'APPROVED').length,
-        rejected: h.participants.filter((p: any) => p.status === 'REJECTED').length,
+        pending: h.participants.filter((p: any) => p.status === 'pending').length,
+        approved: h.participants.filter((p: any) => p.status === 'approved').length,
+        rejected: h.participants.filter((p: any) => p.status === 'rejected').length,
       },
     }))
 
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate status
-    const validStatuses = ['DRAFT', 'OPEN', 'CLOSED', 'COMPLETED']
+    const validStatuses = ['draft', 'open', 'closed', 'completed']
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: 'حالة الهاكاثون غير صحيحة' }, { status: 400 })
     }
