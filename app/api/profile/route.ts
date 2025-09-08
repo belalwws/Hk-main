@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       nationality: user.nationality,
       status: user.status,
       createdAt: user.createdAt.toISOString(),
-      participations: user.participations.map(participation => ({
+      participations: user.participations.map((participation: any) => ({
         id: participation.id,
         hackathon: {
           id: participation.hackathon.id,
