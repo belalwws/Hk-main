@@ -115,7 +115,7 @@ export async function POST(
             id: payload.userId,
             email: payload.email,
             name: payload.name,
-            role: 'PARTICIPANT', // Use correct enum value
+            role: 'participant', // Use correct enum value
             password_hash: 'temp_hash_' + Date.now() // Temporary hash for OAuth users
           }
         })
