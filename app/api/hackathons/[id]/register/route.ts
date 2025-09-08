@@ -19,9 +19,10 @@ const transporter = nodemailer.createTransport({
 // POST /api/hackathons/[id]/register - Register for a hackathon
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params
     const token = request.cookies.get('auth-token')?.value
 
     if (!token) {
@@ -33,8 +34,7 @@ export async function POST(
       return NextResponse.json({ error: 'جلسة غير صالحة' }, { status: 401 })
     }
 
-    const resolvedParams = await params
-    const hackathonId = resolvedParams.id
+    const hackathonId = params.id
 
     // Get hackathon details
     const hackathon = await prisma.hackathon.findUnique({

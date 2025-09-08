@@ -19,12 +19,13 @@ async function getPrisma() {
 // PUT /api/admin/evaluation/criteria/[id] - Update evaluation criteria
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params
     const token = request.cookies.get('auth-token')?.value
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
-    
+
     const payload = await verifyToken(token)
     if (!payload || payload.role !== 'admin') {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })

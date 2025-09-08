@@ -168,9 +168,10 @@ export async function PATCH(
 // PUT /api/admin/hackathons/[id] - Update hackathon
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params
     // Verify admin authentication
     const token = request.cookies.get('auth-token')?.value
     if (!token) {

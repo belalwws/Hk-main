@@ -6,9 +6,10 @@ const prisma = new PrismaClient()
 // DELETE /api/admin/hackathons/[id]/teams/[teamId] - Delete a team
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; teamId: string } }
+  context: { params: Promise<{ id: string; teamId: string }> }
 ) {
   try {
+    const params = await context.params
     const { teamId } = params
 
     // First, unassign all participants from the team
