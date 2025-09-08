@@ -98,12 +98,12 @@ export default function ParticipantDashboard() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      PENDING: { label: 'في الانتظار', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      APPROVED: { label: 'مقبول', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      REJECTED: { label: 'مرفوض', color: 'bg-red-100 text-red-800', icon: XCircle }
+      pending: { label: 'في الانتظار', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      approved: { label: 'مقبول', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      rejected: { label: 'مرفوض', color: 'bg-red-100 text-red-800', icon: XCircle }
     }
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
 
     return (
       <Badge className={config.color}>

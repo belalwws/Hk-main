@@ -10,7 +10,7 @@ async function main() {
     
     console.log(`عدد المحكمين: ${judges.length}`)
     judges.forEach((judge, index) => {
-        console.log(`${index + 1}. ${judge.name} - ${judge.email} (نشط: ${judge.is_active})`)
+        console.log(`${index + 1}. ${judge.name} - ${judge.email} (نشط: ${judge.isActive})`)
     })
     
     // التحقق من المحكمين المطلوبين

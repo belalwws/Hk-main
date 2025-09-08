@@ -18,7 +18,7 @@ interface Hackathon {
   endDate: string
   registrationDeadline: string
   maxParticipants?: number
-  status: 'DRAFT' | 'OPEN' | 'CLOSED' | 'COMPLETED'
+  status: 'draft' | 'open' | 'closed' | 'completed'
   prizes: {
     first: string
     second: string
@@ -35,7 +35,7 @@ interface UserParticipation {
     title: string
     status: string
   }
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'pending' | 'approved' | 'rejected'
   registeredAt: string
 }
 

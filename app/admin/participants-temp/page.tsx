@@ -76,9 +76,9 @@ export default function TempParticipantsManagement() {
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      'PENDING': { label: 'في الانتظار', color: 'bg-yellow-100 text-yellow-800' },
-      'APPROVED': { label: 'مقبول', color: 'bg-green-100 text-green-800' },
-      'REJECTED': { label: 'مرفوض', color: 'bg-red-100 text-red-800' }
+      'pending': { label: 'في الانتظار', color: 'bg-yellow-100 text-yellow-800' },
+      'approved': { label: 'مقبول', color: 'bg-green-100 text-green-800' },
+      'rejected': { label: 'مرفوض', color: 'bg-red-100 text-red-800' }
     }
     return statusMap[status as keyof typeof statusMap] || { label: status, color: 'bg-gray-100 text-gray-800' }
   }

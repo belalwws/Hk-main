@@ -20,7 +20,7 @@ interface Hackathon {
   endDate: string
   registrationDeadline: string
   maxParticipants?: number
-  status: 'DRAFT' | 'OPEN' | 'CLOSED' | 'COMPLETED'
+  status: 'draft' | 'open' | 'closed' | 'completed'
   prizes?: {
     first?: string
     second?: string

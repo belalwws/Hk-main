@@ -44,12 +44,28 @@ interface Hackathon {
   isPinned?: boolean
   evaluationOpen?: boolean
   participants: Participant[]
+  teams?: Team[]
+  judges?: Judge[]
   stats: {
     totalParticipants: number
     pendingParticipants: number
     approvedParticipants: number
     rejectedParticipants: number
   }
+}
+
+interface Team {
+  id: string
+  name: string
+  teamNumber?: number
+  participants?: Participant[]
+}
+
+interface Judge {
+  id: string
+  name: string
+  email: string
+  isActive: boolean
 }
 
 export default function HackathonManagementPage() {

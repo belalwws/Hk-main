@@ -16,7 +16,7 @@ interface Hackathon {
   endDate: string
   registrationDeadline: string
   maxParticipants?: number
-  status: 'DRAFT' | 'OPEN' | 'CLOSED' | 'COMPLETED'
+  status: 'draft' | 'open' | 'closed' | 'completed'
   isPinned?: boolean
   stats: {
     total: number
