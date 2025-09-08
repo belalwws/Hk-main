@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: `تم ${status === 'APPROVED' ? 'قبول' : status === 'REJECTED' ? 'رفض' : 'تحديث'} المشارك بنجاح`
+      message: `تم ${status === 'approved' ? 'قبول' : status === 'rejected' ? 'رفض' : 'تحديث'} المشارك بنجاح`
     })
 
   } catch (error) {

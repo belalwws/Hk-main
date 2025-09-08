@@ -57,14 +57,14 @@ export async function PUT(
     })
 
     // TODO: Send email notification to participant about status change
-    // if (status === 'APPROVED') {
+    // if (status === 'approved') {
     //   // Send approval email
-    // } else if (status === 'REJECTED') {
+    // } else if (status === 'rejected') {
     //   // Send rejection email
     // }
 
     return NextResponse.json({
-      message: `تم ${status === 'APPROVED' ? 'قبول' : status === 'REJECTED' ? 'رفض' : 'تحديث'} المشارك بنجاح`,
+      message: `تم ${status === 'approved' ? 'قبول' : status === 'rejected' ? 'رفض' : 'تحديث'} المشارك بنجاح`,
       participant: {
         id: updatedParticipant.id,
         status: updatedParticipant.status

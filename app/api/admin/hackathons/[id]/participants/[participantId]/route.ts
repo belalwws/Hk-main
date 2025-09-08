@@ -28,7 +28,7 @@ export async function PATCH(
     const body = await request.json()
     const { status, feedback } = body
 
-    if (!['APPROVED', 'REJECTED'].includes(status)) {
+    if (!['approved', 'rejected'].includes(status)) {
       return NextResponse.json({ error: 'حالة غير صحيحة' }, { status: 400 })
     }
 
@@ -53,10 +53,10 @@ export async function PATCH(
     const updatedParticipant = await prisma.participant.update({
       where: { id: params.participantId },
       data: {
-        status: (status === 'APPROVED' ? 'approved' : 'rejected') as any,
+        status: status as any,
         feedback: feedback || null,
-        approvedAt: status === 'APPROVED' ? new Date() : null,
-        rejectedAt: status === 'REJECTED' ? new Date() : null
+        approvedAt: status === 'approved' ? new Date() : null,
+        rejectedAt: status === 'rejected' ? new Date() : null
       }
     })
 
@@ -64,7 +64,7 @@ export async function PATCH(
     console.log(`📧 Preparing to send ${status} email to ${participant.user.email}`)
 
     try {
-      const isApproved = status === 'APPROVED'
+      const isApproved = status === 'approved'
       const subject = isApproved
         ? `🎉 تم قبولك في ${participant.hackathon.title}!`
         : `شكراً لاهتمامك بـ ${participant.hackathon.title}`
