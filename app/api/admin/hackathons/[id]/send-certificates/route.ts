@@ -17,9 +17,10 @@ const transporter = nodemailer.createTransport({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params
     const token = request.cookies.get('auth-token')?.value
     if (!token) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
