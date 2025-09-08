@@ -47,8 +47,12 @@ export async function POST(request: NextRequest) {
             }
           })
 
-          const existingAdmin = await prisma.admin.findUnique({
-            where: { email: data.email }
+          const existingAdmin = await prisma.admin.findFirst({
+            where: {
+              user: {
+                email: data.email
+              }
+            }
           })
   
           if (existingJudge || existingAdmin) {
