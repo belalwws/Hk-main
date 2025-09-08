@@ -5,9 +5,10 @@ const prisma = new PrismaClient()
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { participantId: string } }
+  context: { params: Promise<{ participantId: string }> }
 ) {
   try {
+    const params = await context.params
     const participantId = params.participantId
 
     // Find participant with team and hackathon data

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Download, Printer, Share } from 'lucide-react'
-import { drawCertificateText, DEFAULT_CERTIFICATE_CONFIG } from '@/lib/certificate-config'
 
 interface ParticipantData {
   name: string
@@ -13,6 +12,7 @@ interface ParticipantData {
   rank: number
   isWinner: boolean
   totalScore: number
+  date?: string
 }
 
 export default function CertificatePage() {
@@ -48,47 +48,22 @@ export default function CertificatePage() {
   const downloadCertificate = async () => {
     if (!participant) return
 
-    // Load current settings
-    let currentSettings = DEFAULT_CERTIFICATE_CONFIG
-    try {
-      const response = await fetch('/api/admin/certificate-settings')
-      if (response.ok) {
-        const data = await response.json()
-        currentSettings = {
-          ...DEFAULT_CERTIFICATE_CONFIG,
-          namePositionY: data.namePositionY || data.namePosition || DEFAULT_CERTIFICATE_CONFIG.namePositionY,
-          namePositionX: data.namePositionX || DEFAULT_CERTIFICATE_CONFIG.namePositionX,
-          nameFont: data.nameFont,
-          nameColor: data.nameColor
-        }
-      }
-    } catch (error) {
-      console.error('Error loading settings for download:', error)
-    }
-
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     const img = new Image()
     img.onload = () => {
-      // Set canvas size to match image
       canvas.width = img.width
       canvas.height = img.height
-
-      // Draw the base certificate image
       ctx.drawImage(img, 0, 0)
 
-      // Draw certificate text using helper function with current settings
-      drawCertificateText(ctx, canvas, {
-        participantName: participant.name,
-        hackathonTitle: participant.hackathonTitle,
-        date: participant.date || new Date().toLocaleDateString('ar-SA'),
-        rank: participant.rank,
-        isWinner: participant.isWinner
-      }, currentSettings)
+      // Draw participant name
+      ctx.font = 'bold 48px Arial'
+      ctx.fillStyle = '#01645e'
+      ctx.textAlign = 'center'
+      ctx.fillText(participant.name, canvas.width / 2, canvas.height / 2)
 
-      // Download the certificate
       const link = document.createElement('a')
       link.download = `certificate-${participant.name.replace(/\s+/g, '-')}.png`
       link.href = canvas.toDataURL()
@@ -107,34 +82,41 @@ export default function CertificatePage() {
           url: window.location.href
         })
       } catch (error) {
-        console.log('Error sharing:', error)
+        console.error('Error sharing:', error)
       }
-    } else {
-      // Fallback: copy URL to clipboard
-      navigator.clipboard.writeText(window.location.href)
-      alert('تم نسخ رابط الشهادة!')
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f0f9ff] via-[#e0f2fe] to-[#f0fdf4] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#01645e] mx-auto"></div>
-          <p className="mt-4 text-[#01645e] text-xl">جاري تحميل الشهادة...</p>
+          <div className="w-16 h-16 border-4 border-[#01645e]/20 border-t-[#01645e] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#01645e] font-semibold">جاري تحميل الشهادة...</p>
         </div>
       </div>
     )
   }
 
-  if (error || !participant) {
+  if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f0f9ff] via-[#e0f2fe] to-[#f0fdf4] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 flex items-center justify-center">
         <div className="text-center">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-8 border border-red-200 shadow-xl">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ</h2>
-            <p className="text-red-500">{error}</p>
-          </div>
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-[#01645e] mb-2">خطأ في تحميل الشهادة</h1>
+          <p className="text-[#8b7632]">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!participant) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-[#8b7632] text-6xl mb-4">📄</div>
+          <h1 className="text-2xl font-bold text-[#01645e] mb-2">لم يتم العثور على الشهادة</h1>
+          <p className="text-[#8b7632]">تأكد من صحة الرابط</p>
         </div>
       </div>
     )
@@ -143,15 +125,13 @@ export default function CertificatePage() {
   const currentDate = new Date().toLocaleDateString('ar-SA')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f0f9ff] via-[#e0f2fe] to-[#f0fdf4] py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#01645e] via-[#3ab666] to-[#c3e956] bg-clip-text text-transparent mb-4">
-            شهادة التقدير
-          </h1>
+          <h1 className="text-4xl font-bold text-[#01645e] mb-2">شهادة تقدير</h1>
           <p className="text-[#8b7632] text-lg">
-            {participant.hackathonTitle} - {participant.teamName}
+            تهانينا {participant.name} على مشاركتك في {participant.hackathonTitle}
           </p>
         </div>
 
@@ -186,9 +166,9 @@ export default function CertificatePage() {
         <div className="flex justify-center">
           <div className="bg-white rounded-2xl shadow-2xl p-8">
             <div className="relative">
-              <img
-                src="/row-certificat.png"
-                alt="شهادة تقدير"
+              <img 
+                src="/row-certificat.png" 
+                alt="شهادة تقدير" 
                 className="w-full max-w-4xl mx-auto"
               />
               <div className="absolute inset-0 flex items-center justify-center">
@@ -205,32 +185,33 @@ export default function CertificatePage() {
           </div>
         </div>
 
-        {/* Achievement Info */}
-        {participant.isWinner && (
-          <div className="mt-8 max-w-2xl mx-auto">
-            <div className="bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 border border-yellow-400 rounded-2xl p-6 text-center">
-              <h3 className="text-2xl font-bold text-yellow-700 mb-2">
-                🏆 تهانينا!
-              </h3>
-              <p className="text-yellow-600 text-lg">
-                حصلت على {participant.rank === 1 ? 'المركز الأول' : participant.rank === 2 ? 'المركز الثاني' : 'المركز الثالث'} 
-                في {participant.hackathonTitle}
-              </p>
-              <p className="text-yellow-600 mt-2">
-                النتيجة النهائية: {participant.totalScore.toFixed(2)} نقطة
-              </p>
+        {/* Participant Info */}
+        <div className="mt-8 text-center">
+          <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
+            <h3 className="text-2xl font-bold text-[#01645e] mb-4">تفاصيل المشارك</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
+              <div>
+                <span className="font-semibold text-[#01645e]">الاسم:</span>
+                <br />
+                {participant.name}
+              </div>
+              <div>
+                <span className="font-semibold text-[#01645e]">الإيميل:</span>
+                <br />
+                {participant.email}
+              </div>
+              <div>
+                <span className="font-semibold text-[#01645e]">الهاكاثون:</span>
+                <br />
+                {participant.hackathonTitle}
+              </div>
+              <div>
+                <span className="font-semibold text-[#01645e]">التاريخ:</span>
+                <br />
+                {participant.date || currentDate}
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Footer */}
-        <div className="text-center mt-12 text-[#8b7632]">
-          <p className="text-sm">
-            تم إنشاء هذه الشهادة تلقائياً من منصة هاكاثون الابتكار التقني
-          </p>
-          <p className="text-xs mt-2">
-            © 2024 جميع الحقوق محفوظة
-          </p>
         </div>
       </div>
     </div>
