@@ -579,7 +579,7 @@ export default function LandingPage() {
       {/* Header moved to global SiteHeader */}
 
       {/* Hero Section */}
-      <section className="relative py-20 px-4 overflow-hidden">
+      <section className="relative pt-24 md:pt-20 pb-20 px-4 overflow-hidden">
         {/* Minimal Floating Elements */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Reduced floating elements for better performance */}

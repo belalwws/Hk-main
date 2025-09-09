@@ -15,7 +15,7 @@ export function SiteHeader() {
   return (
     <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-[#c3e956]/30 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16 md:h-20">
           {/* Logo - Enhanced with hover effect */}
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
             <Link href="/" className="flex items-center space-x-4 rtl:space-x-reverse hover:opacity-80 transition-all duration-300 group">

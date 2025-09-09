@@ -123,13 +123,22 @@ export default function RegisterPage() {
 
         // Check if auto-login was successful
         if (data.autoLogin && data.user) {
-          console.log('🔄 Auto-login successful, refreshing user context...')
+          console.log('🔄 Auto-login successful, user data:', data.user)
 
           // Wait a bit for cookie to be set
           await new Promise(resolve => setTimeout(resolve, 1000))
 
-          // Refresh auth context to get the new user
-          const refreshedUser = await refreshUser()
+          // Try to refresh auth context multiple times
+          let refreshedUser = null
+          for (let i = 0; i < 3; i++) {
+            console.log(`🔄 Refresh attempt ${i + 1}/3...`)
+            refreshedUser = await refreshUser()
+            if (refreshedUser) {
+              console.log('✅ User context refreshed successfully:', refreshedUser.email)
+              break
+            }
+            await new Promise(resolve => setTimeout(resolve, 500))
+          }
 
           // Set user data and show success modal
           setRegisteredUser(data.user)
@@ -465,13 +474,24 @@ export default function RegisterPage() {
           console.log('🚀 Modal continue clicked, navigating to dashboard...')
           setShowSuccessModal(false)
 
-          // Wait a bit and refresh user context
+          // Wait a bit and refresh user context one more time
           await new Promise(resolve => setTimeout(resolve, 500))
-          await refreshUser()
+          const finalUser = await refreshUser()
 
-          // Force navigation
-          console.log('🎯 Forcing navigation to participant dashboard')
-          window.location.href = '/participant/dashboard'
+          if (finalUser) {
+            console.log('✅ Final user verification successful:', finalUser.email, 'role:', finalUser.role)
+            // Navigate based on role
+            if (finalUser.role === 'participant') {
+              window.location.href = '/participant/dashboard'
+            } else if (finalUser.role === 'admin') {
+              window.location.href = '/admin/dashboard'
+            } else {
+              window.location.href = '/participant/dashboard'
+            }
+          } else {
+            console.log('❌ Final user verification failed, forcing participant dashboard')
+            window.location.href = '/participant/dashboard'
+          }
         }}
         continueText="الذهاب إلى لوحة المشارك"
       />
