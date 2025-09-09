@@ -634,24 +634,33 @@ export default function LandingPage() {
                           {user && user.role === 'admin' && (
                             <button
                               onClick={async () => {
+                                if (!confirm('هل أنت متأكد من إلغاء تثبيت هذا الهاكاثون من الصفحة الرئيسية؟')) {
+                                  return
+                                }
+
                                 try {
-                                  const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}/pin`, {
-                                    method: 'POST',
+                                  const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}`, {
+                                    method: 'PATCH',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ isPinned: false })
                                   })
 
                                   if (response.ok) {
                                     setPinnedHackathon(null)
+                                    alert('تم إلغاء تثبيت الهاكاثون من الصفحة الرئيسية')
+                                  } else {
+                                    alert('حدث خطأ في إلغاء التثبيت')
                                   }
                                 } catch (error) {
                                   console.error('Error unpinning hackathon:', error)
+                                  alert('حدث خطأ في إلغاء التثبيت')
                                 }
                               }}
-                              className="absolute top-4 left-4 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+                              className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg shadow-lg transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm font-semibold"
                               title="إلغاء التثبيت من الصفحة الرئيسية"
                             >
                               <X className="w-4 h-4" />
+                              <span>إلغاء التثبيت</span>
                             </button>
                           )}
 
