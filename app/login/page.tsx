@@ -4,9 +4,10 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Users, Eye, EyeOff, Loader2 } from "lucide-react"
+import { Users, Eye, EyeOff, Loader2, UserPlus } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function LoginPage() {
 	const [loginEmail, setLoginEmail] = useState("")
@@ -94,6 +95,29 @@ export default function LoginPage() {
 					</button>
 				</form>
 
+				{/* Registration Link */}
+				<div className="mt-6 text-center">
+					<div className="relative">
+						<div className="absolute inset-0 flex items-center">
+							<div className="w-full border-t border-gray-300"></div>
+						</div>
+						<div className="relative flex justify-center text-sm">
+							<span className="px-2 bg-white text-gray-500">أو</span>
+						</div>
+					</div>
+
+					<div className="mt-6">
+						<Link href="/register">
+							<button className="w-full bg-white border-2 border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
+								<UserPlus size={20} />
+								<span>إنشاء حساب جديد</span>
+							</button>
+						</Link>
+						<p className="mt-3 text-sm text-gray-600">
+							ليس لديك حساب؟ سجل الآن للمشاركة في الهاكاثونات
+						</p>
+					</div>
+				</div>
 
 			</motion.div>
 		</div>

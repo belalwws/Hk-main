@@ -36,6 +36,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			try {
 				console.log('🚀 Initializing auth state...')
 
+				// First try to get user from localStorage as backup
+				const storedUser = localStorage.getItem('auth-user')
+				if (storedUser) {
+					try {
+						const userData = JSON.parse(storedUser)
+						console.log('💾 Found user in localStorage:', userData.email)
+						setUser(userData)
+					} catch (e) {
+						console.log('❌ Invalid localStorage data, clearing...')
+						localStorage.removeItem('auth-user')
+					}
+				}
+
 				const response = await fetch('/api/verify-session', {
 					method: 'GET',
 					credentials: 'include',
@@ -52,19 +65,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					console.log('📊 Auth init response data:', data)
 
 					if (data.user) {
-						console.log('✅ User found on init:', data.user.email, 'role:', data.user.role)
+						console.log('✅ User verified from server:', data.user.email, 'role:', data.user.role)
 						setUser(data.user)
+						// Store in localStorage as backup
+						localStorage.setItem('auth-user', JSON.stringify(data.user))
 					} else {
 						console.log('❌ No user in response')
 						setUser(null)
+						localStorage.removeItem('auth-user')
 					}
 				} else {
 					console.log('❌ Auth init failed, status:', response.status)
-					setUser(null)
+					// If we have localStorage user, keep it for now
+					if (!storedUser) {
+						setUser(null)
+						localStorage.removeItem('auth-user')
+					}
 				}
 			} catch (error) {
 				console.error('❌ Auth initialization error:', error)
-				setUser(null)
+				// Keep localStorage user if available
+				const storedUser = localStorage.getItem('auth-user')
+				if (!storedUser) {
+					setUser(null)
+				}
 			} finally {
 				setLoading(false)
 				setInitialized(true)
@@ -76,14 +100,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	const login = useCallback(async (email: string, password: string) => {
 		try {
+			console.log('🔐 Attempting login for:', email)
 			const res = await fetch("/api/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ email, password }),
 			})
 			const data = await res.json()
+			console.log('📊 Login response:', { status: res.status, data })
+
 			if (!res.ok) return false
+
+			console.log('✅ Login successful for:', data.user.email, 'role:', data.user.role)
 			setUser(data.user as User)
+
+			// Store in localStorage as backup
+			localStorage.setItem('auth-user', JSON.stringify(data.user))
 
 			// Redirect based on user role
 			switch (data.user.role) {
@@ -101,16 +133,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			}
 
 			return true
-		} catch {
+		} catch (error) {
+			console.error("❌ Login failed:", error)
 			return false
 		}
 	}, [router])
 
 	const logout = useCallback(async () => {
 		try {
+			console.log('🚪 Logging out user...')
 			await fetch("/api/logout", { method: "POST" })
 		} finally {
 			setUser(null)
+			localStorage.removeItem('auth-user')
+			console.log('✅ User logged out and localStorage cleared')
 		}
 	}, [])
 
@@ -135,6 +171,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				if (data.user) {
 					console.log('✅ User refreshed:', data.user.email, 'role:', data.user.role)
 					setUser(data.user)
+					// Update localStorage
+					localStorage.setItem('auth-user', JSON.stringify(data.user))
 					return data.user
 				} else {
 					console.log('❌ No user in refresh response')

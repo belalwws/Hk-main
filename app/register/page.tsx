@@ -424,6 +424,34 @@ export default function RegisterPage() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Login Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="text-center mt-6"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 text-gray-500">أو</span>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-sm text-gray-600 mb-3">
+              لديك حساب بالفعل؟
+            </p>
+            <Link href="/login">
+              <button className="bg-white border-2 border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white py-3 px-8 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 mx-auto">
+                <span>تسجيل الدخول</span>
+              </button>
+            </Link>
+          </div>
+        </motion.div>
       </div>
 
       {/* Success Modal */}
