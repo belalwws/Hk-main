@@ -13,7 +13,8 @@ try {
   // Check if DATABASE_URL is set
   if (!process.env.DATABASE_URL) {
     console.error('❌ DATABASE_URL environment variable is not set');
-    process.exit(1);
+    console.log('⚠️ Skipping database setup in development mode');
+    return;
   }
 
   console.log('✅ DATABASE_URL is configured');

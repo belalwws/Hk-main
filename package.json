@@ -6,7 +6,8 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start",
+    "start": "npm run setup:production && next start",
+    "start:dev": "next start",
     "db:push": "prisma db push --schema ./schema.prisma",
     "db:generate": "prisma generate --schema ./schema.prisma",
     "db:migrate": "prisma migrate dev --schema ./schema.prisma",
@@ -20,6 +21,8 @@
     "start:production": "next start",
     "deploy:render": "npx prisma migrate deploy --schema ./schema.prisma && npm run db:seed-admin",
     "deploy:db": "node scripts/deploy-db.js",
+    "render:setup": "node scripts/render-setup.js",
+    "setup:production": "node scripts/production-setup.js",
     "postinstall": "npx prisma generate --schema ./schema.prisma",
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build"
