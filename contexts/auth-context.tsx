@@ -17,7 +17,7 @@ interface AuthContextValue {
 	loading: boolean
 	login: (email: string, password: string) => Promise<boolean>
 	logout: () => void
-	refreshUser: () => Promise<void>
+	refreshUser: () => Promise<any>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -99,16 +99,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	const refreshUser = useCallback(async () => {
 		try {
-			const res = await fetch("/api/verify-session")
+			console.log('🔄 Refreshing user session...')
+			const res = await fetch("/api/verify-session", {
+				method: 'GET',
+				credentials: 'include',
+				headers: {
+					'Cache-Control': 'no-cache'
+				}
+			})
 			const data = await res.json()
+			console.log('📊 Session verification response:', { status: res.status, data })
+
 			if (res.ok && data.user) {
+				console.log('✅ User session refreshed successfully:', data.user.email)
 				setUser(data.user)
+				return data.user
 			} else {
+				console.log('❌ No valid session found')
 				setUser(null)
+				return null
 			}
 		} catch (error) {
-			console.error('Failed to refresh user:', error)
+			console.error('❌ Failed to refresh user:', error)
 			setUser(null)
+			return null
 		}
 	}, [])
 

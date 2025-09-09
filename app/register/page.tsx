@@ -116,15 +116,30 @@ export default function RegisterPage() {
 
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Registration response:', data)
 
         // Check if auto-login was successful
         if (data.autoLogin && data.user) {
-          // Refresh auth context to get the new user
-          await refreshUser()
+          console.log('🔄 Auto-login successful, refreshing user context...')
 
-          // Redirect to participant dashboard
-          router.push('/participant/dashboard')
+          // Refresh auth context to get the new user
+          const refreshedUser = await refreshUser()
+
+          if (refreshedUser) {
+            console.log('🎉 User context refreshed successfully, redirecting...')
+
+            // Show success modal first
+            alert(`🎉 مرحباً ${data.user.name}!\n\nتم إنشاء حسابك بنجاح وتم تسجيل دخولك تلقائياً.\n\nسيتم توجيهك الآن إلى لوحة المشارك.`)
+
+            // Redirect to participant dashboard
+            router.push('/participant/dashboard')
+          } else {
+            console.log('❌ Failed to refresh user context, redirecting to login')
+            alert('تم إنشاء حسابك بنجاح! يرجى تسجيل الدخول.')
+            router.push('/login')
+          }
         } else {
+          console.log('❌ Auto-login failed, redirecting to success page')
           // Fallback to success page
           router.push('/register/success')
         }
