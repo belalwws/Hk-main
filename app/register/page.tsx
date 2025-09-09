@@ -85,7 +85,7 @@ const nationalities = [
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { refreshUser } = useAuth()
+  const { refreshUser, forceSetUser } = useAuth()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -125,10 +125,14 @@ export default function RegisterPage() {
         if (data.autoLogin && data.user) {
           console.log('🔄 Auto-login successful, user data:', data.user)
 
+          // Force set user immediately in AuthContext
+          console.log('🔥 Force setting user in context...')
+          forceSetUser(data.user)
+
           // Wait a bit for cookie to be set
           await new Promise(resolve => setTimeout(resolve, 1000))
 
-          // Try to refresh auth context multiple times
+          // Try to refresh auth context multiple times as backup
           let refreshedUser = null
           for (let i = 0; i < 3; i++) {
             console.log(`🔄 Refresh attempt ${i + 1}/3...`)

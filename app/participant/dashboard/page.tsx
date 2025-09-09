@@ -52,7 +52,7 @@ interface UserProfile {
 }
 
 export default function ParticipantDashboard() {
-  const { user } = useAuth()
+  const { user, loading: authLoading, refreshUser } = useAuth()
   const router = useRouter()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,10 +64,27 @@ export default function ParticipantDashboard() {
   })
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login')
+    // Don't redirect immediately if auth is still loading
+    if (authLoading) {
+      console.log('🔄 Auth still loading, waiting...')
       return
     }
+
+    if (!user) {
+      console.log('❌ No user found, trying to refresh...')
+      // Try to refresh user before redirecting
+      refreshUser().then((refreshedUser) => {
+        if (!refreshedUser) {
+          console.log('❌ Refresh failed, redirecting to login')
+          router.push('/login')
+        } else {
+          console.log('✅ User refreshed successfully:', refreshedUser.email)
+        }
+      })
+      return
+    }
+
+    console.log('✅ User found in participant dashboard:', user.email)
     fetchProfile()
   }, [user])
 

@@ -18,6 +18,7 @@ interface AuthContextValue {
 	login: (email: string, password: string) => Promise<boolean>
 	logout: () => void
 	refreshUser: () => Promise<any>
+	forceSetUser: (userData: User) => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -192,7 +193,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	}, [])
 
-	return <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>{children}</AuthContext.Provider>
+	// Force set user (for registration flow)
+	const forceSetUser = useCallback((userData: User) => {
+		console.log('🔥 Force setting user:', userData.email, 'role:', userData.role)
+		setUser(userData)
+		localStorage.setItem('auth-user', JSON.stringify(userData))
+	}, [])
+
+	return <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, forceSetUser }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
