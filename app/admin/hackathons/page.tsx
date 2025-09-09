@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Calendar, Users, Trophy, Settings, Eye, Edit, Trash2, Pin } from 'lucide-react'
+import { Plus, Calendar, Users, Trophy, Settings, Eye, Edit, Trash2, Pin, PinOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -305,13 +305,23 @@ export default function AdminHackathonsPage() {
                             variant="outline"
                             size="sm"
                             className={`${hackathon.isPinned
-                              ? 'text-red-600 hover:text-red-700 border-red-600 hover:border-red-700'
-                              : 'text-yellow-600 hover:text-yellow-700 border-yellow-600 hover:border-yellow-700'
+                              ? 'text-red-600 hover:text-red-700 border-red-600 hover:border-red-700 bg-red-50 hover:bg-red-100'
+                              : 'text-yellow-600 hover:text-yellow-700 border-yellow-600 hover:border-yellow-700 bg-yellow-50 hover:bg-yellow-100'
                             }`}
                             onClick={() => togglePinQuick(hackathon.id, !hackathon.isPinned)}
-                            title={hackathon.isPinned ? 'إلغاء التثبيت' : 'تثبيت في الرئيسية'}
+                            title={hackathon.isPinned ? 'إلغاء التثبيت من الصفحة الرئيسية' : 'تثبيت في الصفحة الرئيسية'}
                           >
-                            <Pin className="w-4 h-4" />
+                            {hackathon.isPinned ? (
+                              <>
+                                <PinOff className="w-4 h-4 ml-1" />
+                                إلغاء
+                              </>
+                            ) : (
+                              <>
+                                <Pin className="w-4 h-4 ml-1" />
+                                تثبيت
+                              </>
+                            )}
                           </Button>
                           <Link href={`/admin/hackathons/${hackathon.id}`}>
                             <Button variant="outline" size="sm">

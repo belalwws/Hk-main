@@ -110,7 +110,7 @@ export async function POST(
                   </div>
                   
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/participant/dashboard" 
+                    <a href="${process.env.NEXTAUTH_URL || 'https://hackathon-platform-601l.onrender.com'}/participant/dashboard"
                        style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
                       🎯 رفع المشروع الآن
                     </a>

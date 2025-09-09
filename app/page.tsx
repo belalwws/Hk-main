@@ -791,10 +791,10 @@ export default function LandingPage() {
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 1.5 + index * 0.1, duration: 0.5 }}
                           whileHover={{ scale: 1.05, y: -5 }}
-                          className="bg-white/80 backdrop-blur-sm border border-[#01645e]/20 rounded-xl p-4 text-center shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="bg-white/80 backdrop-blur-sm border border-[#01645e]/20 rounded-xl p-3 sm:p-4 text-center shadow-lg hover:shadow-xl transition-all duration-300"
                         >
-                          <div className="text-3xl mb-2">{benefit.icon}</div>
-                          <div className="text-sm font-bold text-[#01645e] mb-1">{benefit.title}</div>
+                          <div className="text-2xl sm:text-3xl mb-2">{benefit.icon}</div>
+                          <div className="text-xs sm:text-sm font-bold text-[#01645e] mb-1">{benefit.title}</div>
                           <div className="text-xs text-[#8b7632]">{benefit.desc}</div>
                         </motion.div>
                       ))}
@@ -876,7 +876,7 @@ export default function LandingPage() {
                           <motion.button
                             whileHover={{ scale: 1.05, y: -2 }}
                             whileTap={{ scale: 0.95 }}
-                            className="group bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-12 py-6 text-2xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden"
+                            className="group bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-2xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden w-full sm:w-auto"
                           >
                             <motion.div
                               className="absolute inset-0 bg-gradient-to-r from-[#3ab666] to-[#c3e956] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -901,7 +901,7 @@ export default function LandingPage() {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className={`${pinnedHackathon && pinnedHackathon.status === 'OPEN' ? 'bg-white text-[#01645e]' : 'bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white'} px-12 py-6 text-xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3`}
+                          className={`${pinnedHackathon && pinnedHackathon.status === 'OPEN' ? 'bg-white text-[#01645e]' : 'bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white'} px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 w-full sm:w-auto`}
                         >
                           <Settings className="w-6 h-6" />
                           {user.role === 'admin' ? 'لوحة التحكم' :
@@ -913,7 +913,7 @@ export default function LandingPage() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="bg-white/90 backdrop-blur-sm text-[#01645e] px-8 py-6 text-xl font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 border border-[#01645e]/20"
+                        className="bg-white/90 backdrop-blur-sm text-[#01645e] px-6 sm:px-8 py-4 sm:py-6 text-lg sm:text-xl font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 border border-[#01645e]/20 w-full sm:w-auto"
                         onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
                       >
                         <Target className="w-6 h-6" />

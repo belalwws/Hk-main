@@ -1,29 +1,32 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react'
+import { ChevronDown, LogOut, User as UserIcon, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/contexts/auth-context'
 
 export function SiteHeader() {
   const { user, loading, logout } = useAuth()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-[#c3e956]/30 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
+          {/* Logo */}
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="flex items-center space-x-4 rtl:space-x-reverse">
-            <img src="/placeholder-logo.png" alt="هاكاثون الابتكار الحكومي" className="h-16 w-auto" />
-            <div>
-              <Link href="/" className="text-2xl font-bold text-[#01645e]">هاكاثون الابتكار </Link>
-              <p className="text-sm text-[#8b7632]">نظام احترافي متطور</p>
+            <img src="/placeholder-logo.png" alt="هاكاثون الابتكار الحكومي" className="h-12 sm:h-16 w-auto" />
+            <div className="hidden sm:block">
+              <Link href="/" className="text-xl sm:text-2xl font-bold text-[#01645e]">هاكاثون الابتكار </Link>
+              <p className="text-xs sm:text-sm text-[#8b7632]">نظام احترافي متطور</p>
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="flex items-center space-x-6 rtl:space-x-reverse">
+          {/* Desktop Navigation */}
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="hidden lg:flex items-center space-x-6 rtl:space-x-reverse">
             <nav className="flex space-x-8 rtl:space-x-reverse">
               <Link href="/hackathons" className="text-[#01645e] hover:text-[#3ab666] font-medium transition-colors">الهاكاثونات</Link>
               <Link href="/#features" className="text-[#01645e] hover:text-[#3ab666] font-medium transition-colors">المميزات</Link>
@@ -32,11 +35,11 @@ export function SiteHeader() {
             {loading ? (
               <div className="w-8 h-8 border-2 border-[#01645e]/20 border-t-[#01645e] rounded-full animate-spin"></div>
             ) : !user ? (
-              <div className="flex items-center gap-3">
-                <Link href="/register" className="bg-white text-[#01645e] border border-[#01645e] px-5 py-2.5 rounded-xl font-semibold shadow hover:bg-[#01645e] hover:text-white transition-colors">
+              <div className="hidden sm:flex items-center gap-2 lg:gap-3">
+                <Link href="/register" className="bg-white text-[#01645e] border border-[#01645e] px-3 lg:px-5 py-2 lg:py-2.5 rounded-xl font-semibold shadow hover:bg-[#01645e] hover:text-white transition-colors text-sm lg:text-base">
                   إنشاء حساب
                 </Link>
-                <Link href="/login" className="bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-5 py-2.5 rounded-xl font-semibold shadow hover:from-[#014a46] hover:to-[#2d8f52]">
+                <Link href="/login" className="bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-3 lg:px-5 py-2 lg:py-2.5 rounded-xl font-semibold shadow hover:from-[#014a46] hover:to-[#2d8f52] text-sm lg:text-base">
                   تسجيل الدخول
                 </Link>
               </div>
@@ -166,7 +169,76 @@ export function SiteHeader() {
               </DropdownMenu>
             )}
           </motion.div>
+
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden border-t border-[#c3e956]/30 bg-white/95 backdrop-blur-md"
+          >
+            <div className="px-4 py-6 space-y-4">
+              {/* Navigation Links */}
+              <div className="space-y-3">
+                <Link
+                  href="/hackathons"
+                  className="block text-[#01645e] hover:text-[#3ab666] font-medium transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  الهاكاثونات
+                </Link>
+                <Link
+                  href="/#features"
+                  className="block text-[#01645e] hover:text-[#3ab666] font-medium transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  المميزات
+                </Link>
+                <Link
+                  href="/#criteria"
+                  className="block text-[#01645e] hover:text-[#3ab666] font-medium transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  معايير التقييم
+                </Link>
+              </div>
+
+              {/* Auth Buttons for Mobile */}
+              {!user && (
+                <div className="space-y-3 pt-4 border-t border-[#c3e956]/30">
+                  <Link
+                    href="/register"
+                    className="block w-full text-center bg-white text-[#01645e] border border-[#01645e] px-4 py-3 rounded-xl font-semibold shadow hover:bg-[#01645e] hover:text-white transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    إنشاء حساب
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="block w-full text-center bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-4 py-3 rounded-xl font-semibold shadow hover:from-[#014a46] hover:to-[#2d8f52] transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    تسجيل الدخول
+                  </Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
       </div>
     </header>
   )

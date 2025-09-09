@@ -166,7 +166,7 @@ ${includeHackathonDetails ? `
 - موعد انتهاء التسجيل: ${new Date(hackathon.registrationDeadline).toLocaleDateString('ar-SA')}
 
 للتسجيل في الهاكاثون، يرجى زيارة:
-${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/hackathons/${hackathon.id}/register
+${process.env.NEXTAUTH_URL || 'https://hackathon-platform-601l.onrender.com'}/hackathons/${hackathon.id}/register
 ` : ''}
 
 مع أطيب التحيات،
@@ -202,7 +202,7 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/hackathons/${hack
                     <li><strong>موعد انتهاء التسجيل:</strong> ${new Date(hackathon.registrationDeadline).toLocaleDateString('ar-SA')}</li>
                 </ul>
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/hackathons/${hackathon.id}/register"
+                    <a href="${process.env.NEXTAUTH_URL || 'https://hackathon-platform-601l.onrender.com'}/hackathons/${hackathon.id}/register"
                        style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
                         🚀 سجل الآن
                     </a>
