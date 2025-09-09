@@ -21,6 +21,10 @@ const nextConfig = {
   experimental: {
     // optimizeCss: true, // Temporarily disabled for deployment
   },
+  // Fix chunk loading issues
+  output: 'standalone',
+  // Ensure proper asset loading
+  assetPrefix: process.env.NODE_ENV === 'production' ? undefined : '',
 }
 
 export default nextConfig
