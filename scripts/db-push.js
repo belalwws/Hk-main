@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * Force migration script for Render deployment
- * This script forces the database schema to be created
+ * Database push script - uses db push instead of migrations
+ * This is more reliable for initial deployment
  */
 
 const { execSync } = require('child_process');
 
-console.log('🔧 Force migration starting...');
+console.log('🚀 Database push starting...');
 
-async function forceMigration() {
+async function pushDatabase() {
   try {
     if (!process.env.DATABASE_URL) {
-      console.log('⚠️ DATABASE_URL not found, skipping migration');
+      console.log('⚠️ DATABASE_URL not found, skipping database setup');
       return;
     }
 
@@ -25,24 +25,20 @@ async function forceMigration() {
       cwd: process.cwd()
     });
 
-    // Force deploy migrations
-    console.log('🚀 Deploying migrations...');
-    try {
-      execSync('npx prisma migrate deploy', {
-        stdio: 'inherit',
-        cwd: process.cwd()
-      });
-    } catch (migrateError) {
-      console.log('⚠️ Migration deploy failed, trying db push...');
-      execSync('npx prisma db push --force-reset', {
-        stdio: 'inherit',
-        cwd: process.cwd()
-      });
-    }
+    // Push database schema
+    console.log('🚀 Pushing database schema...');
+    execSync('npx prisma db push --force-reset', { 
+      stdio: 'inherit',
+      cwd: process.cwd()
+    });
 
-    console.log('✅ Migration completed successfully!');
+    console.log('✅ Database schema pushed successfully!');
 
-    // Try to create admin user
+    // Wait a moment for database to be ready
+    console.log('⏳ Waiting for database to be ready...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Create admin user
     console.log('👤 Creating admin user...');
     try {
       const { PrismaClient } = require('@prisma/client');
@@ -79,12 +75,12 @@ async function forceMigration() {
       console.error('❌ Admin creation error:', adminError.message);
     }
 
-    console.log('🎉 Force migration completed!');
+    console.log('🎉 Database push completed successfully!');
 
   } catch (error) {
-    console.error('❌ Force migration failed:', error.message);
+    console.error('❌ Database push failed:', error.message);
     process.exit(1);
   }
 }
 
-forceMigration();
+pushDatabase();

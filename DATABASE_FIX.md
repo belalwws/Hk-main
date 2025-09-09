@@ -16,7 +16,12 @@ git push origin master
 
 ### 2️⃣ **في Render Dashboard**:
 
-#### أ. تحديث Build Command:
+#### أ. تحديث Build Command (الحل الجديد):
+```
+npm ci && npx prisma generate && npm run db:push-production && npm run build
+```
+
+#### ب. أو استخدام الحل القديم:
 ```
 npm ci && npx prisma generate && npm run force:migration && npm run build
 ```
