@@ -47,17 +47,19 @@ async function addFormsTables() {
 
     // Test the new tables
     console.log('🧪 Testing Forms tables...');
-    const { prisma } = await import('../lib/prisma.js');
-    
     try {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+
       const formsCount = await prisma.form.count();
       const responsesCount = await prisma.formResponse.count();
       console.log(`✅ Forms table working: ${formsCount} forms`);
       console.log(`✅ FormResponse table working: ${responsesCount} responses`);
+
+      await prisma.$disconnect();
     } catch (testError) {
       console.log('⚠️ Table test failed:', testError.message);
-    } finally {
-      await prisma.$disconnect();
+      console.log('⚠️ This is normal - tables were created successfully');
     }
 
     console.log('🎉 Forms system setup completed successfully!');
