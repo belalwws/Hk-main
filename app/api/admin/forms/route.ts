@@ -41,18 +41,31 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ User verified for forms fetch:', payload.email)
 
-    const forms = await prisma.form.findMany({
-      include: {
-        _count: {
-          select: {
-            responses: true
+    let forms = []
+    try {
+      forms = await prisma.form.findMany({
+        include: {
+          _count: {
+            select: {
+              responses: true
+            }
           }
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
+      })
+    } catch (dbError: any) {
+      console.log('⚠️ Forms table might not exist yet:', dbError.message)
+      if (dbError.message.includes('does not exist') || dbError.message.includes('relation') || dbError.message.includes('table')) {
+        return NextResponse.json({
+          forms: [],
+          total: 0,
+          message: 'Forms tables not yet created. Please run migration.'
+        })
       }
-    })
+      throw dbError
+    }
 
     console.log('✅ Forms fetched successfully:', forms.length)
 
@@ -148,24 +161,36 @@ export async function POST(request: NextRequest) {
 
     console.log('📝 Creating form with data:', { title, fieldsCount: fields.length, status })
 
-    // Create form
-    const form = await prisma.form.create({
-      data: {
-        title: title.trim(),
-        description: description?.trim() || null,
-        fields: fields,
-        status: status || 'draft',
-        isPublic: isPublic !== false,
-        createdBy: payload.userId
-      },
-      include: {
-        _count: {
-          select: {
-            responses: true
+    // Create form with error handling for missing tables
+    let form
+    try {
+      form = await prisma.form.create({
+        data: {
+          title: title.trim(),
+          description: description?.trim() || null,
+          fields: fields,
+          status: status || 'draft',
+          isPublic: isPublic !== false,
+          createdBy: payload.userId
+        },
+        include: {
+          _count: {
+            select: {
+              responses: true
+            }
           }
         }
+      })
+    } catch (dbError: any) {
+      console.log('⚠️ Forms table might not exist yet:', dbError.message)
+      if (dbError.message.includes('does not exist') || dbError.message.includes('relation') || dbError.message.includes('table')) {
+        return NextResponse.json({
+          error: 'Forms tables not yet created. Please run migration first.',
+          details: 'Run: npm run add-forms'
+        }, { status: 503 })
       }
-    })
+      throw dbError
+    }
 
     console.log('✅ Form created successfully:', form.id)
 
