@@ -1,12 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { verifyToken } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/admin/forms - Get all forms
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Fetching forms...')
+
+    // Get token from cookie or header
+    let token = request.headers.get("authorization")?.replace("Bearer ", "")
+    if (!token) {
+      token = request.cookies.get("auth-token")?.value
+    }
+
+    if (!token) {
+      console.log('❌ No token found')
+      return NextResponse.json(
+        { error: 'غير مصرح بالوصول - لا يوجد رمز مصادقة' },
+        { status: 401 }
+      )
+    }
+
+    // Verify token
+    const payload = await verifyToken(token)
+    if (!payload) {
+      console.log('❌ Invalid token')
+      return NextResponse.json(
+        { error: 'رمز المصادقة غير صالح' },
+        { status: 401 }
+      )
+    }
+
+    if (payload.role !== 'admin') {
+      console.log('❌ User is not admin:', payload.role)
+      return NextResponse.json(
+        { error: 'غير مصرح بالوصول - صلاحيات غير كافية' },
+        { status: 403 }
+      )
+    }
+
+    console.log('✅ User verified for forms fetch:', payload.email)
 
     const forms = await prisma.form.findMany({
       include: {
@@ -42,16 +75,39 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔍 Creating new form...')
 
-    // Get user from headers (set by middleware)
-    const userId = request.headers.get('x-user-id')
-    const userRole = request.headers.get('x-user-role')
+    // Get token from cookie or header
+    let token = request.headers.get("authorization")?.replace("Bearer ", "")
+    if (!token) {
+      token = request.cookies.get("auth-token")?.value
+    }
 
-    if (!userId || userRole !== 'admin') {
+    if (!token) {
+      console.log('❌ No token found')
       return NextResponse.json(
-        { error: 'غير مصرح بالوصول' },
+        { error: 'غير مصرح بالوصول - لا يوجد رمز مصادقة' },
+        { status: 401 }
+      )
+    }
+
+    // Verify token
+    const payload = await verifyToken(token)
+    if (!payload) {
+      console.log('❌ Invalid token')
+      return NextResponse.json(
+        { error: 'رمز المصادقة غير صالح' },
+        { status: 401 }
+      )
+    }
+
+    if (payload.role !== 'admin') {
+      console.log('❌ User is not admin:', payload.role)
+      return NextResponse.json(
+        { error: 'غير مصرح بالوصول - صلاحيات غير كافية' },
         { status: 403 }
       )
     }
+
+    console.log('✅ User verified:', payload.email, 'role:', payload.role)
 
     const body = await request.json()
     const { title, description, fields, status, isPublic } = body
@@ -92,6 +148,7 @@ export async function POST(request: NextRequest) {
 
     console.log('📝 Creating form with data:', { title, fieldsCount: fields.length, status })
 
+    // Create form
     const form = await prisma.form.create({
       data: {
         title: title.trim(),
@@ -99,7 +156,7 @@ export async function POST(request: NextRequest) {
         fields: fields,
         status: status || 'draft',
         isPublic: isPublic !== false,
-        createdBy: userId
+        createdBy: payload.userId
       },
       include: {
         _count: {
@@ -119,8 +176,21 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Error creating form:', error)
+
+    // More specific error messages
+    if (error instanceof Error) {
+      console.error('Error details:', error.message)
+
+      if (error.message.includes('Prisma')) {
+        return NextResponse.json(
+          { error: 'خطأ في قاعدة البيانات', details: error.message },
+          { status: 500 }
+        )
+      }
+    }
+
     return NextResponse.json(
-      { error: 'فشل في إنشاء النموذج' },
+      { error: 'فشل في إنشاء النموذج', details: error instanceof Error ? error.message : 'خطأ غير معروف' },
       { status: 500 }
     )
   }

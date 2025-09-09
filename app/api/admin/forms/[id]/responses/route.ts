@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { verifyToken } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/admin/forms/[id]/responses - Get form responses
 export async function GET(
@@ -11,13 +10,24 @@ export async function GET(
   try {
     console.log('🔍 Fetching responses for form:', params.id)
 
-    // Get user from headers (set by middleware)
-    const userId = request.headers.get('x-user-id')
-    const userRole = request.headers.get('x-user-role')
+    // Get token from cookie or header
+    let token = request.headers.get("authorization")?.replace("Bearer ", "")
+    if (!token) {
+      token = request.cookies.get("auth-token")?.value
+    }
 
-    if (!userId || userRole !== 'admin') {
+    if (!token) {
       return NextResponse.json(
-        { error: 'غير مصرح بالوصول' },
+        { error: 'غير مصرح بالوصول - لا يوجد رمز مصادقة' },
+        { status: 401 }
+      )
+    }
+
+    // Verify token
+    const payload = await verifyToken(token)
+    if (!payload || payload.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'غير مصرح بالوصول - صلاحيات غير كافية' },
         { status: 403 }
       )
     }
