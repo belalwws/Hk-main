@@ -639,28 +639,35 @@ export default function LandingPage() {
                                 }
 
                                 try {
-                                  const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}`, {
-                                    method: 'PATCH',
+                                  console.log('🔄 Unpinning hackathon:', pinnedHackathon.id)
+
+                                  const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}/pin`, {
+                                    method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ isPinned: false })
                                   })
 
+                                  const data = await response.json()
+                                  console.log('📍 Unpin response:', data)
+
                                   if (response.ok) {
                                     setPinnedHackathon(null)
-                                    alert('تم إلغاء تثبيت الهاكاثون من الصفحة الرئيسية')
+                                    alert('✅ تم إلغاء تثبيت الهاكاثون من الصفحة الرئيسية')
                                   } else {
-                                    alert('حدث خطأ في إلغاء التثبيت')
+                                    console.error('❌ Unpin failed:', data)
+                                    alert(`❌ خطأ: ${data.error || 'حدث خطأ في إلغاء التثبيت'}`)
                                   }
                                 } catch (error) {
-                                  console.error('Error unpinning hackathon:', error)
-                                  alert('حدث خطأ في إلغاء التثبيت')
+                                  console.error('❌ Error unpinning hackathon:', error)
+                                  alert('❌ حدث خطأ في الاتصال')
                                 }
                               }}
-                              className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg shadow-lg transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm font-semibold"
+                              className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl flex items-center gap-2 text-sm font-bold border-2 border-white"
                               title="إلغاء التثبيت من الصفحة الرئيسية"
                             >
                               <X className="w-4 h-4" />
-                              <span>إلغاء التثبيت</span>
+                              <span className="hidden sm:inline">إلغاء التثبيت</span>
+                              <span className="sm:hidden">إلغاء</span>
                             </button>
                           )}
 
