@@ -16,13 +16,19 @@ export function SiteHeader() {
     <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-[#c3e956]/30 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Logo */}
-          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="flex items-center space-x-4 rtl:space-x-reverse">
-            <img src="/placeholder-logo.png" alt="هاكاثون الابتكار الحكومي" className="h-12 sm:h-16 w-auto" />
-            <div className="hidden sm:block">
-              <Link href="/" className="text-xl sm:text-2xl font-bold text-[#01645e]">هاكاثون الابتكار </Link>
-              <p className="text-xs sm:text-sm text-[#8b7632]">نظام احترافي متطور</p>
-            </div>
+          {/* Logo - Enhanced with hover effect */}
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
+            <Link href="/" className="flex items-center space-x-4 rtl:space-x-reverse hover:opacity-80 transition-all duration-300 group">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                <span className="text-white font-bold text-xl sm:text-2xl">ه</span>
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#01645e] to-[#3ab666] bg-clip-text text-transparent group-hover:from-[#3ab666] group-hover:to-[#01645e] transition-all duration-300">
+                  هاكاثون الابتكار
+                </h1>
+                <p className="text-xs sm:text-sm text-[#8b7632] group-hover:text-[#01645e] transition-colors duration-300">منصة الهاكاثونات التقنية</p>
+              </div>
+            </Link>
           </motion.div>
 
           {/* Desktop Navigation */}
@@ -268,17 +274,18 @@ export function SiteHeader() {
             <div className="px-4 py-6 space-y-6">
               {/* User Info for Mobile (if logged in) */}
               {user && (
-                <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 rounded-xl p-4 border border-[#01645e]/20">
+                <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 rounded-xl p-4 border border-[#01645e]/20 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-14 h-14 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <div className="font-semibold text-[#01645e]">{user.name}</div>
-                      <div className="text-sm text-[#8b7632]">
-                        {user.role === 'admin' ? 'مدير النظام' :
-                         user.role === 'judge' ? 'محكم' : 'مشارك'}
+                    <div className="flex-1">
+                      <div className="font-bold text-[#01645e] text-lg">{user.name}</div>
+                      <div className="text-sm text-[#8b7632] font-medium">
+                        {user.role === 'admin' ? '👑 مدير النظام' :
+                         user.role === 'judge' ? '⚖️ محكم' : '🚀 مشارك'}
                       </div>
+                      <div className="text-xs text-[#01645e]/70 mt-1">مرحباً بك في المنصة</div>
                     </div>
                   </div>
                 </div>
@@ -289,27 +296,27 @@ export function SiteHeader() {
                 <h3 className="text-sm font-semibold text-[#8b7632] mb-3 px-2">التنقل</h3>
                 <Link
                   href="/hackathons"
-                  className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                  className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Calendar className="w-5 h-5" />
-                  الهاكاثونات
+                  <Calendar className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-semibold">الهاكاثونات</span>
                 </Link>
                 <Link
                   href="/#features"
-                  className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                  className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <UserIcon className="w-5 h-5" />
-                  المميزات
+                  <UserIcon className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-semibold">المميزات</span>
                 </Link>
                 <Link
                   href="/#criteria"
-                  className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                  className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Settings className="w-5 h-5" />
-                  معايير التقييم
+                  <Settings className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-semibold">معايير التقييم</span>
                 </Link>
               </div>
 
@@ -321,76 +328,78 @@ export function SiteHeader() {
                   {user.role === 'admin' && (
                     <Link
                       href="/admin/dashboard"
-                      className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                      className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md border border-[#01645e]/20"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Settings className="w-5 h-5" />
-                      لوحة الإدارة
+                      <Settings className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-semibold">👑 لوحة الإدارة</span>
                     </Link>
                   )}
 
                   {user.role === 'judge' && (
                     <Link
                       href="/judge"
-                      className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                      className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md border border-[#01645e]/20"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Settings className="w-5 h-5" />
-                      منطقة التحكيم
+                      <Settings className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-semibold">⚖️ منطقة التحكيم</span>
                     </Link>
                   )}
 
                   {user.role === 'participant' && (
                     <Link
                       href="/participant/dashboard"
-                      className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                      className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md border border-[#01645e]/20"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <UserIcon className="w-5 h-5" />
-                      لوحة المشارك
+                      <UserIcon className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-semibold">🚀 لوحة المشارك</span>
                     </Link>
                   )}
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                    className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md border border-[#01645e]/20"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <UserIcon className="w-5 h-5" />
-                    الملف الشخصي
+                    <UserIcon className="w-5 h-5 flex-shrink-0" />
+                    <span className="font-semibold">👤 الملف الشخصي</span>
                   </Link>
                 </div>
               )}
 
               {/* Auth Buttons for Mobile */}
               {!user ? (
-                <div className="space-y-3 pt-2">
+                <div className="space-y-3 pt-4 border-t border-[#01645e]/20">
                   <Link
                     href="/register"
-                    className="block w-full text-center bg-white text-[#01645e] border-2 border-[#01645e] px-4 py-3 rounded-xl font-semibold shadow-md hover:bg-[#01645e] hover:text-white transition-all duration-300"
+                    className="flex items-center justify-center gap-2 w-full text-center bg-white text-[#01645e] border-2 border-[#01645e] px-4 py-4 rounded-xl font-bold shadow-md hover:bg-[#01645e] hover:text-white transition-all duration-300 hover:shadow-lg"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    إنشاء حساب جديد
+                    <UserIcon className="w-5 h-5" />
+                    <span>✨ إنشاء حساب جديد</span>
                   </Link>
                   <Link
                     href="/login"
-                    className="block w-full text-center bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+                    className="flex items-center justify-center gap-2 w-full text-center bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-4 py-4 rounded-xl font-bold shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    تسجيل الدخول
+                    <LogOut className="w-5 h-5 rotate-180" />
+                    <span>🚀 تسجيل الدخول</span>
                   </Link>
                 </div>
               ) : (
-                <div className="pt-2">
+                <div className="pt-4 border-t border-[#01645e]/20">
                   <button
                     onClick={() => {
                       logout()
                       setMobileMenuOpen(false)
                     }}
-                    className="flex items-center justify-center gap-3 w-full text-red-600 hover:text-red-700 hover:bg-red-50 font-medium transition-all py-3 px-2 rounded-lg border border-red-200"
+                    className="flex items-center justify-center gap-3 w-full text-red-600 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 font-bold transition-all duration-300 py-4 px-3 rounded-xl border-2 border-red-200 hover:border-red-500 shadow-md hover:shadow-lg"
                   >
                     <LogOut className="w-5 h-5" />
-                    تسجيل الخروج
+                    <span>👋 تسجيل الخروج</span>
                   </button>
                 </div>
               )}
