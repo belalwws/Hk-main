@@ -33,18 +33,19 @@ async function setupProduction() {
     // Check if we need to seed admin
     console.log('🔍 Checking admin user...');
     try {
-      const { prisma } = await import('../lib/prisma.js');
-      
+      // Use require instead of import for better compatibility
+      const { PrismaClient } = require('@prisma/client');
+      const bcrypt = require('bcryptjs');
+
+      const prisma = new PrismaClient();
+
       const adminExists = await prisma.user.findFirst({
         where: { role: 'admin' }
       });
 
       if (!adminExists) {
         console.log('👤 Creating admin user...');
-        
-        // Import bcrypt
-        const bcrypt = await import('bcryptjs');
-        
+
         // Create admin user
         await prisma.user.create({
           data: {
@@ -55,7 +56,7 @@ async function setupProduction() {
             isActive: true
           }
         });
-        
+
         console.log('✅ Admin user created successfully');
         console.log('📧 Email: admin@hackathon.com');
         console.log('🔑 Password: admin123456');
@@ -64,7 +65,7 @@ async function setupProduction() {
       }
 
       await prisma.$disconnect();
-      
+
     } catch (dbError) {
       console.error('❌ Database setup error:', dbError.message);
       console.log('⚠️ Continuing without database setup');
