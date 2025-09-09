@@ -31,19 +31,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	React.useEffect(() => {
 		const verifySession = async () => {
 			try {
-				const response = await fetch('/api/auth/verify', {
+				console.log('🔍 Verifying session on mount...')
+				const response = await fetch('/api/verify-session', {
 					method: 'GET',
-					credentials: 'include'
+					credentials: 'include',
+					headers: {
+						'Cache-Control': 'no-cache'
+					}
 				})
 
 				if (response.ok) {
 					const data = await response.json()
+					console.log('✅ Session verified on mount:', data.user?.email)
 					setUser(data.user)
 				} else {
+					console.log('❌ No valid session on mount')
 					setUser(null)
 				}
 			} catch (error) {
-				console.error('Session verification failed:', error)
+				console.error('❌ Session verification failed on mount:', error)
 				setUser(null)
 			} finally {
 				setLoading(false)

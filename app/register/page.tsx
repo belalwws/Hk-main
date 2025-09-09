@@ -122,6 +122,9 @@ export default function RegisterPage() {
         if (data.autoLogin && data.user) {
           console.log('🔄 Auto-login successful, refreshing user context...')
 
+          // Wait a bit for cookie to be set
+          await new Promise(resolve => setTimeout(resolve, 1000))
+
           // Refresh auth context to get the new user
           const refreshedUser = await refreshUser()
 
@@ -131,12 +134,16 @@ export default function RegisterPage() {
             // Show success modal first
             alert(`🎉 مرحباً ${data.user.name}!\n\nتم إنشاء حسابك بنجاح وتم تسجيل دخولك تلقائياً.\n\nسيتم توجيهك الآن إلى لوحة المشارك.`)
 
-            // Redirect to participant dashboard
-            router.push('/participant/dashboard')
+            // Force page reload to ensure auth state is updated
+            window.location.href = '/participant/dashboard'
           } else {
-            console.log('❌ Failed to refresh user context, redirecting to login')
-            alert('تم إنشاء حسابك بنجاح! يرجى تسجيل الدخول.')
-            router.push('/login')
+            console.log('❌ Failed to refresh user context, trying manual redirect...')
+
+            // Show success message and try manual redirect
+            alert(`🎉 مرحباً ${data.user.name}!\n\nتم إنشاء حسابك بنجاح وتم تسجيل دخولك تلقائياً.\n\nسيتم توجيهك الآن إلى لوحة المشارك.`)
+
+            // Force page reload to participant dashboard
+            window.location.href = '/participant/dashboard'
           }
         } else {
           console.log('❌ Auto-login failed, redirecting to success page')
