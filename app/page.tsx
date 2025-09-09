@@ -629,7 +629,32 @@ export default function LandingPage() {
                           {pinnedHackathon.description}
                         </p>
 
-                        <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 border border-[#01645e]/20 rounded-2xl p-6 mb-8">
+                        <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 border border-[#01645e]/20 rounded-2xl p-6 mb-8 relative">
+                          {/* زر إلغاء التثبيت للأدمن */}
+                          {user && user.role === 'admin' && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}/pin`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ isPinned: false })
+                                  })
+
+                                  if (response.ok) {
+                                    setPinnedHackathon(null)
+                                  }
+                                } catch (error) {
+                                  console.error('Error unpinning hackathon:', error)
+                                }
+                              }}
+                              className="absolute top-4 left-4 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+                              title="إلغاء التثبيت من الصفحة الرئيسية"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                             <div>
                               <div className="text-2xl font-bold text-[#01645e]">{pinnedHackathon.participantCount || 0}</div>
