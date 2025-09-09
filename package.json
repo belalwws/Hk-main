@@ -23,6 +23,7 @@
     "deploy:db": "node scripts/deploy-db.js",
     "render:setup": "node scripts/render-setup.js",
     "setup:production": "node scripts/production-setup.js",
+    "force:migration": "node scripts/force-migration.js",
     "postinstall": "npx prisma generate --schema ./schema.prisma",
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build"

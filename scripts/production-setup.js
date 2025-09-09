@@ -30,6 +30,31 @@ async function setupProduction() {
     console.log('⏳ Waiting for database...');
     await new Promise(resolve => setTimeout(resolve, 3000));
 
+    // Check if tables exist, if not run migration
+    console.log('🔍 Checking database schema...');
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      const testPrisma = new PrismaClient();
+
+      // Try to query users table
+      await testPrisma.user.findFirst();
+      console.log('✅ Database schema exists');
+      await testPrisma.$disconnect();
+
+    } catch (schemaError) {
+      console.log('📋 Database schema missing, running migration...');
+      try {
+        execSync('npx prisma migrate deploy', {
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        console.log('✅ Migration completed successfully');
+      } catch (migrationError) {
+        console.error('❌ Migration failed:', migrationError.message);
+        console.log('⚠️ Continuing without migration');
+      }
+    }
+
     // Check if we need to seed admin
     console.log('🔍 Checking admin user...');
     try {
