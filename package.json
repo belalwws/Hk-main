@@ -30,6 +30,7 @@
     "prod:check": "node scripts/production-only-check.js",
     "no-db": "node scripts/no-db-setup.js",
     "recreate-admin": "node scripts/recreate-admin.js",
+    "add-forms": "node scripts/add-forms-tables.js",
     "postinstall": "npx prisma generate --schema ./schema.prisma",
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build"
