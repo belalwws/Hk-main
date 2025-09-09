@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ChevronDown, LogOut, User as UserIcon, Menu, X } from 'lucide-react'
+import { ChevronDown, LogOut, User as UserIcon, Menu, X, Calendar, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/contexts/auth-context'
@@ -170,8 +170,82 @@ export function SiteHeader() {
             )}
           </motion.div>
 
-          {/* Mobile Menu Button */}
-          <div className="lg:hidden">
+          {/* Mobile Menu Button & User Menu */}
+          <div className="lg:hidden flex items-center gap-2">
+            {/* User Avatar for Mobile */}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-1 rounded-full"
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 p-2">
+                  <DropdownMenuLabel className="text-center pb-2">
+                    <div className="font-semibold text-[#01645e]">{user.name}</div>
+                    <div className="text-xs text-[#8b7632]">
+                      {user.role === 'admin' ? 'مدير النظام' :
+                       user.role === 'judge' ? 'محكم' : 'مشارك'}
+                    </div>
+                  </DropdownMenuLabel>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Dashboard Links */}
+                  {user.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/dashboard" className="flex items-center gap-2 w-full">
+                        <Settings className="w-4 h-4" />
+                        لوحة التحكم
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  {user.role === 'judge' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/judge" className="flex items-center gap-2 w-full">
+                        <Settings className="w-4 h-4" />
+                        منطقة التحكيم
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  {user.role === 'participant' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/participant/dashboard" className="flex items-center gap-2 w-full">
+                        <Settings className="w-4 h-4" />
+                        لوحة المشارك
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2 w-full">
+                      <UserIcon className="w-4 h-4" />
+                      الملف الشخصي
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    تسجيل الخروج
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* Menu Button */}
             <Button
               variant="ghost"
               size="sm"
@@ -183,57 +257,141 @@ export function SiteHeader() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Enhanced Mobile Menu */}
         {mobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden border-t border-[#c3e956]/30 bg-white/95 backdrop-blur-md"
+            className="lg:hidden border-t border-[#c3e956]/30 bg-white/98 backdrop-blur-md shadow-lg"
           >
-            <div className="px-4 py-6 space-y-4">
+            <div className="px-4 py-6 space-y-6">
+              {/* User Info for Mobile (if logged in) */}
+              {user && (
+                <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 rounded-xl p-4 border border-[#01645e]/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-[#01645e]">{user.name}</div>
+                      <div className="text-sm text-[#8b7632]">
+                        {user.role === 'admin' ? 'مدير النظام' :
+                         user.role === 'judge' ? 'محكم' : 'مشارك'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Navigation Links */}
-              <div className="space-y-3">
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-[#8b7632] mb-3 px-2">التنقل</h3>
                 <Link
                   href="/hackathons"
-                  className="block text-[#01645e] hover:text-[#3ab666] font-medium transition-colors py-2"
+                  className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
                   onClick={() => setMobileMenuOpen(false)}
                 >
+                  <Calendar className="w-5 h-5" />
                   الهاكاثونات
                 </Link>
                 <Link
                   href="/#features"
-                  className="block text-[#01645e] hover:text-[#3ab666] font-medium transition-colors py-2"
+                  className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
                   onClick={() => setMobileMenuOpen(false)}
                 >
+                  <UserIcon className="w-5 h-5" />
                   المميزات
                 </Link>
                 <Link
                   href="/#criteria"
-                  className="block text-[#01645e] hover:text-[#3ab666] font-medium transition-colors py-2"
+                  className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
                   onClick={() => setMobileMenuOpen(false)}
                 >
+                  <Settings className="w-5 h-5" />
                   معايير التقييم
                 </Link>
               </div>
 
-              {/* Auth Buttons for Mobile */}
-              {!user && (
-                <div className="space-y-3 pt-4 border-t border-[#c3e956]/30">
+              {/* Dashboard Links for Logged in Users */}
+              {user && (
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-[#8b7632] mb-3 px-2">لوحة التحكم</h3>
+
+                  {user.role === 'admin' && (
+                    <Link
+                      href="/admin/dashboard"
+                      className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Settings className="w-5 h-5" />
+                      لوحة الإدارة
+                    </Link>
+                  )}
+
+                  {user.role === 'judge' && (
+                    <Link
+                      href="/judge"
+                      className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Settings className="w-5 h-5" />
+                      منطقة التحكيم
+                    </Link>
+                  )}
+
+                  {user.role === 'participant' && (
+                    <Link
+                      href="/participant/dashboard"
+                      className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <UserIcon className="w-5 h-5" />
+                      لوحة المشارك
+                    </Link>
+                  )}
+
                   <Link
-                    href="/register"
-                    className="block w-full text-center bg-white text-[#01645e] border border-[#01645e] px-4 py-3 rounded-xl font-semibold shadow hover:bg-[#01645e] hover:text-white transition-colors"
+                    href="/profile"
+                    className="flex items-center gap-3 text-[#01645e] hover:text-[#3ab666] hover:bg-[#01645e]/5 font-medium transition-all py-3 px-2 rounded-lg"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    إنشاء حساب
+                    <UserIcon className="w-5 h-5" />
+                    الملف الشخصي
+                  </Link>
+                </div>
+              )}
+
+              {/* Auth Buttons for Mobile */}
+              {!user ? (
+                <div className="space-y-3 pt-2">
+                  <Link
+                    href="/register"
+                    className="block w-full text-center bg-white text-[#01645e] border-2 border-[#01645e] px-4 py-3 rounded-xl font-semibold shadow-md hover:bg-[#01645e] hover:text-white transition-all duration-300"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    إنشاء حساب جديد
                   </Link>
                   <Link
                     href="/login"
-                    className="block w-full text-center bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-4 py-3 rounded-xl font-semibold shadow hover:from-[#014a46] hover:to-[#2d8f52] transition-colors"
+                    className="block w-full text-center bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     تسجيل الدخول
                   </Link>
+                </div>
+              ) : (
+                <div className="pt-2">
+                  <button
+                    onClick={() => {
+                      logout()
+                      setMobileMenuOpen(false)
+                    }}
+                    className="flex items-center justify-center gap-3 w-full text-red-600 hover:text-red-700 hover:bg-red-50 font-medium transition-all py-3 px-2 rounded-lg border border-red-200"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    تسجيل الخروج
+                  </button>
                 </div>
               )}
             </div>

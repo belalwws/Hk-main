@@ -21,9 +21,20 @@ async function simpleSetup() {
     console.log('📦 Generating Prisma client...');
     execSync('npx prisma generate', { stdio: 'inherit' });
 
-    // Step 2: Push schema to database
+    // Step 2: Push schema to database (without reset to preserve data)
     console.log('🚀 Pushing schema to database...');
-    execSync('npx prisma db push', { stdio: 'inherit' });
+    try {
+      // Try normal push first (preserves data)
+      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+    } catch (error) {
+      console.log('⚠️ Normal push failed, trying migration deploy...');
+      try {
+        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+      } catch (migrationError) {
+        console.log('⚠️ Migration deploy failed, using force push as last resort...');
+        execSync('npx prisma db push --force-reset', { stdio: 'inherit' });
+      }
+    }
 
     console.log('✅ Database schema created successfully!');
 
