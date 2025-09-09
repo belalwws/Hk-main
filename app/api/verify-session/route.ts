@@ -7,17 +7,20 @@ const prisma = new PrismaClient()
 // GET /api/verify-session - Verify user session and return user data
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Verifying user session...')
+    console.log('🔍 [VERIFY-SESSION] Starting verification...')
+    console.log('🔍 [VERIFY-SESSION] Request URL:', request.url)
+    console.log('🔍 [VERIFY-SESSION] Request headers:', Object.fromEntries(request.headers.entries()))
 
     // Get token from cookies
     const token = request.cookies.get('auth-token')?.value
+    console.log('🔍 [VERIFY-SESSION] All cookies:', Object.fromEntries(request.cookies.getAll().map(c => [c.name, c.value.substring(0, 20) + '...'])))
 
     if (!token) {
-      console.log('❌ No auth token found in cookies')
+      console.log('❌ [VERIFY-SESSION] No auth token found in cookies')
       return NextResponse.json({ error: 'No token found' }, { status: 401 })
     }
 
-    console.log('🔑 Token found, length:', token.length)
+    console.log('🔑 [VERIFY-SESSION] Token found, length:', token.length, 'first 20 chars:', token.substring(0, 20))
 
     // Verify token
     const payload = await verifyToken(token)

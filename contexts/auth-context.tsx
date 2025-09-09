@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useCallback } from "react"
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 type Role = "admin" | "judge" | "participant"
@@ -25,49 +25,54 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<User | null>(null)
 	const [loading, setLoading] = useState(true)
+	const [initialized, setInitialized] = useState(false)
 	const router = useRouter()
 
-	// Check session validity on mount and periodically
-	React.useEffect(() => {
-		const verifySession = async () => {
+	// Initialize auth state on mount
+	useEffect(() => {
+		if (initialized) return
+
+		const initializeAuth = async () => {
 			try {
-				console.log('🔍 Verifying session on mount...')
+				console.log('🚀 Initializing auth state...')
+
 				const response = await fetch('/api/verify-session', {
 					method: 'GET',
 					credentials: 'include',
 					headers: {
-						'Cache-Control': 'no-cache'
+						'Cache-Control': 'no-cache',
+						'Pragma': 'no-cache'
 					}
 				})
 
+				console.log('📡 Auth init response status:', response.status)
+
 				if (response.ok) {
 					const data = await response.json()
+					console.log('📊 Auth init response data:', data)
+
 					if (data.user) {
-						console.log('✅ Session verified on mount:', data.user.email)
+						console.log('✅ User found on init:', data.user.email, 'role:', data.user.role)
 						setUser(data.user)
 					} else {
-						console.log('❌ No user data in response')
+						console.log('❌ No user in response')
 						setUser(null)
 					}
 				} else {
-					console.log('❌ Session verification failed, status:', response.status)
-					// Don't set user to null immediately, maybe it's a temporary error
-					if (response.status === 401) {
-						setUser(null)
-					}
+					console.log('❌ Auth init failed, status:', response.status)
+					setUser(null)
 				}
 			} catch (error) {
-				console.error('❌ Session verification failed on mount:', error)
-				// Don't set user to null on network errors
+				console.error('❌ Auth initialization error:', error)
+				setUser(null)
 			} finally {
 				setLoading(false)
+				setInitialized(true)
 			}
 		}
 
-		verifySession()
-
-		// No periodic verification to avoid logout issues
-	}, [])
+		initializeAuth()
+	}, [initialized])
 
 	const login = useCallback(async (email: string, password: string) => {
 		try {
@@ -125,25 +130,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			if (res.ok) {
 				const data = await res.json()
-				console.log('📊 Session verification response:', data)
+				console.log('📊 Refresh response data:', data)
 
 				if (data.user) {
-					console.log('✅ User session refreshed successfully:', data.user.email, 'role:', data.user.role)
+					console.log('✅ User refreshed:', data.user.email, 'role:', data.user.role)
 					setUser(data.user)
 					return data.user
 				} else {
-					console.log('❌ No user data in response')
+					console.log('❌ No user in refresh response')
 					return null
 				}
 			} else {
-				console.log('❌ Session verification failed, status:', res.status)
+				console.log('❌ Refresh failed, status:', res.status)
 				if (res.status === 401) {
+					console.log('🚪 Setting user to null due to 401')
 					setUser(null)
 				}
 				return null
 			}
 		} catch (error) {
-			console.error('❌ Failed to refresh user:', error)
+			console.error('❌ Refresh error:', error)
 			return null
 		}
 	}, [])
