@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { SuccessModal } from '@/components/ui/success-modal'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -88,6 +89,8 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [registeredUser, setRegisteredUser] = useState<any>(null)
   const [formData, setFormData] = useState({
     // Personal Info
     name: '',
@@ -128,23 +131,11 @@ export default function RegisterPage() {
           // Refresh auth context to get the new user
           const refreshedUser = await refreshUser()
 
-          if (refreshedUser) {
-            console.log('🎉 User context refreshed successfully, redirecting...')
+          // Set user data and show success modal
+          setRegisteredUser(data.user)
+          setShowSuccessModal(true)
 
-            // Show success modal first
-            alert(`🎉 مرحباً ${data.user.name}!\n\nتم إنشاء حسابك بنجاح وتم تسجيل دخولك تلقائياً.\n\nسيتم توجيهك الآن إلى لوحة المشارك.`)
-
-            // Force page reload to ensure auth state is updated
-            window.location.href = '/participant/dashboard'
-          } else {
-            console.log('❌ Failed to refresh user context, trying manual redirect...')
-
-            // Show success message and try manual redirect
-            alert(`🎉 مرحباً ${data.user.name}!\n\nتم إنشاء حسابك بنجاح وتم تسجيل دخولك تلقائياً.\n\nسيتم توجيهك الآن إلى لوحة المشارك.`)
-
-            // Force page reload to participant dashboard
-            window.location.href = '/participant/dashboard'
-          }
+          console.log('🎉 Registration successful, showing success modal')
         } else {
           console.log('❌ Auto-login failed, redirecting to success page')
           // Fallback to success page
@@ -434,6 +425,21 @@ export default function RegisterPage() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="🎉 تم إنشاء حسابك بنجاح!"
+        message="تم تسجيل دخولك تلقائياً وسيتم توجيهك الآن إلى لوحة المشارك حيث يمكنك متابعة مشاركتك في الهاكاثونات."
+        userName={registeredUser?.name}
+        onContinue={() => {
+          setShowSuccessModal(false)
+          // Force page reload to ensure auth state is updated
+          window.location.href = '/participant/dashboard'
+        }}
+        continueText="الذهاب إلى لوحة المشارك"
+      />
     </div>
   )
 }

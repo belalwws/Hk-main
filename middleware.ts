@@ -3,13 +3,14 @@ import type { NextRequest } from "next/server"
 import { verifyToken } from "@/lib/auth"
 
 // Define protected route prefixes and their required roles
-const protectedRoutes: { prefix: string; roles: ("admin" | "judge")[] }[] = [
+const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "participant")[] }[] = [
   { prefix: "/api/teams", roles: ["judge"] },
   { prefix: "/api/submit-score", roles: ["judge"] },
   { prefix: "/api/results", roles: ["admin"] },
   { prefix: "/api/admin", roles: ["admin"] },
   { prefix: "/judge", roles: ["judge"] },
   { prefix: "/admin", roles: ["admin"] },
+  { prefix: "/participant", roles: ["participant", "admin"] },
 ]
 
 export async function middleware(request: NextRequest) {
@@ -74,7 +75,9 @@ export async function middleware(request: NextRequest) {
     }
 
     // For pages, redirect based on role
-    const redirectUrl = payload.role === "admin" ? "/admin/dashboard" : "/judge"
+    const redirectUrl = payload.role === "admin" ? "/admin/dashboard" :
+                       payload.role === "judge" ? "/judge" :
+                       "/participant/dashboard"
     return NextResponse.redirect(new URL(redirectUrl, request.url))
   }
 
@@ -96,5 +99,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*"],
+  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*", "/participant/:path*"],
 }
