@@ -90,17 +90,31 @@ export function SiteHeader() {
                   <DropdownMenuSeparator className="bg-[#01645e]/10" />
 
                   {user.role === 'admin' && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#01645e]/10 transition-colors">
-                        <div className="w-8 h-8 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-lg flex items-center justify-center">
-                          <span className="text-white text-sm">🏛️</span>
-                        </div>
-                        <div>
-                          <div className="font-medium text-[#01645e]">لوحة تحكم الأدمن</div>
-                          <div className="text-xs text-[#8b7632]">إدارة النظام والمشاركين</div>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#01645e]/10 transition-colors">
+                          <div className="w-8 h-8 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-lg flex items-center justify-center">
+                            <span className="text-white text-sm">🏛️</span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-[#01645e]">لوحة تحكم الأدمن</div>
+                            <div className="text-xs text-[#8b7632]">إدارة النظام والمشاركين</div>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/forms" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3ab666]/10 transition-colors">
+                          <div className="w-8 h-8 bg-gradient-to-r from-[#3ab666] to-[#c3e956] rounded-lg flex items-center justify-center">
+                            <span className="text-white text-sm">📝</span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-[#01645e]">إدارة النماذج</div>
+                            <div className="text-xs text-[#8b7632]">إنشاء ومتابعة النماذج</div>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
 
                   {user.role === 'judge' && (
@@ -326,14 +340,25 @@ export function SiteHeader() {
                   <h3 className="text-sm font-semibold text-[#8b7632] mb-3 px-2">لوحة التحكم</h3>
 
                   {user.role === 'admin' && (
-                    <Link
-                      href="/admin/dashboard"
-                      className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md border border-[#01645e]/20"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Settings className="w-5 h-5 flex-shrink-0" />
-                      <span className="font-semibold">👑 لوحة الإدارة</span>
-                    </Link>
+                    <>
+                      <Link
+                        href="/admin/dashboard"
+                        className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md border border-[#01645e]/20"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Settings className="w-5 h-5 flex-shrink-0" />
+                        <span className="font-semibold">👑 لوحة الإدارة</span>
+                      </Link>
+
+                      <Link
+                        href="/admin/forms"
+                        className="flex items-center gap-3 text-[#3ab666] hover:text-white hover:bg-gradient-to-r hover:from-[#3ab666] hover:to-[#c3e956] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md border border-[#3ab666]/20"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span className="w-5 h-5 flex-shrink-0 text-lg">📝</span>
+                        <span className="font-semibold">إدارة النماذج</span>
+                      </Link>
+                    </>
                   )}
 
                   {user.role === 'judge' && (

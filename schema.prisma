@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -217,4 +217,43 @@ model ResultsSnapshot {
   createdAt DateTime @default(now())
 
   @@map("results_snapshots")
+}
+
+// Forms Management System
+model Form {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  fields      Json       // Array of form fields with their configurations
+  status      FormStatus @default(draft)
+  isPublic    Boolean    @default(false)
+  createdBy   String     // Admin user ID
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  responses FormResponse[]
+
+  @@map("forms")
+}
+
+enum FormStatus {
+  draft
+  published
+  closed
+}
+
+model FormResponse {
+  id         String   @id @default(cuid())
+  formId     String
+  userId     String?  // Optional - for logged in users
+  userEmail  String?  // For anonymous responses
+  userName   String?  // For anonymous responses
+  responses  Json     // User's responses to form fields
+  submittedAt DateTime @default(now())
+
+  // Relations
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@map("form_responses")
 }
