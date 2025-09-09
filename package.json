@@ -6,7 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start",
+    "start": "npm run simple:setup && next start",
     "start:dev": "next start",
     "db:push": "prisma db push --schema ./schema.prisma",
     "db:generate": "prisma generate --schema ./schema.prisma",
@@ -25,6 +25,7 @@
     "setup:production": "node scripts/production-setup.js",
     "force:migration": "node scripts/force-migration.js",
     "db:push-production": "node scripts/db-push.js",
+    "simple:setup": "node scripts/simple-setup.js",
     "postinstall": "npx prisma generate --schema ./schema.prisma",
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build"

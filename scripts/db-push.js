@@ -27,10 +27,18 @@ async function pushDatabase() {
 
     // Push database schema
     console.log('🚀 Pushing database schema...');
-    execSync('npx prisma db push --force-reset', { 
-      stdio: 'inherit',
-      cwd: process.cwd()
-    });
+    try {
+      execSync('npx prisma db push --force-reset', {
+        stdio: 'inherit',
+        cwd: process.cwd()
+      });
+    } catch (pushError) {
+      console.log('⚠️ Force reset failed, trying without reset...');
+      execSync('npx prisma db push', {
+        stdio: 'inherit',
+        cwd: process.cwd()
+      });
+    }
 
     console.log('✅ Database schema pushed successfully!');
 
