@@ -504,21 +504,34 @@ export default function HackathonManagementPage() {
     if (!confirm(confirmMessage)) return
 
     try {
+      console.log('🔄 Toggling pin status:', { hackathonId: params.id, newPinStatus })
+
       const response = await fetch(`/api/admin/hackathons/${params.id}/pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isPinned: newPinStatus })
       })
 
+      const data = await response.json()
+      console.log('📌 Pin response:', data)
+
       if (response.ok) {
-        fetchHackathon() // Refresh data
-        alert(newPinStatus ? 'تم تثبيت الهاكاثون في الصفحة الرئيسية' : 'تم إلغاء تثبيت الهاكاثون')
+        // Update local state immediately
+        if (hackathon) {
+          setHackathon({ ...hackathon, isPinned: newPinStatus })
+        }
+
+        // Also refresh data from server
+        fetchHackathon()
+
+        alert(newPinStatus ? '✅ تم تثبيت الهاكاثون في الصفحة الرئيسية' : '✅ تم إلغاء تثبيت الهاكاثون')
       } else {
-        alert('فشل في تحديث حالة التثبيت')
+        console.error('❌ Pin toggle failed:', data)
+        alert(`❌ فشل في تحديث حالة التثبيت: ${data.error || 'خطأ غير معروف'}`)
       }
     } catch (error) {
-      console.error('Error updating pin status:', error)
-      alert('حدث خطأ في تحديث حالة التثبيت')
+      console.error('❌ Error updating pin status:', error)
+      alert('❌ حدث خطأ في تحديث حالة التثبيت')
     }
   }
 

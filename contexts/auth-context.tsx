@@ -66,9 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 		verifySession()
 
-		// Set up periodic session verification (every 10 minutes)
-		const interval = setInterval(verifySession, 10 * 60 * 1000)
-		return () => clearInterval(interval)
+		// No periodic verification to avoid logout issues
 	}, [])
 
 	const login = useCallback(async (email: string, password: string) => {

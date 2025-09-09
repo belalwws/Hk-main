@@ -181,7 +181,7 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8"
         >
           <Card className="bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white">
             <CardContent className="p-4">
@@ -239,7 +239,7 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
 
           {/* Left Column - Profile Info */}
           <motion.div
@@ -485,7 +485,7 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Details Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
                           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200">
                             <p className="text-xs text-blue-600 mb-1 font-medium">الدور المفضل</p>
                             <p className="font-semibold text-[#01645e]">{participation.teamRole || 'غير محدد'}</p>
