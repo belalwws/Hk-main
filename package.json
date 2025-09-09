@@ -9,14 +9,19 @@
     "start": "next start",
     "db:push": "prisma db push --schema ./schema.prisma",
     "db:generate": "prisma generate --schema ./schema.prisma",
+    "db:migrate": "prisma migrate dev --schema ./schema.prisma",
+    "db:migrate:deploy": "prisma migrate deploy --schema ./schema.prisma",
     "db:seed": "node ./seed.mjs",
     "db:seed-new": "tsx ./seed-new.ts",
     "db:seed-admin": "node ./scripts/seed-super-admin.mjs",
     "db:remove-placeholders": "node ./scripts/remove-judges.mjs",
-    "build:production": "npx prisma generate && next build",
+    "db:reset": "prisma migrate reset --schema ./schema.prisma --force",
+    "build:production": "npx prisma generate --schema ./schema.prisma && next build",
     "start:production": "next start",
-    "deploy:render": "npx prisma migrate deploy && npm run db:seed-admin",
-    "postinstall": "npx prisma generate"
+    "deploy:render": "npx prisma migrate deploy --schema ./schema.prisma && npm run db:seed-admin",
+    "postinstall": "npx prisma generate --schema ./schema.prisma",
+    "type-check": "tsc --noEmit",
+    "test:build": "npm run type-check && npm run lint && npm run build"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
@@ -95,6 +100,8 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -1,0 +1,36 @@
+const { PrismaClient } = require('@prisma/client')
+const bcrypt = require('bcryptjs')
+
+const prisma = new PrismaClient()
+
+async function createAdmin() {
+  try {
+    console.log('🚀 إنشاء admin user...')
+
+    const hashedPassword = await bcrypt.hash('admin123', 10)
+    
+    const admin = await prisma.user.create({
+      data: {
+        name: 'مدير النظام',
+        email: 'admin@hackathon.com',
+        password_hash: hashedPassword,
+        phone: '+966500000000',
+        city: 'الرياض',
+        nationality: 'سعودي',
+        role: 'admin'
+      }
+    })
+
+    console.log('✅ تم إنشاء admin user:')
+    console.log('📧 Email: admin@hackathon.com')
+    console.log('🔑 Password: admin123')
+    console.log('🆔 ID:', admin.id)
+
+  } catch (error) {
+    console.error('❌ خطأ:', error.message)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+createAdmin()

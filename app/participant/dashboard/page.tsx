@@ -430,13 +430,13 @@ export default function ParticipantDashboard() {
                   </div>
                 </div>
                 <Badge className={`${
-                  currentParticipation.hackathon.status === 'OPEN' ? 'bg-green-100 text-green-800' :
-                  currentParticipation.hackathon.status === 'CLOSED' ? 'bg-red-100 text-red-800' :
+                  (currentParticipation.hackathon.status === 'open' || currentParticipation.hackathon.status === 'OPEN') ? 'bg-green-100 text-green-800' :
+                  (currentParticipation.hackathon.status === 'closed' || currentParticipation.hackathon.status === 'CLOSED') ? 'bg-red-100 text-red-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {currentParticipation.hackathon.status === 'OPEN' ? 'نشط' :
-                   currentParticipation.hackathon.status === 'CLOSED' ? 'مغلق' :
-                   currentParticipation.hackathon.status === 'COMPLETED' ? 'مكتمل' : 'مسودة'}
+                  {(currentParticipation.hackathon.status === 'open' || currentParticipation.hackathon.status === 'OPEN') ? 'نشط' :
+                   (currentParticipation.hackathon.status === 'closed' || currentParticipation.hackathon.status === 'CLOSED') ? 'مغلق' :
+                   (currentParticipation.hackathon.status === 'completed' || currentParticipation.hackathon.status === 'COMPLETED') ? 'مكتمل' : 'مسودة'}
                 </Badge>
               </CardContent>
             </Card>

@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         skills: skills || null,
         experience: experience || null,
         preferredRole: preferredRole || null,
-        role: 'PARTICIPANT'
+        role: 'participant'
       }
     })
 

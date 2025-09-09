@@ -675,8 +675,8 @@ export default function JudgeEvaluation() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#8b7632]">التقييم:</span>
-                      <span className={`font-semibold ${scores[currentCriterion?.id] ? 'text-green-600' : 'text-red-600'}`}>
-                        {scores[currentCriterion?.id] ? `${scores[currentCriterion?.id]} نجوم` : 'غير مقيم'}
+                      <span className={`font-semibold ${currentCriterion?.id && scores[currentCriterion.id] ? 'text-green-600' : 'text-red-600'}`}>
+                        {currentCriterion?.id && scores[currentCriterion.id] ? `${scores[currentCriterion.id]} نجوم` : 'غير مقيم'}
                       </span>
                     </div>
                   </div>

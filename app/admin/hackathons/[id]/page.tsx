@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import TeamsDisplay from '@/components/admin/TeamsDisplay'
+import { AlertModal, ConfirmModal } from '@/components/ui/modal'
+import { useModal } from '@/hooks/use-modal'
 
 interface Participant {
   id: string
@@ -547,21 +549,29 @@ export default function HackathonManagementPage() {
   const filteredParticipants = hackathon?.participants.filter(participant => {
     // Status filter
     if (filter !== 'all' && participant.status.toLowerCase() !== filter) return false
-    
+
     // City filter
-    if (cityFilter && !participant.user.city.toLowerCase().includes(cityFilter.toLowerCase())) return false
-    
+    if (cityFilter && (!participant.user.city || !participant.user.city.toLowerCase().includes(cityFilter.toLowerCase()))) return false
+
     // Nationality filter
-    if (nationalityFilter && !participant.user.nationality.toLowerCase().includes(nationalityFilter.toLowerCase())) return false
-    
+    if (nationalityFilter && (!participant.user.nationality || !participant.user.nationality.toLowerCase().includes(nationalityFilter.toLowerCase()))) return false
+
     return true
   }) || []
 
   
 
   // Get unique cities and nationalities for filters
-  const uniqueCities = [...new Set(hackathon?.participants.map(p => p.user.city) || [])]
-  const uniqueNationalities = [...new Set(hackathon?.participants.map(p => p.user.nationality) || [])]
+  const uniqueCities = [...new Set(
+    hackathon?.participants
+      .map(p => p.user.city)
+      .filter(city => city && city.trim() !== '') || []
+  )]
+  const uniqueNationalities = [...new Set(
+    hackathon?.participants
+      .map(p => p.user.nationality)
+      .filter(nationality => nationality && nationality.trim() !== '') || []
+  )]
 
   if (loading) {
     return (

@@ -649,9 +649,9 @@ export default function LandingPage() {
                             </div>
                             <div>
                               <div className="text-2xl font-bold text-[#8b7632]">
-                                {pinnedHackathon.status === 'OPEN' ? '🟢 مفتوح' :
-                                 pinnedHackathon.status === 'DRAFT' ? '🟡 قريباً' :
-                                 pinnedHackathon.status === 'CLOSED' ? '🔴 مغلق' : '✅ منتهي'}
+                                {(pinnedHackathon.status === 'open' || pinnedHackathon.status === 'OPEN') ? '🟢 مفتوح' :
+                                 (pinnedHackathon.status === 'draft' || pinnedHackathon.status === 'DRAFT') ? '🟡 قريباً' :
+                                 (pinnedHackathon.status === 'closed' || pinnedHackathon.status === 'CLOSED') ? '🔴 مغلق' : '✅ منتهي'}
                               </div>
                               <div className="text-sm text-[#8b7632]">الحالة</div>
                             </div>

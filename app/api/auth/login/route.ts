@@ -13,10 +13,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
+    console.log('🔍 Login attempt with data:', { email: body.email, hasPassword: !!body.password, passwordLength: body.password?.length })
+
     const validation = validateRequest(loginSchema, body)
 
     if (!validation.success) {
-      return NextResponse.json({ error: "بيانات غير صحيحة" }, { status: 400 })
+      console.log('❌ Validation failed:', validation.error)
+      return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
     const { email, password } = validation.data

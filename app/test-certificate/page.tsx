@@ -40,7 +40,7 @@ export default function TestCertificate() {
         setResult(`❌ فشل في إنشاء الشهادة: ${error.error}`)
       }
     } catch (error) {
-      setResult(`💥 خطأ: ${error.message}`)
+      setResult(`💥 خطأ: ${error instanceof Error ? error.message : 'حدث خطأ غير متوقع'}`)
     } finally {
       setGenerating(false)
     }

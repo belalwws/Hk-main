@@ -45,7 +45,7 @@ export default function TestPin() {
         setResult(`❌ فشل: ${error.error}`)
       }
     } catch (error) {
-      setResult(`💥 خطأ: ${error.message}`)
+      setResult(`💥 خطأ: ${error instanceof Error ? error.message : 'حدث خطأ غير متوقع'}`)
     }
   }
 

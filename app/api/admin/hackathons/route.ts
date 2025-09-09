@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     const payload = await verifyToken(token)
     if (!payload || payload.role !== 'admin') return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
-
     const prismaClient = await getPrisma()
     if (!prismaClient) return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
 
@@ -113,6 +112,21 @@ export async function POST(request: NextRequest) {
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: 'حالة الهاكاثون غير صحيحة' }, { status: 400 })
     }
+    
+    // Map validated status string to Prisma enum at runtime to avoid case/value mismatches
+    let statusForDb: any = status
+    try {
+      const prismaModule = await import('@prisma/client')
+      const EnumObj: any = (prismaModule as any).Prisma?.HackathonStatus
+      if (EnumObj) {
+        const key = typeof status === 'string' ? status : 'draft'
+        if (EnumObj[key]) statusForDb = EnumObj[key]
+        else if (EnumObj[key.toUpperCase()]) statusForDb = EnumObj[key.toUpperCase()]
+        else if (EnumObj[key.toLowerCase()]) statusForDb = EnumObj[key.toLowerCase()]
+        else if (EnumObj['draft']) statusForDb = EnumObj['draft']
+        else statusForDb = 'draft'
+      }
+    } catch {}
 
     const prismaClient = await getPrisma()
     if (!prismaClient) return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
@@ -127,7 +141,7 @@ export async function POST(request: NextRequest) {
         endDate: end,
         registrationDeadline: regDeadline,
         maxParticipants: maxParticipants || null,
-        status: status,
+        status: status as any,
         prizes: prizes || {
           first: 'الجائزة الأولى',
           second: 'الجائزة الثانية',

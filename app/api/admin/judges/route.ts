@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
           email,
           password_hash: passwordHash,
           phone: phone || null,
-          role: UserRole.judge as any
+          role: UserRole.judge
         }
       })
 

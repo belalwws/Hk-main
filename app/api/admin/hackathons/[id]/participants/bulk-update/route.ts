@@ -27,7 +27,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'معرفات المشاركين مطلوبة' }, { status: 400 })
     }
 
-    if (!['APPROVED', 'REJECTED'].includes(status)) {
+    if (!['approved', 'rejected', 'APPROVED', 'REJECTED'].includes(status)) {
       return NextResponse.json({ error: 'حالة غير صحيحة' }, { status: 400 })
     }
 
@@ -58,6 +58,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'لم يتم العثور على مشاركين' }, { status: 404 })
     }
 
+    // Normalize status to lowercase
+    const normalizedStatus = status.toLowerCase()
+
     // Update participants status
     const updateResult = await prisma.participant.updateMany({
       where: {
@@ -65,8 +68,8 @@ export async function PATCH(
         hackathonId: hackathonId
       },
       data: {
-        status: (status === 'APPROVED' ? 'approved' : 'rejected') as any,
-        ...(status === 'APPROVED' ? { approvedAt: new Date() } : { rejectedAt: new Date() })
+        status: normalizedStatus as any,
+        ...(normalizedStatus === 'approved' ? { approvedAt: new Date() } : { rejectedAt: new Date() })
       }
     })
 
@@ -75,7 +78,7 @@ export async function PATCH(
     // Send emails to participants
     const emailPromises = participants.map(async (participant) => {
       try {
-        const emailContent = status === 'APPROVED' 
+        const emailContent = normalizedStatus === 'approved'
           ? getApprovalEmailContent(participant.user.name, participant.hackathon.title)
           : getRejectionEmailContent(participant.user.name, participant.hackathon.title)
 

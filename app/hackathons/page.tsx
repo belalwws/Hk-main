@@ -81,14 +81,19 @@ export default function HackathonsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
+      draft: { label: 'قريباً', color: 'bg-gray-500' },
+      open: { label: 'مفتوح للتسجيل', color: 'bg-green-500' },
+      closed: { label: 'مغلق', color: 'bg-red-500' },
+      completed: { label: 'مكتمل', color: 'bg-blue-500' },
+      // Support for uppercase versions for compatibility
       DRAFT: { label: 'قريباً', color: 'bg-gray-500' },
       OPEN: { label: 'مفتوح للتسجيل', color: 'bg-green-500' },
       CLOSED: { label: 'مغلق', color: 'bg-red-500' },
       COMPLETED: { label: 'مكتمل', color: 'bg-blue-500' }
     }
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.DRAFT
-    
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
+
     return (
       <Badge className={`${config.color} text-white`}>
         {config.label}
@@ -225,7 +230,7 @@ export default function HackathonsPage() {
                     </div>
 
                     {/* Prizes */}
-                    {(hackathon.prizes.first || hackathon.prizes.second || hackathon.prizes.third) && (
+                    {hackathon.prizes && (hackathon.prizes.first || hackathon.prizes.second || hackathon.prizes.third) && (
                       <div className="bg-gradient-to-r from-[#c3e956]/10 to-[#3ab666]/10 p-4 rounded-lg">
                         <div className="flex items-center gap-2 mb-3">
                           <Trophy className="w-5 h-5 text-[#c3e956]" />
@@ -255,7 +260,7 @@ export default function HackathonsPage() {
                     )}
 
                     {/* Categories */}
-                    {hackathon.categories.length > 0 && (
+                    {hackathon.categories && hackathon.categories.length > 0 && (
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <Target className="w-4 h-4 text-[#3ab666]" />
@@ -294,12 +299,12 @@ export default function HackathonsPage() {
                               <div className="text-center text-sm">
                                 <span className="text-[#8b7632]">الحالة: </span>
                                 <span className={`font-semibold ${
-                                  participation?.status === 'APPROVED' ? 'text-green-600' :
-                                  participation?.status === 'REJECTED' ? 'text-red-600' :
+                                  participation?.status === 'approved' ? 'text-green-600' :
+                                  participation?.status === 'rejected' ? 'text-red-600' :
                                   'text-yellow-600'
                                 }`}>
-                                  {participation?.status === 'APPROVED' ? 'مقبول' :
-                                   participation?.status === 'REJECTED' ? 'مرفوض' :
+                                  {participation?.status === 'approved' ? 'مقبول' :
+                                   participation?.status === 'rejected' ? 'مرفوض' :
                                    'في انتظار المراجعة'}
                                 </span>
                               </div>
@@ -314,8 +319,8 @@ export default function HackathonsPage() {
                         </Link>
                       ) : (
                         <Button disabled className="w-full">
-                          {hackathon.status === 'COMPLETED' ? 'انتهى الهاكاثون' :
-                           hackathon.status === 'CLOSED' ? 'مغلق' : 'التسجيل مغلق'}
+                          {hackathon.status === 'completed' ? 'انتهى الهاكاثون' :
+                           hackathon.status === 'closed' ? 'مغلق' : 'التسجيل مغلق'}
                         </Button>
                       )}
                     </div>

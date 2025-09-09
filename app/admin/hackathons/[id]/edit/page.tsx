@@ -84,8 +84,8 @@ export default function EditHackathonPage() {
             second: h.prizes?.second || '',
             third: h.prizes?.third || ''
           },
-          requirements: h.requirements?.length ? h.requirements : [''],
-          categories: h.categories?.length ? h.categories : ['']
+          requirements: Array.isArray(h.requirements) && h.requirements.length > 0 ? h.requirements : [''],
+          categories: Array.isArray(h.categories) && h.categories.length > 0 ? h.categories : ['']
         })
       } else {
         alert('فشل في جلب بيانات الهاكاثون')
@@ -105,11 +105,14 @@ export default function EditHackathonPage() {
 
     try {
       // Clean up empty requirements and categories
+      const currentRequirements = Array.isArray(formData.requirements) ? formData.requirements : []
+      const currentCategories = Array.isArray(formData.categories) ? formData.categories : []
+
       const cleanedData = {
         ...formData,
         maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
-        requirements: formData.requirements.filter(req => req.trim() !== ''),
-        categories: formData.categories.filter(cat => cat.trim() !== '')
+        requirements: currentRequirements.filter(req => req.trim() !== ''),
+        categories: currentCategories.filter(cat => cat.trim() !== '')
       }
 
       const response = await fetch(`/api/admin/hackathons/${params.id}`, {
@@ -134,21 +137,24 @@ export default function EditHackathonPage() {
   }
 
   const addRequirement = () => {
+    const currentRequirements = Array.isArray(formData.requirements) ? formData.requirements : ['']
     setFormData({
       ...formData,
-      requirements: [...formData.requirements, '']
+      requirements: [...currentRequirements, '']
     })
   }
 
   const removeRequirement = (index: number) => {
+    const currentRequirements = Array.isArray(formData.requirements) ? formData.requirements : ['']
     setFormData({
       ...formData,
-      requirements: formData.requirements.filter((_, i) => i !== index)
+      requirements: currentRequirements.filter((_, i) => i !== index)
     })
   }
 
   const updateRequirement = (index: number, value: string) => {
-    const newRequirements = [...formData.requirements]
+    const currentRequirements = Array.isArray(formData.requirements) ? formData.requirements : ['']
+    const newRequirements = [...currentRequirements]
     newRequirements[index] = value
     setFormData({
       ...formData,
@@ -157,21 +163,24 @@ export default function EditHackathonPage() {
   }
 
   const addCategory = () => {
+    const currentCategories = Array.isArray(formData.categories) ? formData.categories : ['']
     setFormData({
       ...formData,
-      categories: [...formData.categories, '']
+      categories: [...currentCategories, '']
     })
   }
 
   const removeCategory = (index: number) => {
+    const currentCategories = Array.isArray(formData.categories) ? formData.categories : ['']
     setFormData({
       ...formData,
-      categories: formData.categories.filter((_, i) => i !== index)
+      categories: currentCategories.filter((_, i) => i !== index)
     })
   }
 
   const updateCategory = (index: number, value: string) => {
-    const newCategories = [...formData.categories]
+    const currentCategories = Array.isArray(formData.categories) ? formData.categories : ['']
+    const newCategories = [...currentCategories]
     newCategories[index] = value
     setFormData({
       ...formData,
@@ -410,7 +419,7 @@ export default function EditHackathonPage() {
                 <CardDescription>شروط ومتطلبات المشاركة في الهاكاثون</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {formData.requirements.map((requirement, index) => (
+                {Array.isArray(formData.requirements) && formData.requirements.map((requirement, index) => (
                   <div key={index} className="flex gap-2">
                     <Input
                       value={requirement}
@@ -457,7 +466,7 @@ export default function EditHackathonPage() {
                 <CardDescription>تصنيفات المشاريع المقبولة في الهاكاثون</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {formData.categories.map((category, index) => (
+                {Array.isArray(formData.categories) && formData.categories.map((category, index) => (
                   <div key={index} className="flex gap-2">
                     <Input
                       value={category}

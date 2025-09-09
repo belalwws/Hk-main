@@ -60,7 +60,9 @@ export default function HackathonDetailsPage() {
     if (!hackathon) return false
     const now = new Date()
     const deadline = new Date(hackathon.registrationDeadline)
-    return hackathon.status === 'OPEN' && now < deadline
+    // Check for both lowercase and uppercase status values for compatibility
+    const isOpen = hackathon.status === 'open' || hackathon.status === 'OPEN'
+    return isOpen && now < deadline
   }
 
   const handleRegisterClick = () => {
@@ -131,13 +133,13 @@ export default function HackathonDetailsPage() {
             <p className="text-[#8b7632] text-lg">{hackathon.description}</p>
           </div>
           <Badge className={`${
-            hackathon.status === 'OPEN' ? 'bg-green-500' :
-            hackathon.status === 'CLOSED' ? 'bg-red-500' :
-            hackathon.status === 'COMPLETED' ? 'bg-blue-500' : 'bg-gray-500'
+            (hackathon.status === 'open' || hackathon.status === 'OPEN') ? 'bg-green-500' :
+            (hackathon.status === 'closed' || hackathon.status === 'CLOSED') ? 'bg-red-500' :
+            (hackathon.status === 'completed' || hackathon.status === 'COMPLETED') ? 'bg-blue-500' : 'bg-gray-500'
           } text-white`}>
-            {hackathon.status === 'OPEN' ? 'مفتوح' :
-             hackathon.status === 'CLOSED' ? 'مغلق' :
-             hackathon.status === 'COMPLETED' ? 'مكتمل' : 'مسودة'}
+            {(hackathon.status === 'open' || hackathon.status === 'OPEN') ? 'مفتوح' :
+             (hackathon.status === 'closed' || hackathon.status === 'CLOSED') ? 'مغلق' :
+             (hackathon.status === 'completed' || hackathon.status === 'COMPLETED') ? 'مكتمل' : 'مسودة'}
           </Badge>
         </motion.div>
 

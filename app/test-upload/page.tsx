@@ -40,7 +40,7 @@ export default function TestUpload() {
         setResult(`❌ فشل الرفع: ${JSON.stringify(data, null, 2)}`)
       }
     } catch (error) {
-      setResult(`💥 خطأ: ${error.message}`)
+      setResult(`💥 خطأ: ${error instanceof Error ? error.message : 'حدث خطأ غير متوقع'}`)
     } finally {
       setUploading(false)
     }

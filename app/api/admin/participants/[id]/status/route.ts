@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { ParticipantStatus } from '@prisma/client'
 import { verifyToken } from '@/lib/auth'
 import { z } from 'zod'
 
@@ -36,6 +37,12 @@ export async function PUT(
     }
 
     const { status } = validation.data
+    const statusEnum =
+      status === 'approved'
+        ? ParticipantStatus.approved
+        : status === 'rejected'
+        ? ParticipantStatus.rejected
+        : ParticipantStatus.pending
 
     // Check if participant exists
     const participant = await prisma.participant.findUnique({
@@ -53,7 +60,7 @@ export async function PUT(
     // Update participant status
     const updatedParticipant = await prisma.participant.update({
       where: { id: params.id },
-      data: { status }
+      data: { status: statusEnum }
     })
 
     // TODO: Send email notification to participant about status change

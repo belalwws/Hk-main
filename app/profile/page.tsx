@@ -32,6 +32,7 @@ interface UserProfile {
     }
     teamName?: string
     projectTitle?: string
+    projectDescription?: string
     teamRole?: string
     status: 'pending' | 'approved' | 'rejected'
     registeredAt: string
@@ -40,9 +41,11 @@ interface UserProfile {
     team?: {
       id: string
       name: string
+      teamNumber: number
       members: Array<{
         id: string
         user: {
+          id: string
           name: string
           email: string
           preferredRole: string
@@ -490,7 +493,7 @@ export default function ProfilePage() {
 
                           <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-200">
                             <p className="text-xs text-green-600 mb-1 font-medium">نوع المشاركة</p>
-                            <p className="font-semibold text-[#01645e]">{participation.teamType === 'TEAM' ? 'فريق' : 'فردي'}</p>
+                            <p className="font-semibold text-[#01645e]">{participation.team ? 'فريق' : 'فردي'}</p>
                           </div>
 
                           <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-3 rounded-lg border border-purple-200">
@@ -582,14 +585,14 @@ export default function ProfilePage() {
                               </div>
                               <div>
                                 <p className="text-sm text-[#8b7632] mb-1">عدد الأعضاء:</p>
-                                <p className="font-semibold text-[#01645e]">{participation.team.participants.length} أعضاء</p>
+                                <p className="font-semibold text-[#01645e]">{participation.team.members.length} أعضاء</p>
                               </div>
                             </div>
 
                             <div>
                               <p className="text-sm text-[#8b7632] mb-2">أعضاء الفريق:</p>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {participation.team.participants.map((member) => (
+                                {participation.team.members.map((member) => (
                                   <div key={member.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
                                     <div className="w-8 h-8 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center">
                                       <User className="w-4 h-4 text-white" />

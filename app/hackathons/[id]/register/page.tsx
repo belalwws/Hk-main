@@ -111,7 +111,10 @@ export default function HackathonRegisterPage() {
     if (!hackathon) return false
     const now = new Date()
     const deadline = new Date(hackathon.registrationDeadline)
-    return hackathon.status === 'OPEN' && now < deadline
+
+    // Check for both lowercase and uppercase status values for compatibility
+    const isOpen = hackathon.status === 'open' || hackathon.status === 'OPEN'
+    return isOpen && now < deadline
   }
 
   if (loading) {

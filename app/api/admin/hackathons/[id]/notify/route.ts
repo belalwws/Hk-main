@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import nodemailer from 'nodemailer'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, ParticipantStatus, UserRole } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -61,7 +61,7 @@ export async function POST(
       const approvedParticipants = await prisma.participant.findMany({
         where: {
           hackathonId: hackathonId,
-          status: 'approved' as any
+          status: ParticipantStatus.approved
         },
         include: {
           user: true
@@ -87,7 +87,7 @@ export async function POST(
       // جميع المستخدمين المسجلين في المنصة
       const allUsers = await prisma.user.findMany({
         where: {
-          role: 'participant' // فقط المستخدمين العاديين، مش الأدمن أو المحكمين
+          role: UserRole.participant // فقط المستخدمين العاديين، مش الأدمن أو المحكمين
         }
       })
       targetUsers = allUsers

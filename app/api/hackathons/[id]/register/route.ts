@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, HackathonStatus, UserRole, ParticipantStatus } from '@prisma/client'
 import { verifyToken } from '@/lib/auth'
 import nodemailer from 'nodemailer'
 
@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // Check if hackathon is open for registration
-    if (hackathon.status !== 'open') {
+    if (hackathon.status !== HackathonStatus.open) {
       return NextResponse.json({
         error: 'التسجيل غير متاح لهذا الهاكاثون حالياً'
       }, { status: 400 })
@@ -115,7 +115,7 @@ export async function POST(
             id: payload.userId,
             email: payload.email,
             name: payload.name,
-            role: 'participant', // Use correct enum value
+            role: UserRole.participant, // Use correct enum value
             password_hash: 'temp_hash_' + Date.now() // Temporary hash for OAuth users
           }
         })
@@ -131,7 +131,7 @@ export async function POST(
           projectDescription: projectDescription || null,
           githubRepo: githubRepo || null,
           teamRole: teamRole,
-          status: 'pending',
+          status: ParticipantStatus.pending,
           registeredAt: new Date()
         }
       })

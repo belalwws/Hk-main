@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { HackathonStatus } from '@prisma/client'
 
 // GET /api/hackathons/active - Get all active hackathons
 export async function GET(request: NextRequest) {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
       const { prisma } = await import('@/lib/prisma')
       activeHackathons = await prisma.hackathon.findMany({
         where: {
-          status: 'open',
+          status: HackathonStatus.open,
           endDate: {
             gte: new Date()
           }

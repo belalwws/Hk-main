@@ -27,7 +27,10 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Test certificate generated successfully')
 
-    return new NextResponse(certificateBuffer, {
+    // Convert Buffer -> Blob to satisfy BodyInit typings
+    const blob = new Blob([new Uint8Array(certificateBuffer)], { type: 'image/png' })
+
+    return new NextResponse(blob, {
       headers: {
         'Content-Type': 'image/png',
         'Content-Disposition': `attachment; filename="test-certificate-${participantName.replace(/\s+/g, '-')}.png"`

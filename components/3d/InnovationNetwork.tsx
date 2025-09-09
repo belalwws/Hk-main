@@ -16,7 +16,7 @@ interface Node {
 export default function InnovationNetwork() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const nodesRef = useRef<Node[]>([])
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
 
   useEffect(() => {
     const canvas = canvasRef.current
