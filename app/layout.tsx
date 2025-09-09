@@ -12,7 +12,13 @@ export const metadata: Metadata = {
   title: "هاكاثون الابتكار التقني",
   description: "منصة متكاملة لإدارة وتنظيم الهاكاثونات التقنية",
   generator: "v0.app",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({

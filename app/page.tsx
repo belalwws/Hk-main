@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-
+import React from "react"
 import { motion } from "framer-motion"
 import { Trophy, Users, Target, Lightbulb, Rocket, CheckCircle, X, Gift, Award, Code, Brain, Heart, Settings, TrendingUp, Monitor } from "lucide-react"
 import Link from "next/link"
