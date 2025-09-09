@@ -8,26 +8,26 @@ const prisma = new PrismaClient()
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Verifying user session...')
-    
+
     // Get token from cookies
     const token = request.cookies.get('auth-token')?.value
-    
+
     if (!token) {
-      console.log('❌ No auth token found')
+      console.log('❌ No auth token found in cookies')
       return NextResponse.json({ error: 'No token found' }, { status: 401 })
     }
 
-    console.log('🔑 Token found, verifying...')
-    
+    console.log('🔑 Token found, length:', token.length)
+
     // Verify token
     const payload = await verifyToken(token)
-    
+
     if (!payload || !payload.userId) {
-      console.log('❌ Invalid token payload')
+      console.log('❌ Invalid token payload:', payload)
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    console.log('✅ Token verified for user:', payload.userId)
+    console.log('✅ Token verified for user:', payload.userId, 'role:', payload.role)
     
     // Get user from database
     const user = await prisma.user.findUnique({

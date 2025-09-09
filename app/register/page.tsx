@@ -433,9 +433,16 @@ export default function RegisterPage() {
         title="🎉 تم إنشاء حسابك بنجاح!"
         message="تم تسجيل دخولك تلقائياً وسيتم توجيهك الآن إلى لوحة المشارك حيث يمكنك متابعة مشاركتك في الهاكاثونات."
         userName={registeredUser?.name}
-        onContinue={() => {
+        onContinue={async () => {
+          console.log('🚀 Modal continue clicked, navigating to dashboard...')
           setShowSuccessModal(false)
-          // Force page reload to ensure auth state is updated
+
+          // Wait a bit and refresh user context
+          await new Promise(resolve => setTimeout(resolve, 500))
+          await refreshUser()
+
+          // Force navigation
+          console.log('🎯 Forcing navigation to participant dashboard')
           window.location.href = '/participant/dashboard'
         }}
         continueText="الذهاب إلى لوحة المشارك"

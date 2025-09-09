@@ -370,6 +370,11 @@ export default function LandingPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
 
+  // Debug user state
+  React.useEffect(() => {
+    console.log('🔍 Landing page - User state:', { user: user?.email, role: user?.role, loading })
+  }, [user, loading])
+
   // جلب الهاكاثون المثبت
   useEffect(() => {
     const fetchPinnedHackathon = async () => {
@@ -631,7 +636,7 @@ export default function LandingPage() {
 
                         <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 border border-[#01645e]/20 rounded-2xl p-6 mb-8 relative">
                           {/* زر إلغاء التثبيت للأدمن */}
-                          {user && user.role === 'admin' && (
+                          {user && user.role === 'admin' && pinnedHackathon && (
                             <button
                               onClick={async () => {
                                 if (!confirm('هل أنت متأكد من إلغاء تثبيت هذا الهاكاثون من الصفحة الرئيسية؟')) {

@@ -3,14 +3,13 @@ import type { NextRequest } from "next/server"
 import { verifyToken } from "@/lib/auth"
 
 // Define protected route prefixes and their required roles
-const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "participant")[] }[] = [
+const protectedRoutes: { prefix: string; roles: ("admin" | "judge")[] }[] = [
   { prefix: "/api/teams", roles: ["judge"] },
   { prefix: "/api/submit-score", roles: ["judge"] },
   { prefix: "/api/results", roles: ["admin"] },
   { prefix: "/api/admin", roles: ["admin"] },
   { prefix: "/judge", roles: ["judge"] },
   { prefix: "/admin", roles: ["admin"] },
-  { prefix: "/participant", roles: ["participant", "admin"] },
 ]
 
 export async function middleware(request: NextRequest) {
@@ -99,5 +98,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*", "/participant/:path*"],
+  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*"],
 }

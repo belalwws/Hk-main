@@ -42,15 +42,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 				if (response.ok) {
 					const data = await response.json()
-					console.log('✅ Session verified on mount:', data.user?.email)
-					setUser(data.user)
+					if (data.user) {
+						console.log('✅ Session verified on mount:', data.user.email)
+						setUser(data.user)
+					} else {
+						console.log('❌ No user data in response')
+						setUser(null)
+					}
 				} else {
-					console.log('❌ No valid session on mount')
-					setUser(null)
+					console.log('❌ Session verification failed, status:', response.status)
+					// Don't set user to null immediately, maybe it's a temporary error
+					if (response.status === 401) {
+						setUser(null)
+					}
 				}
 			} catch (error) {
 				console.error('❌ Session verification failed on mount:', error)
-				setUser(null)
+				// Don't set user to null on network errors
 			} finally {
 				setLoading(false)
 			}
@@ -110,24 +118,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				method: 'GET',
 				credentials: 'include',
 				headers: {
-					'Cache-Control': 'no-cache'
+					'Cache-Control': 'no-cache',
+					'Pragma': 'no-cache'
 				}
 			})
-			const data = await res.json()
-			console.log('📊 Session verification response:', { status: res.status, data })
 
-			if (res.ok && data.user) {
-				console.log('✅ User session refreshed successfully:', data.user.email)
-				setUser(data.user)
-				return data.user
+			console.log('📊 Refresh response status:', res.status)
+
+			if (res.ok) {
+				const data = await res.json()
+				console.log('📊 Session verification response:', data)
+
+				if (data.user) {
+					console.log('✅ User session refreshed successfully:', data.user.email, 'role:', data.user.role)
+					setUser(data.user)
+					return data.user
+				} else {
+					console.log('❌ No user data in response')
+					return null
+				}
 			} else {
-				console.log('❌ No valid session found')
-				setUser(null)
+				console.log('❌ Session verification failed, status:', res.status)
+				if (res.status === 401) {
+					setUser(null)
+				}
 				return null
 			}
 		} catch (error) {
 			console.error('❌ Failed to refresh user:', error)
-			setUser(null)
 			return null
 		}
 	}, [])
