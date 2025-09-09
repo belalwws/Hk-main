@@ -19,6 +19,7 @@
     "build:production": "npx prisma generate --schema ./schema.prisma && next build",
     "start:production": "next start",
     "deploy:render": "npx prisma migrate deploy --schema ./schema.prisma && npm run db:seed-admin",
+    "deploy:db": "node scripts/deploy-db.js",
     "postinstall": "npx prisma generate --schema ./schema.prisma",
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build"

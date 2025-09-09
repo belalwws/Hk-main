@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         skills: skills || null,
         experience: experience || null,
         preferredRole: preferredRole || null,
-        role: 'participant'
+        role: 'participant' as any
       }
     })
 
@@ -117,9 +117,14 @@ export async function POST(request: NextRequest) {
 
 // Send welcome email function
 async function sendWelcomeEmail(email: string, name: string) {
-  // Gmail credentials (hardcoded for now)
-  const gmailUser = 'racein668@gmail.com'
-  const gmailPass = 'gpbyxbbvrzfyluqt'
+  // Gmail credentials from environment variables
+  const gmailUser = process.env.GMAIL_USER
+  const gmailPass = process.env.GMAIL_PASS
+
+  if (!gmailUser || !gmailPass) {
+    console.log('⚠️ Gmail credentials not configured, skipping email')
+    return
+  }
 
   const transporter = nodemailer.createTransport({
     service: 'gmail',
