@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { User, Mail, Phone, MapPin, Flag, Users, ArrowRight, ArrowLeft } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -83,6 +84,7 @@ const nationalities = [
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { refreshUser } = useAuth()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -113,7 +115,19 @@ export default function RegisterPage() {
       })
 
       if (response.ok) {
-        router.push('/register/success')
+        const data = await response.json()
+
+        // Check if auto-login was successful
+        if (data.autoLogin && data.user) {
+          // Refresh auth context to get the new user
+          await refreshUser()
+
+          // Redirect to participant dashboard
+          router.push('/participant/dashboard')
+        } else {
+          // Fallback to success page
+          router.push('/register/success')
+        }
       } else {
         const contentType = response.headers.get('content-type') || ''
         if (contentType.includes('application/json')) {

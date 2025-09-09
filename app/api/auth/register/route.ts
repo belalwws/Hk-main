@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import nodemailer from 'nodemailer'
+import jwt from 'jsonwebtoken'
 
 // Lazy import prisma to avoid build-time errors
 let prisma: any = null
@@ -87,6 +88,17 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ New user created successfully:', user.email, 'ID:', user.id)
 
+    // Create JWT token for automatic login
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role
+      },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '7d' }
+    )
+
     // Send welcome email
     try {
       console.log('📧 Attempting to send welcome email to:', user.email)
@@ -98,14 +110,28 @@ export async function POST(request: NextRequest) {
       // Don't fail registration if email fails
     }
 
-    return NextResponse.json({ 
-      message: 'تم التسجيل بنجاح',
+    // Create response with automatic login
+    const response = NextResponse.json({
+      message: 'تم التسجيل بنجاح وتم تسجيل الدخول تلقائياً',
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
-      }
+        email: user.email,
+        role: user.role
+      },
+      autoLogin: true
     })
+
+    // Set HTTP-only cookie for authentication
+    response.cookies.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/'
+    })
+
+    return response
 
   } catch (error) {
     console.error('❌ Error in registration:', error)
