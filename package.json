@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "build:render": "npm ci && npx prisma generate --schema ./schema.prisma && npm run build",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
@@ -31,7 +32,8 @@
     "prod:check": "node scripts/production-only-check.js",
     "no-db": "node scripts/no-db-setup.js",
     "recreate-admin": "node scripts/recreate-admin.js",
-    "add-forms": "node scripts/add-forms-tables.js",
+    "add-forms": "node scripts/add-forms-tables.js && npm run build",
+    "render:build": "npm ci && npx prisma generate --schema ./schema.prisma && npm run build",
     "postinstall": "npx prisma generate --schema ./schema.prisma",
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build"
