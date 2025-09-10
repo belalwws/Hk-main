@@ -20,16 +20,24 @@ async function getPrisma() {
 // POST /api/admin/emails/broadcast - Send broadcast emails
 export async function POST(request: NextRequest) {
   try {
+    console.log('📧 [broadcast] Starting email broadcast request')
+    
     const token = request.cookies.get('auth-token')?.value
-    if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+    if (!token) {
+      console.log('❌ [broadcast] No auth token')
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+    }
     
     const payload = await verifyToken(token)
     if (!payload || payload.role !== 'admin') {
+      console.log('❌ [broadcast] Invalid token or not admin')
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
+    console.log('✅ [broadcast] Auth verified, getting Prisma client')
     const prismaClient = await getPrisma()
     if (!prismaClient) {
+      console.log('❌ [broadcast] Failed to get Prisma client')
       return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
     }
 
@@ -48,18 +56,27 @@ export async function POST(request: NextRequest) {
 
     // Handle form email sending
     if (formId) {
+      console.log('📋 [broadcast] Form email request detected')
+      console.log('📋 [broadcast] Form ID:', formId)
+      console.log('📋 [broadcast] Subject:', subject)
+      console.log('📋 [broadcast] Recipients:', recipients)
+      console.log('📋 [broadcast] Hackathon ID:', hackathonId)
+      
       if (!subject || !content) {
+        console.log('❌ [broadcast] Missing required data')
         return NextResponse.json({ error: 'البيانات المطلوبة مفقودة' }, { status: 400 })
       }
 
       let targetUsers = []
       
       if (recipients === 'all') {
+        console.log('👥 [broadcast] Fetching all users')
         targetUsers = await prismaClient.user.findMany({
           where: { email: { not: null } },
           select: { email: true, name: true }
         })
       } else if (recipients === 'hackathon' && hackathonId) {
+        console.log('👥 [broadcast] Fetching hackathon participants')
         targetUsers = await prismaClient.user.findMany({
           where: {
             participations: {
@@ -73,14 +90,18 @@ export async function POST(request: NextRequest) {
           select: { email: true, name: true }
         })
       }
+      
+      console.log('👥 [broadcast] Found', targetUsers.length, 'target users')
 
       if (targetUsers.length === 0) {
         return NextResponse.json({ error: 'لا يوجد مستخدمون للرسالة' }, { status: 400 })
       }
 
       // Send emails
+      console.log('📧 [broadcast] Starting to send emails to', targetUsers.length, 'users')
       const emailPromises = targetUsers.map(async (user: any) => {
         try {
+          console.log('📧 [broadcast] Sending email to:', user.email)
           const result = await sendMail({
             to: user.email,
             subject: subject,
@@ -89,13 +110,14 @@ export async function POST(request: NextRequest) {
           
           // Check if email was actually sent or just mocked
           if (result.mocked) {
-            console.warn(`Email mocked for ${user.email} (mailer not configured)`)
+            console.warn(`📧 [broadcast] Email mocked for ${user.email} (mailer not configured)`)
             return { success: true, email: user.email, mocked: true }
           }
           
+          console.log('✅ [broadcast] Email sent successfully to:', user.email)
           return { success: true, email: user.email, messageId: result.messageId }
         } catch (error) {
-          console.error(`Failed to send email to ${user.email}:`, error)
+          console.error(`❌ [broadcast] Failed to send email to ${user.email}:`, error)
           return { success: false, email: user.email, error: error.message }
         }
       })
@@ -256,10 +278,12 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
     })
 
   } catch (error) {
-    console.error('Error sending broadcast emails:', error)
+    console.error('❌ [broadcast] Error sending broadcast emails:', error)
+    console.error('❌ [broadcast] Error stack:', error.stack)
     
     // Check if it's a mailer configuration error
     if (error.message && error.message.includes('mailer')) {
+      console.log('❌ [broadcast] Mailer configuration error detected')
       return NextResponse.json({ 
         error: 'البريد الإلكتروني غير مُعد بشكل صحيح. يرجى التحقق من إعدادات SMTP أو Gmail.',
         details: error.message,
@@ -267,9 +291,11 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
       }, { status: 500 })
     }
     
+    console.log('❌ [broadcast] General error, returning generic message')
     return NextResponse.json({ 
       error: 'خطأ في إرسال الإيميلات',
-      details: error.message || 'خطأ غير معروف'
+      details: error.message || 'خطأ غير معروف',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 })
   }
 }
