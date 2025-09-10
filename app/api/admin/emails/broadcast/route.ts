@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { sendMail } from '@/lib/mailer'
+import nodemailer from 'nodemailer'
 
 // Lazy import prisma to avoid build-time errors
 let prisma: any = null
@@ -15,6 +15,40 @@ async function getPrisma() {
     }
   }
   return prisma
+}
+
+// Send email function using same method as register
+async function sendEmailDirect(to: string, subject: string, html: string) {
+  const gmailUser = process.env.GMAIL_USER
+  const gmailPass = process.env.GMAIL_PASS
+
+  if (!gmailUser || !gmailPass) {
+    console.log('⚠️ Gmail credentials not configured, skipping email')
+    return { success: false, mocked: true }
+  }
+
+  const transporter = nodemailer.createTransporter({
+    service: 'gmail',
+    auth: {
+      user: gmailUser,
+      pass: gmailPass
+    }
+  })
+
+  try {
+    const result = await transporter.sendMail({
+      from: `منصة هاكاثون الابتكار التقني <${gmailUser}>`,
+      to: to,
+      subject: subject,
+      html: html
+    })
+    
+    console.log('✅ Email sent successfully:', result.messageId)
+    return { success: true, messageId: result.messageId }
+  } catch (error) {
+    console.error('❌ Failed to send email:', error)
+    throw error
+  }
 }
 
 // POST /api/admin/emails/broadcast - Send broadcast emails
@@ -97,16 +131,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'لا يوجد مستخدمون للرسالة' }, { status: 400 })
       }
 
-      // Send emails
+      // Send emails using direct method
       console.log('📧 [broadcast] Starting to send emails to', targetUsers.length, 'users')
       const emailPromises = targetUsers.map(async (user: any) => {
         try {
           console.log('📧 [broadcast] Sending email to:', user.email)
-          const result = await sendMail({
-            to: user.email,
-            subject: subject,
-            html: content.replace(/\n/g, '<br>')
-          })
+          const result = await sendEmailDirect(
+            user.email,
+            subject,
+            content.replace(/\n/g, '<br>')
+          )
           
           // Check if email was actually sent or just mocked
           if (result.mocked) {
