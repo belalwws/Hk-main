@@ -1,21 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import nodemailer from 'nodemailer'
-
-// Lazy import prisma to avoid build-time errors
-let prisma: any = null
-async function getPrisma() {
-  if (!prisma) {
-    try {
-      const { prisma: prismaClient } = await import('@/lib/prisma')
-      prisma = prismaClient
-    } catch (error) {
-      console.error('Failed to import prisma:', error)
-      return null
-    }
-  }
-  return prisma
-}
 
 // Send email function using same method as register
 async function sendEmailDirect(to: string, subject: string, html: string) {
@@ -68,12 +54,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
-    console.log('✅ [broadcast] Auth verified, getting Prisma client')
-    const prismaClient = await getPrisma()
-    if (!prismaClient) {
-      console.log('❌ [broadcast] Failed to get Prisma client')
-      return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
-    }
+    console.log('✅ [broadcast] Auth verified, using Prisma client')
 
     const body = await request.json()
     const { 
@@ -105,13 +86,13 @@ export async function POST(request: NextRequest) {
       
       if (recipients === 'all') {
         console.log('👥 [broadcast] Fetching all users')
-        targetUsers = await prismaClient.user.findMany({
+        targetUsers = await prisma.user.findMany({
           where: { email: { not: null } },
           select: { email: true, name: true }
         })
       } else if (recipients === 'hackathon' && hackathonId) {
         console.log('👥 [broadcast] Fetching hackathon participants')
-        targetUsers = await prismaClient.user.findMany({
+        targetUsers = await prisma.user.findMany({
           where: {
             participations: {
               some: {
@@ -184,7 +165,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get users data
-    const users = await prismaClient.user.findMany({
+    const users = await prisma.user.findMany({
       where: {
         id: { in: selectedUsers }
       },
@@ -198,7 +179,7 @@ export async function POST(request: NextRequest) {
     // Get hackathon data if selected
     let hackathon = null
     if (selectedHackathon) {
-      hackathon = await prismaClient.hackathon.findUnique({
+      hackathon = await prisma.hackathon.findUnique({
         where: { id: selectedHackathon }
       })
     }
