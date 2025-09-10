@@ -105,13 +105,13 @@ export async function POST(request: NextRequest) {
       const failed = results.filter(r => !r.success).length
       const mocked = results.filter(r => r.mocked).length
 
-      let message = `تم إرسال ${successful} رسالة بنجاح`
-      if (failed > 0) message += `، فشل ${failed} رسالة`
-      if (mocked > 0) message += `، تم محاكاة ${mocked} رسالة (البريد غير مُعد)`
+      let responseMessage = `تم إرسال ${successful} رسالة بنجاح`
+      if (failed > 0) responseMessage += `، فشل ${failed} رسالة`
+      if (mocked > 0) responseMessage += `، تم محاكاة ${mocked} رسالة (البريد غير مُعد)`
 
       return NextResponse.json({
         success: true,
-        message: message,
+        message: responseMessage,
         details: results,
         stats: {
           total: targetUsers.length,
@@ -239,13 +239,13 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
     const failed = results.filter(r => !r.success).length
     const mocked = results.filter(r => r.mocked).length
 
-    let message = `تم إرسال ${successful} رسالة بنجاح`
-    if (failed > 0) message += `، فشل ${failed} رسالة`
-    if (mocked > 0) message += `، تم محاكاة ${mocked} رسالة (البريد غير مُعد)`
+    let responseMessage = `تم إرسال ${successful} رسالة بنجاح`
+    if (failed > 0) responseMessage += `، فشل ${failed} رسالة`
+    if (mocked > 0) responseMessage += `، تم محاكاة ${mocked} رسالة (البريد غير مُعد)`
 
     return NextResponse.json({ 
       success: true,
-      message: message,
+      message: responseMessage,
       details: results,
       stats: {
         total: emailPromises.length,
