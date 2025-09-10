@@ -743,7 +743,7 @@ export default function HackathonManagementPage() {
                           <SelectValue placeholder="جميع المدن" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">جميع المدن</SelectItem>
+                          <SelectItem value="all">جميع المدن</SelectItem>
                           {uniqueCities.map(city => (
                             <SelectItem key={city} value={city}>{city}</SelectItem>
                           ))}
@@ -757,7 +757,7 @@ export default function HackathonManagementPage() {
                           <SelectValue placeholder="جميع الجنسيات" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">جميع الجنسيات</SelectItem>
+                          <SelectItem value="all">جميع الجنسيات</SelectItem>
                           {uniqueNationalities.map(nationality => (
                             <SelectItem key={nationality} value={nationality}>{nationality}</SelectItem>
                           ))}
