@@ -8,6 +8,7 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
+    "start:production": "npm run build && next start",
     "postbuild": "next build",
     "start:dev": "next start",
     "DISABLED-db:push": "echo '🚫 DATABASE OPERATIONS DISABLED FOR SAFETY'",

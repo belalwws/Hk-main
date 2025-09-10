@@ -43,7 +43,7 @@ export default function EditHackathonPage() {
     endDate: '',
     registrationDeadline: '',
     maxParticipants: '',
-    status: 'DRAFT' as const,
+    status: 'draft' as const,
     prizes: {
       first: '',
       second: '',
@@ -78,7 +78,7 @@ export default function EditHackathonPage() {
           endDate: formatDate(h.endDate),
           registrationDeadline: formatDate(h.registrationDeadline),
           maxParticipants: h.maxParticipants?.toString() || '',
-          status: h.status || 'DRAFT',
+          status: h.status || 'draft',
           prizes: {
             first: h.prizes?.first || '',
             second: h.prizes?.second || '',

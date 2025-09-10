@@ -99,7 +99,7 @@ export default function NotifyPage() {
 
   // Form state
   const [targetAudience, setTargetAudience] = useState('all')
-  const [filters, setFilters] = useState({ city: '', nationality: '' })
+  const [filters, setFilters] = useState({ city: 'all', nationality: 'all' })
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [includeHackathonDetails, setIncludeHackathonDetails] = useState(true)
@@ -358,6 +358,7 @@ export default function NotifyPage() {
                           <SelectValue placeholder="اختر المدينة" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="all">جميع المدن</SelectItem>
                           <SelectItem value="الرياض">الرياض</SelectItem>
                           <SelectItem value="جدة">جدة</SelectItem>
                           <SelectItem value="الدمام">الدمام</SelectItem>
@@ -376,6 +377,7 @@ export default function NotifyPage() {
                           <SelectValue placeholder="اختر الجنسية" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="all">جميع الجنسيات</SelectItem>
                           <SelectItem value="سعودي">سعودي</SelectItem>
                           <SelectItem value="مقيم">مقيم</SelectItem>
                         </SelectContent>

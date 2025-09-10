@@ -22,7 +22,7 @@ export default function CreateHackathonPage() {
     endDate: '',
     registrationDeadline: '',
     maxParticipants: '',
-    status: 'DRAFT',
+    status: 'draft',
     prizes: {
       first: '',
       second: '',
