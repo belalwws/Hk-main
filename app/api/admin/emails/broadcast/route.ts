@@ -27,7 +27,7 @@ async function sendEmailDirect(to: string, subject: string, html: string) {
     return { success: false, mocked: true }
   }
 
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: gmailUser,
