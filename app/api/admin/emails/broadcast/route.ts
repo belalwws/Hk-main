@@ -81,12 +81,19 @@ export async function POST(request: NextRequest) {
       // Send emails
       const emailPromises = targetUsers.map(async (user: any) => {
         try {
-          await sendMail({
+          const result = await sendMail({
             to: user.email,
             subject: subject,
             html: content.replace(/\n/g, '<br>')
           })
-          return { success: true, email: user.email }
+          
+          // Check if email was actually sent or just mocked
+          if (result.mocked) {
+            console.warn(`Email mocked for ${user.email} (mailer not configured)`)
+            return { success: true, email: user.email, mocked: true }
+          }
+          
+          return { success: true, email: user.email, messageId: result.messageId }
         } catch (error) {
           console.error(`Failed to send email to ${user.email}:`, error)
           return { success: false, email: user.email, error: error.message }
@@ -96,11 +103,22 @@ export async function POST(request: NextRequest) {
       const results = await Promise.all(emailPromises)
       const successful = results.filter(r => r.success).length
       const failed = results.filter(r => !r.success).length
+      const mocked = results.filter(r => r.mocked).length
+
+      let message = `تم إرسال ${successful} رسالة بنجاح`
+      if (failed > 0) message += `، فشل ${failed} رسالة`
+      if (mocked > 0) message += `، تم محاكاة ${mocked} رسالة (البريد غير مُعد)`
 
       return NextResponse.json({
         success: true,
-        message: `تم إرسال ${successful} رسالة بنجاح، فشل ${failed} رسالة`,
-        details: results
+        message: message,
+        details: results,
+        stats: {
+          total: targetUsers.length,
+          successful,
+          failed,
+          mocked
+        }
       })
     }
 
@@ -200,25 +218,59 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
 </html>
       `
 
-      return sendMail({
-        to: user.email,
-        subject: emailSubject,
-        text: emailContent,
-        html: emailHtml
-      })
+      try {
+        const result = await sendMail({
+          to: user.email,
+          subject: emailSubject,
+          text: emailContent,
+          html: emailHtml
+        })
+        
+        return { success: true, email: user.email, messageId: result.messageId, mocked: result.mocked }
+      } catch (error) {
+        console.error(`Failed to send email to ${user.email}:`, error)
+        return { success: false, email: user.email, error: error.message }
+      }
     })
 
     // Wait for all emails to be sent
-    await Promise.all(emailPromises)
+    const results = await Promise.all(emailPromises)
+    const successful = results.filter(r => r.success).length
+    const failed = results.filter(r => !r.success).length
+    const mocked = results.filter(r => r.mocked).length
+
+    let message = `تم إرسال ${successful} رسالة بنجاح`
+    if (failed > 0) message += `، فشل ${failed} رسالة`
+    if (mocked > 0) message += `، تم محاكاة ${mocked} رسالة (البريد غير مُعد)`
 
     return NextResponse.json({ 
-      message: `تم إرسال ${emailPromises.length} إيميل بنجاح`,
-      sentCount: emailPromises.length
+      success: true,
+      message: message,
+      details: results,
+      stats: {
+        total: emailPromises.length,
+        successful,
+        failed,
+        mocked
+      }
     })
 
   } catch (error) {
     console.error('Error sending broadcast emails:', error)
-    return NextResponse.json({ error: 'خطأ في إرسال الإيميلات' }, { status: 500 })
+    
+    // Check if it's a mailer configuration error
+    if (error.message && error.message.includes('mailer')) {
+      return NextResponse.json({ 
+        error: 'البريد الإلكتروني غير مُعد بشكل صحيح. يرجى التحقق من إعدادات SMTP أو Gmail.',
+        details: error.message,
+        mailerConfigured: false
+      }, { status: 500 })
+    }
+    
+    return NextResponse.json({ 
+      error: 'خطأ في إرسال الإيميلات',
+      details: error.message || 'خطأ غير معروف'
+    }, { status: 500 })
   }
 }
 
