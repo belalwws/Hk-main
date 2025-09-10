@@ -233,7 +233,7 @@ export default function EmailBroadcastPage() {
                       <SelectValue placeholder="اختر هاكاثون للترويج له" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">بدون هاكاثون محدد</SelectItem>
+                      <SelectItem value="none">بدون هاكاثون محدد</SelectItem>
                       {hackathons.map((hackathon) => (
                         <SelectItem key={hackathon.id} value={hackathon.id}>
                           {hackathon.title}
