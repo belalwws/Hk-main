@@ -365,7 +365,7 @@ import AnimatedBlobs from "@/components/3d/AnimatedBlobs"
 
 export default function LandingPage() {
   const [showDemo, setShowDemo] = useState(false)
-  const [pinnedHackathon, setPinnedHackathon] = useState<any>(null)
+  // Removed pinned hackathon functionality
   const router = useRouter()
   const { user, loading } = useAuth()
 
@@ -375,21 +375,7 @@ export default function LandingPage() {
   }, [user, loading])
 
   // جلب الهاكاثون المثبت
-  useEffect(() => {
-    const fetchPinnedHackathon = async () => {
-      try {
-        const response = await fetch('/api/hackathons/pinned')
-        if (response.ok) {
-          const data = await response.json()
-          setPinnedHackathon(data.hackathon)
-        }
-      } catch (error) {
-        console.error('Error fetching pinned hackathon:', error)
-      }
-    }
-
-    fetchPinnedHackathon()
-  }, [])
+  // Removed pinned hackathon fetch
 
   if (loading) {
     return (
@@ -622,89 +608,7 @@ export default function LandingPage() {
                   </div>
                 </motion.div>
 
-                    {pinnedHackathon ? (
-                      // عرض الهاكاثون المثبت
-                      <>
-                        <h1 className="text-4xl md:text-6xl font-bold text-[#01645e] mb-6 leading-tight">
-                          {pinnedHackathon.title}
-                </h1>
-
-                <p className="text-xl md:text-2xl text-[#8b7632] mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                          {pinnedHackathon.description}
-                        </p>
-
-                        <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 border border-[#01645e]/20 rounded-2xl p-6 mb-8 relative">
-                          {/* زر إلغاء التثبيت للأدمن */}
-                          {user && user.role === 'admin' && pinnedHackathon && (
-                            <button
-                              onClick={async () => {
-                                if (!confirm('هل أنت متأكد من إلغاء تثبيت هذا الهاكاثون من الصفحة الرئيسية؟')) {
-                                  return
-                                }
-
-                                try {
-                                  console.log('🔄 Unpinning hackathon:', pinnedHackathon.id)
-
-                                  const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}/pin`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ isPinned: false })
-                                  })
-
-                                  const data = await response.json()
-                                  console.log('📍 Unpin response:', data)
-
-                                  if (response.ok) {
-                                    setPinnedHackathon(null)
-                                    alert('✅ تم إلغاء تثبيت الهاكاثون من الصفحة الرئيسية')
-                                  } else {
-                                    console.error('❌ Unpin failed:', data)
-                                    alert(`❌ خطأ: ${data.error || 'حدث خطأ في إلغاء التثبيت'}`)
-                                  }
-                                } catch (error) {
-                                  console.error('❌ Error unpinning hackathon:', error)
-                                  alert('❌ حدث خطأ في الاتصال')
-                                }
-                              }}
-                              className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl flex items-center gap-2 text-sm font-bold border-2 border-white"
-                              title="إلغاء التثبيت من الصفحة الرئيسية"
-                            >
-                              <X className="w-4 h-4" />
-                              <span className="hidden sm:inline">إلغاء التثبيت</span>
-                              <span className="sm:hidden">إلغاء</span>
-                            </button>
-                          )}
-
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                            <div>
-                              <div className="text-2xl font-bold text-[#01645e]">{pinnedHackathon.participantCount || 0}</div>
-                              <div className="text-sm text-[#8b7632]">مشارك</div>
-                            </div>
-                            <div>
-                              <div className="text-2xl font-bold text-[#3ab666]">
-                                {new Date(pinnedHackathon.registrationDeadline).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
-                              </div>
-                              <div className="text-sm text-[#8b7632]">آخر موعد</div>
-                            </div>
-                            <div>
-                              <div className="text-2xl font-bold text-[#c3e956]">
-                                {new Date(pinnedHackathon.startDate).toLocaleDateString('ar-SA', { day: 'numeric', month: 'short' })}
-                              </div>
-                              <div className="text-sm text-[#8b7632]">تاريخ البداية</div>
-                            </div>
-                            <div>
-                              <div className="text-2xl font-bold text-[#8b7632]">
-                                {(pinnedHackathon.status === 'open' || pinnedHackathon.status === 'OPEN') ? '🟢 مفتوح' :
-                                 (pinnedHackathon.status === 'draft' || pinnedHackathon.status === 'DRAFT') ? '🟡 قريباً' :
-                                 (pinnedHackathon.status === 'closed' || pinnedHackathon.status === 'CLOSED') ? '🔴 مغلق' : '✅ منتهي'}
-                              </div>
-                              <div className="text-sm text-[#8b7632]">الحالة</div>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      // عرض الـ Hero Section المحسن
+                    {
                       <>
                         <motion.h1
                           initial={{ opacity: 0, y: 30 }}
@@ -768,7 +672,7 @@ export default function LandingPage() {
                       transition={{ delay: 1.2, duration: 0.8 }}
                       className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4"
                     >
-                      <Link href={pinnedHackathon ? `/hackathons/${pinnedHackathon.id}/register` : "/register"}>
+                      <Link href="/register">
                         <motion.button
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
@@ -785,7 +689,7 @@ export default function LandingPage() {
                       <Rocket className="w-8 h-8" />
                           </motion.div>
                           <span className="relative z-10">
-                            {pinnedHackathon ? 'سجل في الهاكاثون' : 'ابدأ رحلتك الآن'}
+                            ابدأ رحلتك الآن
                           </span>
                     </motion.button>
                   </Link>
@@ -861,7 +765,7 @@ export default function LandingPage() {
                       أهلاً بك، <span className="text-[#3ab666]">{user.name}</span>
                     </h1>
 
-                    {pinnedHackathon ? (
+                    {false && (
                       // عرض الهاكاثون المثبت للمستخدمين المسجلين
                       <>
                         <motion.div
@@ -916,7 +820,7 @@ export default function LandingPage() {
                     )}
 
                     <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-                      {pinnedHackathon && pinnedHackathon.status === 'OPEN' && (
+                      {false && (
                         <Link href={`/hackathons/${pinnedHackathon.id}/register`}>
                           <motion.button
                             whileHover={{ scale: 1.05, y: -2 }}
@@ -946,7 +850,7 @@ export default function LandingPage() {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className={`${pinnedHackathon && pinnedHackathon.status === 'OPEN' ? 'bg-white text-[#01645e]' : 'bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white'} px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 w-full sm:w-auto`}
+                          className="bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 w-full sm:w-auto"
                         >
                           <Settings className="w-6 h-6" />
                           {user.role === 'admin' ? 'لوحة التحكم' :

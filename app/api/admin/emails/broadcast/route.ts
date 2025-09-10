@@ -37,11 +37,74 @@ export async function POST(request: NextRequest) {
     const { 
       subject,
       message,
+      content,
       selectedUsers,
       selectedHackathon,
-      includeHackathonDetails = false
+      includeHackathonDetails = false,
+      recipients,
+      hackathonId,
+      formId
     } = body
 
+    // Handle form email sending
+    if (formId) {
+      if (!subject || !content) {
+        return NextResponse.json({ error: 'البيانات المطلوبة مفقودة' }, { status: 400 })
+      }
+
+      let targetUsers = []
+      
+      if (recipients === 'all') {
+        targetUsers = await prismaClient.user.findMany({
+          where: { email: { not: null } },
+          select: { email: true, name: true }
+        })
+      } else if (recipients === 'hackathon' && hackathonId) {
+        targetUsers = await prismaClient.user.findMany({
+          where: {
+            participations: {
+              some: {
+                hackathonId: hackathonId,
+                status: 'accepted'
+              }
+            },
+            email: { not: null }
+          },
+          select: { email: true, name: true }
+        })
+      }
+
+      if (targetUsers.length === 0) {
+        return NextResponse.json({ error: 'لا يوجد مستخدمون للرسالة' }, { status: 400 })
+      }
+
+      // Send emails
+      const emailPromises = targetUsers.map(async (user: any) => {
+        try {
+          await sendMail({
+            to: user.email,
+            subject: subject,
+            html: content.replace(/\n/g, '<br>')
+          })
+          return { success: true, email: user.email }
+        } catch (error) {
+          console.error(`Failed to send email to ${user.email}:`, error)
+          return { success: false, email: user.email, error: error.message }
+        }
+      })
+
+      const results = await Promise.all(emailPromises)
+      const successful = results.filter(r => r.success).length
+      const failed = results.filter(r => !r.success).length
+
+      return NextResponse.json({
+        success: true,
+        message: `تم إرسال ${successful} رسالة بنجاح، فشل ${failed} رسالة`,
+        details: results
+      })
+    }
+
+    // Original broadcast email logic
     if (!subject || !message || !selectedUsers || selectedUsers.length === 0) {
       return NextResponse.json({ error: 'البيانات المطلوبة مفقودة' }, { status: 400 })
     }

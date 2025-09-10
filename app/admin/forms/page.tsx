@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, FileText, Eye, Edit, Trash2, Users, Calendar, BarChart3 } from 'lucide-react'
+import { Plus, FileText, Eye, Edit, Trash2, Users, Calendar, BarChart3, Share2, Mail, Copy, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -28,6 +28,14 @@ export default function FormsManagement() {
   const router = useRouter()
   const [forms, setForms] = useState<Form[]>([])
   const [loading, setLoading] = useState(true)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [emailModalOpen, setEmailModalOpen] = useState(false)
+  const [selectedForm, setSelectedForm] = useState<Form | null>(null)
+  const [emailContent, setEmailContent] = useState('')
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailRecipients, setEmailRecipients] = useState<'all' | 'hackathon'>('all')
+  const [selectedHackathon, setSelectedHackathon] = useState('')
+  const [hackathons, setHackathons] = useState<any[]>([])
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -48,6 +56,71 @@ export default function FormsManagement() {
       console.error('Error fetching forms:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchHackathons = async () => {
+    try {
+      const response = await fetch('/api/admin/hackathons')
+      if (response.ok) {
+        const data = await response.json()
+        setHackathons(data.hackathons || [])
+      }
+    } catch (error) {
+      console.error('Error fetching hackathons:', error)
+    }
+  }
+
+  const copyFormLink = async (formId: string) => {
+    const formUrl = `${window.location.origin}/forms/${formId}`
+    try {
+      await navigator.clipboard.writeText(formUrl)
+      alert('تم نسخ رابط الفورم بنجاح!')
+    } catch (error) {
+      console.error('Error copying link:', error)
+      alert('حدث خطأ في نسخ الرابط')
+    }
+  }
+
+  const openShareModal = (form: Form) => {
+    setSelectedForm(form)
+    setShareModalOpen(true)
+  }
+
+  const openEmailModal = (form: Form) => {
+    setSelectedForm(form)
+    setEmailSubject(`استطلاع: ${form.title}`)
+    setEmailContent(`مرحباً،\n\nنود دعوتكم للمشاركة في الاستطلاع التالي:\n\n${form.title}\n${form.description}\n\nيمكنكم الوصول للاستطلاع عبر الرابط التالي:\n${window.location.origin}/forms/${form.id}\n\nشكراً لكم`)
+    setEmailModalOpen(true)
+    fetchHackathons()
+  }
+
+  const sendFormEmail = async () => {
+    if (!selectedForm) return
+
+    try {
+      const response = await fetch('/api/admin/emails/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: emailSubject,
+          content: emailContent,
+          recipients: emailRecipients,
+          hackathonId: emailRecipients === 'hackathon' ? selectedHackathon : null,
+          formId: selectedForm.id
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        alert('تم إرسال البريد الإلكتروني بنجاح!')
+        setEmailModalOpen(false)
+      } else {
+        alert(`خطأ: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
+      alert('حدث خطأ في إرسال البريد الإلكتروني')
     }
   }
 
@@ -240,27 +313,59 @@ export default function FormsManagement() {
                         </div>
                       </div>
 
-                      <div className="flex gap-2 mt-6">
-                        <Link href={`/admin/forms/${form.id}/responses`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
-                            <BarChart3 className="w-4 h-4 ml-1" />
-                            الردود
+                      <div className="space-y-3 mt-6">
+                        <div className="flex gap-2">
+                          <Link href={`/admin/forms/${form.id}/responses`} className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
+                              <BarChart3 className="w-4 h-4 ml-1" />
+                              الردود
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/forms/${form.id}/edit`} className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
+                              <Edit className="w-4 h-4 ml-1" />
+                              تعديل
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteForm(form.id)}
+                            className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </Button>
-                        </Link>
-                        <Link href={`/admin/forms/${form.id}/edit`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
-                            <Edit className="w-4 h-4 ml-1" />
-                            تعديل
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyFormLink(form.id)}
+                            className="flex-1 border-[#8b7632] text-[#8b7632] hover:bg-[#8b7632] hover:text-white"
+                          >
+                            <Copy className="w-4 h-4 ml-1" />
+                            نسخ الرابط
                           </Button>
-                        </Link>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteForm(form.id)}
-                          className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openShareModal(form)}
+                            className="flex-1 border-[#6c757d] text-[#6c757d] hover:bg-[#6c757d] hover:text-white"
+                          >
+                            <Share2 className="w-4 h-4 ml-1" />
+                            مشاركة
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEmailModal(form)}
+                            className="flex-1 border-[#c3e956] text-[#c3e956] hover:bg-[#c3e956] hover:text-black"
+                          >
+                            <Mail className="w-4 h-4 ml-1" />
+                            إرسال
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -269,6 +374,134 @@ export default function FormsManagement() {
             </div>
           )}
         </motion.div>
+
+        {/* Share Modal */}
+        {shareModalOpen && selectedForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold text-[#01645e] mb-4">مشاركة الفورم</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">رابط الفورم:</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={`${window.location.origin}/forms/${selectedForm.id}`}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <Button
+                      onClick={() => copyFormLink(selectedForm.id)}
+                      size="sm"
+                      className="bg-[#01645e] text-white"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    onClick={() => setShareModalOpen(false)}
+                    variant="outline"
+                  >
+                    إغلاق
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Email Modal */}
+        {emailModalOpen && selectedForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <h3 className="text-xl font-bold text-[#01645e] mb-4">إرسال الفورم بالبريد الإلكتروني</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">الموضوع:</label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">المستلمون:</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        value="all"
+                        checked={emailRecipients === 'all'}
+                        onChange={(e) => setEmailRecipients(e.target.value as 'all')}
+                        className="ml-2"
+                      />
+                      جميع المستخدمين
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        value="hackathon"
+                        checked={emailRecipients === 'hackathon'}
+                        onChange={(e) => setEmailRecipients(e.target.value as 'hackathon')}
+                        className="ml-2"
+                      />
+                      المشاركون في هاكثون معين
+                    </label>
+                  </div>
+                </div>
+
+                {emailRecipients === 'hackathon' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">اختر الهاكثون:</label>
+                    <select
+                      value={selectedHackathon}
+                      onChange={(e) => setSelectedHackathon(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">اختر الهاكثون</option>
+                      {hackathons.map((hackathon) => (
+                        <option key={hackathon.id} value={hackathon.id}>
+                          {hackathon.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">المحتوى:</label>
+                  <textarea
+                    value={emailContent}
+                    onChange={(e) => setEmailContent(e.target.value)}
+                    rows={8}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    onClick={() => setEmailModalOpen(false)}
+                    variant="outline"
+                  >
+                    إلغاء
+                  </Button>
+                  <Button
+                    onClick={sendFormEmail}
+                    className="bg-[#01645e] text-white"
+                    disabled={!emailSubject || !emailContent || (emailRecipients === 'hackathon' && !selectedHackathon)}
+                  >
+                    <Send className="w-4 h-4 ml-1" />
+                    إرسال
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
