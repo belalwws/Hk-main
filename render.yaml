@@ -6,6 +6,7 @@ services:
     region: oregon
     plan: starter
     buildCommand: npm ci && npx prisma generate --schema ./schema.prisma && npm run build
+    installCommand: npm ci
     startCommand: npm start
     healthCheckPath: /
     envVars:
