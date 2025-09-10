@@ -51,11 +51,13 @@ async function getMailer() {
 
   // 2) Fallback: Gmail service if provided
   if (gmailUser && gmailPass) {
+    console.log('🔧 [mailer] Creating Gmail transporter...')
     cachedTransporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: gmailUser, pass: gmailPass },
     })
     cachedStatus = { installed: true, provider: 'gmail', configured: true }
+    console.log('✅ [mailer] Gmail transporter created successfully')
     return cachedTransporter
   }
 
@@ -72,9 +74,14 @@ async function getMailer() {
 
 export async function sendMail(options: MailOptions) {
   console.log('📧 [mailer] Attempting to send email to:', options.to)
+  console.log('🔍 [mailer] Environment check:')
+  console.log('🔍 [mailer] GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET')
+  console.log('🔍 [mailer] GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET' : 'NOT SET')
 
   const transporter = await getMailer()
   const from = process.env.MAIL_FROM || `Hackathon <${process.env.SMTP_USER || process.env.GMAIL_USER || 'no-reply@example.com'}>`
+
+  console.log('🔍 [mailer] Transporter status:', transporter ? 'AVAILABLE' : 'NOT AVAILABLE')
 
   // If mailer not available (no nodemailer or env), log and noop so build/dev works
   if (!transporter) {
@@ -93,9 +100,18 @@ export async function sendMail(options: MailOptions) {
   }
 
   console.log('✅ [mailer] Transporter ready, sending real email...')
-  const result = await transporter.sendMail({ from, ...options })
-  console.log('✅ [mailer] Email sent successfully:', result.messageId)
-  return Object.assign(result || {}, { actuallyMailed: true })
+  console.log('📧 [mailer] From:', from)
+  console.log('📧 [mailer] To:', options.to)
+  console.log('📧 [mailer] Subject:', options.subject)
+  
+  try {
+    const result = await transporter.sendMail({ from, ...options })
+    console.log('✅ [mailer] Email sent successfully:', result.messageId)
+    return Object.assign(result || {}, { actuallyMailed: true })
+  } catch (error) {
+    console.error('❌ [mailer] Failed to send email:', error)
+    throw error
+  }
 }
 
 export function mailerStatus() {
