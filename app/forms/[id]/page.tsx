@@ -154,141 +154,206 @@ export default function FormPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 via-[#3ab666]/5 to-[#01645e]/10 py-8 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-[#c3e956]/20 to-[#3ab666]/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-[#01645e]/20 to-[#3ab666]/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-[#c3e956]/10 to-[#01645e]/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
+
+      <div className="container mx-auto px-4 max-w-3xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <Card className="shadow-xl">
-            <CardHeader className="text-center bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white">
-              <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-                <FileText className="w-6 h-6" />
-                {form.title}
-              </CardTitle>
-              {form.description && (
-                <CardDescription className="text-white/90 text-lg">
-                  {form.description}
-                </CardDescription>
-              )}
+          <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+            <CardHeader className="text-center bg-gradient-to-r from-[#01645e] via-[#3ab666] to-[#c3e956] text-white relative overflow-hidden">
+              {/* Decorative Elements */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 animate-pulse"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#c3e956] to-[#01645e]"></div>
+              
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="relative z-10"
+              >
+                <CardTitle className="text-3xl font-bold flex items-center justify-center gap-3 mb-2">
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  >
+                    <FileText className="w-8 h-8" />
+                  </motion.div>
+                  {form.title}
+                </CardTitle>
+                {form.description && (
+                  <CardDescription className="text-white/90 text-lg leading-relaxed">
+                    {form.description}
+                  </CardDescription>
+                )}
+              </motion.div>
             </CardHeader>
-            <CardContent className="p-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {form.fields.map((field) => (
-                  <div key={field.id} className="space-y-2">
-                    <label className="block text-sm font-medium text-[#01645e]">
-                      {field.label}
-                      {field.required && <span className="text-red-500 mr-1">*</span>}
-                    </label>
+            <CardContent className="p-8">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {form.fields.map((field, index) => (
+                  <motion.div
+                    key={field.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1, duration: 0.5 }}
+                    className="space-y-3"
+                  >
+                    <div className="relative">
+                      <label className="block text-lg font-semibold text-[#01645e] mb-2 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-gradient-to-r from-[#3ab666] to-[#c3e956] rounded-full"></div>
+                        {field.label}
+                        {field.required && <span className="text-red-500 text-xl">*</span>}
+                      </label>
+                      
+                      {field.type === 'text' && (
+                        <motion.input
+                          type="text"
+                          value={formData[field.id] || ''}
+                          onChange={(e) => handleInputChange(field.id, e.target.value)}
+                          required={field.required}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#01645e]/20 focus:border-[#01645e] transition-all duration-300 bg-white/80 backdrop-blur-sm text-lg"
+                          placeholder={`أدخل ${field.label.toLowerCase()}`}
+                          whileFocus={{ scale: 1.02 }}
+                        />
+                      )}
                     
-                    {field.type === 'text' && (
-                      <input
-                        type="text"
-                        value={formData[field.id] || ''}
-                        onChange={(e) => handleInputChange(field.id, e.target.value)}
-                        required={field.required}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01645e]"
-                      />
-                    )}
+                      {field.type === 'textarea' && (
+                        <motion.textarea
+                          value={formData[field.id] || ''}
+                          onChange={(e) => handleInputChange(field.id, e.target.value)}
+                          required={field.required}
+                          rows={4}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#01645e]/20 focus:border-[#01645e] transition-all duration-300 bg-white/80 backdrop-blur-sm text-lg resize-none"
+                          placeholder={`اكتب ${field.label.toLowerCase()} هنا...`}
+                          whileFocus={{ scale: 1.02 }}
+                        />
+                      )}
+                      
+                      {field.type === 'select' && field.options && (
+                        <motion.select
+                          value={formData[field.id] || ''}
+                          onChange={(e) => handleInputChange(field.id, e.target.value)}
+                          required={field.required}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#01645e]/20 focus:border-[#01645e] transition-all duration-300 bg-white/80 backdrop-blur-sm text-lg appearance-none cursor-pointer"
+                          whileFocus={{ scale: 1.02 }}
+                        >
+                          <option value="">اختر من القائمة...</option>
+                          {field.options.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </motion.select>
+                      )}
                     
-                    {field.type === 'textarea' && (
-                      <textarea
-                        value={formData[field.id] || ''}
-                        onChange={(e) => handleInputChange(field.id, e.target.value)}
-                        required={field.required}
-                        rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01645e]"
-                      />
-                    )}
-                    
-                    {field.type === 'select' && field.options && (
-                      <select
-                        value={formData[field.id] || ''}
-                        onChange={(e) => handleInputChange(field.id, e.target.value)}
-                        required={field.required}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01645e]"
-                      >
-                        <option value="">اختر...</option>
-                        {field.options.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    
-                    {field.type === 'radio' && field.options && (
-                      <div className="space-y-2">
-                        {field.options.map((option) => (
-                          <label key={option} className="flex items-center">
-                            <input
-                              type="radio"
-                              name={field.id}
-                              value={option}
-                              checked={formData[field.id] === option}
-                              onChange={(e) => handleInputChange(field.id, e.target.value)}
-                              required={field.required}
-                              className="ml-2"
-                            />
-                            {option}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {field.type === 'checkbox' && field.options && (
-                      <div className="space-y-2">
-                        {field.options.map((option) => (
-                          <label key={option} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              value={option}
-                              checked={formData[field.id]?.includes(option) || false}
-                              onChange={(e) => {
-                                const currentValues = formData[field.id] || []
-                                if (e.target.checked) {
-                                  handleInputChange(field.id, [...currentValues, option])
-                                } else {
-                                  handleInputChange(field.id, currentValues.filter((v: string) => v !== option))
-                                }
-                              }}
-                              className="ml-2"
-                            />
-                            {option}
-                          </label>
-                        ))}
-                      </div>
-                    )}
+                      {field.type === 'radio' && field.options && (
+                        <div className="space-y-3">
+                          {field.options.map((option, optionIndex) => (
+                            <motion.label
+                              key={option}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: optionIndex * 0.05 }}
+                              className="flex items-center p-3 rounded-lg border-2 border-gray-100 hover:border-[#3ab666]/30 hover:bg-[#3ab666]/5 transition-all duration-300 cursor-pointer group"
+                            >
+                              <input
+                                type="radio"
+                                name={field.id}
+                                value={option}
+                                checked={formData[field.id] === option}
+                                onChange={(e) => handleInputChange(field.id, e.target.value)}
+                                required={field.required}
+                                className="w-5 h-5 text-[#01645e] border-2 border-gray-300 focus:ring-[#01645e] focus:ring-2 ml-3"
+                              />
+                              <span className="text-lg text-gray-700 group-hover:text-[#01645e] transition-colors duration-300">
+                                {option}
+                              </span>
+                            </motion.label>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {field.type === 'checkbox' && field.options && (
+                        <div className="space-y-3">
+                          {field.options.map((option, optionIndex) => (
+                            <motion.label
+                              key={option}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: optionIndex * 0.05 }}
+                              className="flex items-center p-3 rounded-lg border-2 border-gray-100 hover:border-[#c3e956]/30 hover:bg-[#c3e956]/5 transition-all duration-300 cursor-pointer group"
+                            >
+                              <input
+                                type="checkbox"
+                                value={option}
+                                checked={formData[field.id]?.includes(option) || false}
+                                onChange={(e) => {
+                                  const currentValues = formData[field.id] || []
+                                  if (e.target.checked) {
+                                    handleInputChange(field.id, [...currentValues, option])
+                                  } else {
+                                    handleInputChange(field.id, currentValues.filter((v: string) => v !== option))
+                                  }
+                                }}
+                                className="w-5 h-5 text-[#c3e956] border-2 border-gray-300 focus:ring-[#c3e956] focus:ring-2 ml-3 rounded"
+                              />
+                              <span className="text-lg text-gray-700 group-hover:text-[#01645e] transition-colors duration-300">
+                                {option}
+                              </span>
+                            </motion.label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
                   </div>
                 ))}
                 
-                <div className="flex gap-4 justify-end">
-                  <Button
-                    type="button"
-                    onClick={() => router.push('/')}
-                    variant="outline"
-                  >
-                    إلغاء
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="bg-[#01645e] text-white hover:bg-[#3ab666]"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2" />
-                        جاري الإرسال...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 ml-2" />
-                        إرسال
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex gap-4 justify-center pt-6"
+                >
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      type="button"
+                      onClick={() => router.push('/')}
+                      variant="outline"
+                      className="px-8 py-3 text-lg border-2 border-gray-300 hover:border-[#01645e] hover:text-[#01645e] transition-all duration-300"
+                    >
+                      إلغاء
+                    </Button>
+                  </motion.div>
+                  
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="px-8 py-3 text-lg bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white hover:from-[#3ab666] hover:to-[#c3e956] transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin ml-2" />
+                          جاري الإرسال...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5 ml-2" />
+                          إرسال النموذج
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.div>
               </form>
             </CardContent>
           </Card>

@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+
+// Lazy import prisma to avoid build-time errors
+let prisma: any = null
+async function getPrisma() {
+  if (!prisma) {
+    try {
+      const { prisma: prismaClient } = await import('@/lib/prisma')
+      prisma = prismaClient
+    } catch (error) {
+      console.error('Failed to import prisma:', error)
+      return null
+    }
+  }
+  return prisma
+}
 
 // GET /api/admin/forms/[id] - Get specific form
 export async function GET(
@@ -10,7 +24,12 @@ export async function GET(
   try {
     console.log('🔍 Fetching form:', params.id)
 
-    const form = await prisma.form.findUnique({
+    const prismaClient = await getPrisma()
+    if (!prismaClient) {
+      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })
+    }
+
+    const form = await prismaClient.form.findUnique({
       where: { id: params.id },
       include: {
         _count: {
@@ -74,8 +93,13 @@ export async function PUT(
     const body = await request.json()
     const { title, description, fields, status, isPublic } = body
 
+    const prismaClient = await getPrisma()
+    if (!prismaClient) {
+      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })
+    }
+
     // Check if form exists
-    const existingForm = await prisma.form.findUnique({
+    const existingForm = await prismaClient.form.findUnique({
       where: { id: params.id }
     })
 
@@ -122,7 +146,7 @@ export async function PUT(
 
     console.log('📝 Updating form with data:', { title, fieldsCount: fields.length, status })
 
-    const form = await prisma.form.update({
+    const form = await prismaClient.form.update({
       where: { id: params.id },
       data: {
         title: title.trim(),
@@ -186,8 +210,13 @@ export async function DELETE(
       )
     }
 
+    const prismaClient = await getPrisma()
+    if (!prismaClient) {
+      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })
+    }
+
     // Check if form exists
-    const existingForm = await prisma.form.findUnique({
+    const existingForm = await prismaClient.form.findUnique({
       where: { id: params.id },
       include: {
         _count: {
@@ -211,7 +240,7 @@ export async function DELETE(
     })
 
     // Delete form (responses will be deleted automatically due to cascade)
-    await prisma.form.delete({
+    await prismaClient.form.delete({
       where: { id: params.id }
     })
 
