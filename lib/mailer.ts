@@ -15,9 +15,12 @@ async function getMailer() {
   // Attempt to dynamically import nodemailer only if available
   let nodemailer: any
   try {
+    console.log('🔧 [mailer] Attempting to import nodemailer...')
     // @ts-ignore - dynamic import at runtime; avoids build-time dependency
     nodemailer = (await import('nodemailer')).default
-  } catch {
+    console.log('✅ [mailer] Nodemailer imported successfully')
+  } catch (error) {
+    console.error('❌ [mailer] Failed to import nodemailer:', error)
     cachedStatus = { installed: false, provider: null, configured: false }
     if (FORCE_SEND) throw new Error('[mailer] nodemailer not installed')
     return null
@@ -77,11 +80,14 @@ export async function sendMail(options: MailOptions) {
   console.log('🔍 [mailer] Environment check:')
   console.log('🔍 [mailer] GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET')
   console.log('🔍 [mailer] GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET' : 'NOT SET')
+  console.log('🔍 [mailer] NODE_ENV:', process.env.NODE_ENV)
 
+  console.log('🔧 [mailer] Getting transporter...')
   const transporter = await getMailer()
+  console.log('🔍 [mailer] Transporter result:', transporter ? 'AVAILABLE' : 'NOT AVAILABLE')
+  
   const from = process.env.MAIL_FROM || `Hackathon <${process.env.SMTP_USER || process.env.GMAIL_USER || 'no-reply@example.com'}>`
-
-  console.log('🔍 [mailer] Transporter status:', transporter ? 'AVAILABLE' : 'NOT AVAILABLE')
+  console.log('📧 [mailer] From address:', from)
 
   // If mailer not available (no nodemailer or env), log and noop so build/dev works
   if (!transporter) {
