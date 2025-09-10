@@ -664,7 +664,7 @@ export default function LandingPage() {
                           </div>
                         </motion.div>
                       </>
-                    )}
+                    }
 
                     <motion.div
                       initial={{ opacity: 0, y: 30 }}
@@ -765,7 +765,7 @@ export default function LandingPage() {
                       أهلاً بك، <span className="text-[#3ab666]">{user.name}</span>
                     </h1>
 
-                    {false && (
+                    {false ? (
                       // عرض الهاكاثون المثبت للمستخدمين المسجلين
                       <>
                         <motion.div
