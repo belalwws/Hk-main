@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
+import { useModal } from '@/hooks/use-modal'
 
 interface EvaluationCriterion {
   id: string
@@ -51,6 +52,7 @@ export default function JudgeEvaluation() {
   const [scores, setScores] = useState<{ [criterionId: string]: number }>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const { showSuccess, showError, showInfo, ModalComponents } = useModal()
 
   useEffect(() => {
     if (authLoading) return
@@ -112,11 +114,11 @@ export default function JudgeEvaluation() {
       // Save the final team evaluation first
       const saved = await saveEvaluation(false)
       if (saved) {
-        alert("🎉 تهانينا! لقد أكملت تقييم جميع الفرق بنجاح!\n\nشكراً لك على جهودك في التقييم.")
+        showSuccess("🎉 تهانينا! لقد أكملت تقييم جميع الفرق بنجاح!\n\nشكراً لك على جهودك في التقييم.", "🏆 تم إكمال التقييم")
         // Optionally redirect to judge dashboard
         // router.push('/judge')
       } else {
-        alert("يجب إكمال تقييم جميع المعايير قبل إنهاء التقييم")
+        showError("يجب إكمال تقييم جميع المعايير قبل إنهاء التقييم")
       }
     }
   }
@@ -181,7 +183,7 @@ export default function JudgeEvaluation() {
 
       if (response.ok) {
         if (showAlert) {
-          alert("تم حفظ التقييم بنجاح!")
+          showSuccess("تم حفظ التقييم بنجاح!")
         }
         setScores({}) // Clear scores for next team
         setCurrentCriterionIndex(0) // Reset to first criterion
@@ -189,14 +191,14 @@ export default function JudgeEvaluation() {
       } else {
         const error = await response.json()
         if (showAlert) {
-          alert(error.error || "فشل في حفظ التقييم")
+          showError(error.error || "فشل في حفظ التقييم")
         }
         return false
       }
     } catch (error) {
       console.error('Error saving evaluation:', error)
       if (showAlert) {
-        alert("حدث خطأ في حفظ التقييم")
+        showError("حدث خطأ في حفظ التقييم")
       }
       return false
     } finally {
@@ -743,6 +745,9 @@ export default function JudgeEvaluation() {
           </motion.div>
         </div>
       </div>
+
+      {/* Modal Components */}
+      <ModalComponents />
     </div>
   )
 }

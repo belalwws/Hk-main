@@ -2,11 +2,12 @@
 
 import React from "react"
 import { motion } from "framer-motion"
-import { Trophy, Users, Target, Lightbulb, Rocket, CheckCircle, X, Gift, Award, Code, Brain, Heart, Settings, TrendingUp, Monitor } from "lucide-react"
+import { Trophy, Users, Target, Lightbulb, Rocket, CheckCircle, X, Gift, Award, Code, Brain, Heart, Settings, TrendingUp, Monitor, Calendar } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
+import { useModal } from "@/hooks/use-modal"
 
 // Trophy Cup 3D Scene Component
 const TrophyCup3DScene = () => (
@@ -369,6 +370,7 @@ export default function LandingPage() {
   const [loadingPinned, setLoadingPinned] = useState(true)
   const router = useRouter()
   const { user, loading } = useAuth()
+  const { showSuccess, showError, showConfirm, ModalComponents } = useModal()
 
   // Debug user state
   React.useEffect(() => {
@@ -626,7 +628,7 @@ export default function LandingPage() {
                           >
                             🚀
                           </motion.span>
-                          التسجيل مفتوح الآن - انضم لرحلة الابتكار!
+                          {pinnedHackathon ? `${pinnedHackathon.title} - التسجيل مفتوح الآن!` : 'التسجيل مفتوح الآن - انضم لرحلة الابتكار!'}
                         </span>
                   </div>
                 </motion.div>
@@ -689,13 +691,40 @@ export default function LandingPage() {
                       </>
                     }
 
+                    {/* عرض الهاكثون المثبت للمستخدمين غير المسجلين */}
+                    {pinnedHackathon && !loadingPinned && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.0, duration: 0.8 }}
+                        className="mb-8 p-6 bg-gradient-to-r from-[#01645e]/5 to-[#3ab666]/5 border border-[#01645e]/20 rounded-2xl backdrop-blur-sm"
+                      >
+                        <h3 className="text-2xl font-bold text-[#01645e] mb-3">
+                          🎯 {pinnedHackathon.title}
+                        </h3>
+                        <p className="text-lg text-[#8b7632] mb-4 leading-relaxed">
+                          {pinnedHackathon.description}
+                        </p>
+                        <div className="flex items-center gap-4 text-sm text-[#01645e]">
+                          <span className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            {pinnedHackathon.participantCount || 0} مشارك
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {pinnedHackathon.status === 'open' ? 'مفتوح للتسجيل' : 'قريباً'}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
+
                     <motion.div
                       initial={{ opacity: 0, y: 30 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 1.2, duration: 0.8 }}
                       className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4"
                     >
-                      <Link href="/register">
+                      <Link href={pinnedHackathon && pinnedHackathon.status === 'open' ? `/hackathons/${pinnedHackathon.id}/register` : "/register"}>
                         <motion.button
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
@@ -712,7 +741,7 @@ export default function LandingPage() {
                       <Rocket className="w-8 h-8" />
                           </motion.div>
                           <span className="relative z-10">
-                            ابدأ رحلتك الآن
+                            {pinnedHackathon && pinnedHackathon.status === 'open' ? `سجل في ${pinnedHackathon.title}` : 'ابدأ رحلتك الآن'}
                           </span>
                     </motion.button>
                   </Link>
@@ -813,27 +842,32 @@ export default function LandingPage() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={async () => {
-                                  if (!confirm('هل أنت متأكد من إلغاء تثبيت هذا الهاكاثون من الصفحة الرئيسية؟')) {
-                                    return
-                                  }
+                                  showConfirm(
+                                    'هل أنت متأكد من إلغاء تثبيت هذا الهاكاثون من الصفحة الرئيسية؟',
+                                    async () => {
+                                      try {
+                                        const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}/pin`, {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ isPinned: false })
+                                        })
 
-                                  try {
-                                    const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}/pin`, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ isPinned: false })
-                                    })
-
-                                    if (response.ok) {
-                                      setPinnedHackathon(null)
-                                      alert('✅ تم إلغاء تثبيت الهاكاثون من الصفحة الرئيسية')
-                                    } else {
-                                      alert('❌ فشل في إلغاء التثبيت')
-                                    }
-                                  } catch (error) {
-                                    console.error('Error unpinning hackathon:', error)
-                                    alert('❌ حدث خطأ في إلغاء التثبيت')
-                                  }
+                                        if (response.ok) {
+                                          setPinnedHackathon(null)
+                                          showSuccess('تم إلغاء تثبيت الهاكاثون من الصفحة الرئيسية')
+                                        } else {
+                                          showError('فشل في إلغاء التثبيت')
+                                        }
+                                      } catch (error) {
+                                        console.error('Error unpinning hackathon:', error)
+                                        showError('حدث خطأ في إلغاء التثبيت')
+                                      }
+                                    },
+                                    '📍 إلغاء التثبيت',
+                                    'إلغاء التثبيت',
+                                    'إلغاء',
+                                    'danger'
+                                  )
                                 }}
                                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2"
                               >
@@ -1488,6 +1522,9 @@ export default function LandingPage() {
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[#01645e]/10 rounded-full blur-[150px] translate-x-1/2 translate-y-1/4" />
 
     </div>
+
+    {/* Modal Components */}
+    <ModalComponents />
     </>
   )
 }

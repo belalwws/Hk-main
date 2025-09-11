@@ -87,6 +87,7 @@ export default function HackathonManagementPage() {
   const [evaluationCriteria, setEvaluationCriteria] = useState<any[]>([])
   const [newCriterion, setNewCriterion] = useState({ name: '', description: '', maxScore: 10 })
   const [sendingEmails, setSendingEmails] = useState(false)
+  const { showSuccess, showError, showWarning, showConfirm, ModalComponents } = useModal()
 
   useEffect(() => {
     fetchHackathon()
@@ -127,7 +128,7 @@ export default function HackathonManagementPage() {
 
   const addEvaluationCriterion = async () => {
     if (!newCriterion.name.trim()) {
-      alert('يجب إدخال اسم المعيار')
+      showWarning('يجب إدخال اسم المعيار')
       return
     }
 
@@ -141,36 +142,43 @@ export default function HackathonManagementPage() {
       if (response.ok) {
         await fetchEvaluationCriteria()
         setNewCriterion({ name: '', description: '', maxScore: 10 })
-        alert('تم إضافة المعيار بنجاح')
+        showSuccess('تم إضافة المعيار بنجاح')
       } else {
         const error = await response.json()
-        alert(error.error || 'فشل في إضافة المعيار')
+        showError(error.error || 'فشل في إضافة المعيار')
       }
     } catch (error) {
       console.error('Error adding criterion:', error)
-      alert('حدث خطأ في إضافة المعيار')
+      showError('حدث خطأ في إضافة المعيار')
     }
   }
 
   const deleteEvaluationCriterion = async (criterionId: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا المعيار؟')) return
+    showConfirm(
+      'هل أنت متأكد من حذف هذا المعيار؟',
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/hackathons/${params.id}/evaluation-criteria/${criterionId}`, {
+            method: 'DELETE'
+          })
 
-    try {
-      const response = await fetch(`/api/admin/hackathons/${params.id}/evaluation-criteria/${criterionId}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        await fetchEvaluationCriteria()
-        alert('تم حذف المعيار بنجاح')
-      } else {
-        const error = await response.json()
-        alert(error.error || 'فشل في حذف المعيار')
-      }
-    } catch (error) {
-      console.error('Error deleting criterion:', error)
-      alert('حدث خطأ في حذف المعيار')
-    }
+          if (response.ok) {
+            await fetchEvaluationCriteria()
+            showSuccess('تم حذف المعيار بنجاح')
+          } else {
+            const error = await response.json()
+            showError(error.error || 'فشل في حذف المعيار')
+          }
+        } catch (error) {
+          console.error('Error deleting criterion:', error)
+          showError('حدث خطأ في حذف المعيار')
+        }
+      },
+      '🗑️ حذف المعيار',
+      'حذف',
+      'إلغاء',
+      'danger'
+    )
   }
 
   const toggleEvaluation = async () => {
@@ -501,38 +509,45 @@ export default function HackathonManagementPage() {
       ? 'هل تريد تثبيت هذا الهاكاثون في الصفحة الرئيسية؟ (سيتم إلغاء تثبيت أي هاكاثون آخر)'
       : 'هل تريد إلغاء تثبيت هذا الهاكاثون من الصفحة الرئيسية؟'
 
-    if (!confirm(confirmMessage)) return
+    showConfirm(
+      confirmMessage,
+      async () => {
+        try {
+          console.log('🔄 Toggling pin status:', { hackathonId: params.id, newPinStatus })
 
-    try {
-      console.log('🔄 Toggling pin status:', { hackathonId: params.id, newPinStatus })
+          const response = await fetch(`/api/admin/hackathons/${params.id}/pin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isPinned: newPinStatus })
+          })
 
-      const response = await fetch(`/api/admin/hackathons/${params.id}/pin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPinned: newPinStatus })
-      })
+          const data = await response.json()
+          console.log('📌 Pin response:', data)
 
-      const data = await response.json()
-      console.log('📌 Pin response:', data)
+          if (response.ok) {
+            // Update local state immediately
+            if (hackathon) {
+              setHackathon({ ...hackathon, isPinned: newPinStatus })
+            }
 
-      if (response.ok) {
-        // Update local state immediately
-        if (hackathon) {
-          setHackathon({ ...hackathon, isPinned: newPinStatus })
+            // Also refresh data from server
+            fetchHackathon()
+
+            showSuccess(newPinStatus ? 'تم تثبيت الهاكاثون في الصفحة الرئيسية' : 'تم إلغاء تثبيت الهاكاثون')
+          } else {
+            console.error('❌ Pin toggle failed:', data)
+            showError(`فشل في تحديث حالة التثبيت: ${data.error || 'خطأ غير معروف'}`)
+          }
+        } catch (error) {
+          console.error('❌ Error updating pin status:', error)
+          showError('حدث خطأ في تحديث حالة التثبيت')
         }
-
-        // Also refresh data from server
-        fetchHackathon()
-
-        alert(newPinStatus ? '✅ تم تثبيت الهاكاثون في الصفحة الرئيسية' : '✅ تم إلغاء تثبيت الهاكاثون')
-      } else {
-        console.error('❌ Pin toggle failed:', data)
-        alert(`❌ فشل في تحديث حالة التثبيت: ${data.error || 'خطأ غير معروف'}`)
-      }
-    } catch (error) {
-      console.error('❌ Error updating pin status:', error)
-      alert('❌ حدث خطأ في تحديث حالة التثبيت')
-    }
+      },
+      newPinStatus ? '📌 تثبيت الهاكاثون' : '📍 إلغاء التثبيت',
+      newPinStatus ? 'تثبيت' : 'إلغاء التثبيت',
+      'إلغاء',
+      'info'
+    )
   }
 
   const deleteHackathon = async () => {
@@ -1371,6 +1386,9 @@ export default function HackathonManagementPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Components */}
+      <ModalComponents />
     </div>
   )
 }

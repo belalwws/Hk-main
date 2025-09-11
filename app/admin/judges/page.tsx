@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
+import { useModal } from '@/hooks/use-modal'
 
 interface Judge {
   id: string
@@ -43,6 +44,7 @@ export default function AdminJudgesPage() {
   const [hackathons, setHackathons] = useState<Hackathon[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const { showSuccess, showError, showWarning, showConfirm, ModalComponents } = useModal()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -84,7 +86,7 @@ export default function AdminJudgesPage() {
 
   const createJudge = async () => {
     if (!formData.name || !formData.email || !formData.password || !formData.hackathonId) {
-      alert('يرجى ملء جميع الحقول المطلوبة')
+      showWarning('يرجى ملء جميع الحقول المطلوبة')
       return
     }
 
@@ -97,17 +99,17 @@ export default function AdminJudgesPage() {
 
       if (response.ok) {
         const result = await response.json()
-        alert('تم إنشاء المحكم بنجاح!')
+        showSuccess('تم إنشاء المحكم بنجاح!')
         setShowCreateDialog(false)
         setFormData({ name: '', email: '', phone: '', password: '', hackathonId: '' })
         fetchJudges()
       } else {
         const error = await response.json()
-        alert(error.error || 'فشل في إنشاء المحكم')
+        showError(error.error || 'فشل في إنشاء المحكم')
       }
     } catch (error) {
       console.error('Error creating judge:', error)
-      alert('حدث خطأ في إنشاء المحكم')
+      showError('حدث خطأ في إنشاء المحكم')
     }
   }
 
@@ -132,23 +134,30 @@ export default function AdminJudgesPage() {
   }
 
   const deleteJudge = async (judgeId: string, judgeName: string) => {
-    if (!confirm(`هل أنت متأكد من حذف المحكم "${judgeName}"؟`)) return
+    showConfirm(
+      `هل أنت متأكد من حذف المحكم "${judgeName}"؟`,
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/judges/${judgeId}`, {
+            method: 'DELETE'
+          })
 
-    try {
-      const response = await fetch(`/api/admin/judges/${judgeId}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        fetchJudges()
-        alert('تم حذف المحكم بنجاح')
-      } else {
-        alert('فشل في حذف المحكم')
-      }
-    } catch (error) {
-      console.error('Error deleting judge:', error)
-      alert('حدث خطأ في حذف المحكم')
-    }
+          if (response.ok) {
+            fetchJudges()
+            showSuccess('تم حذف المحكم بنجاح')
+          } else {
+            showError('فشل في حذف المحكم')
+          }
+        } catch (error) {
+          console.error('Error deleting judge:', error)
+          showError('حدث خطأ في حذف المحكم')
+        }
+      },
+      '🗑️ حذف المحكم',
+      'حذف',
+      'إلغاء',
+      'danger'
+    )
   }
 
   const getStatusBadge = (isActive: boolean) => {
@@ -412,6 +421,9 @@ export default function AdminJudgesPage() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Modal Components */}
+      <ModalComponents />
     </div>
   )
 }

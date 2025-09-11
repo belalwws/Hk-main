@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
+import { useModal } from '@/hooks/use-modal'
 
 interface User {
   id: string
@@ -24,6 +25,7 @@ export default function UsersManagement() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const { showSuccess, showError, showConfirm, ModalComponents } = useModal()
 
   useEffect(() => { void fetchUsers() }, [])
 
@@ -48,25 +50,30 @@ export default function UsersManagement() {
   }
 
   const deleteUser = async (userId: string, userName: string) => {
-    if (!confirm(`هل أنت متأكد من حذف المستخدم "${userName}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
-      return
-    }
+    showConfirm(
+      `هل أنت متأكد من حذف المستخدم "${userName}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`,
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'DELETE'
+          })
 
-    try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        alert('تم حذف المستخدم بنجاح')
-        fetchUsers() // Refresh the list
-      } else {
-        alert('فشل في حذف المستخدم')
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error)
-      alert('حدث خطأ في حذف المستخدم')
-    }
+          if (response.ok) {
+            showSuccess('تم حذف المستخدم بنجاح')
+            fetchUsers() // Refresh the list
+          } else {
+            showError('فشل في حذف المستخدم')
+          }
+        } catch (error) {
+          console.error('Error deleting user:', error)
+          showError('حدث خطأ في حذف المستخدم')
+        }
+      },
+      '🗑️ حذف المستخدم',
+      'حذف',
+      'إلغاء',
+      'danger'
+    )
   }
 
   const filtered = users.filter(u =>
@@ -162,6 +169,9 @@ export default function UsersManagement() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Modal Components */}
+      <ModalComponents />
     </div>
   )
 }
