@@ -107,9 +107,17 @@ export default function JudgeEvaluation() {
     else if (currentTeamIndex < selectedHackathon.teams.length - 1) {
       goToNextTeam()
     }
-    // If last criterion of last team, show completion message
+    // If last criterion of last team, save final evaluation and show completion message
     else {
-      alert("🎉 تهانينا! لقد أكملت تقييم جميع الفرق بنجاح!\n\nشكراً لك على جهودك في التقييم.")
+      // Save the final team evaluation first
+      const saved = await saveEvaluation(false)
+      if (saved) {
+        alert("🎉 تهانينا! لقد أكملت تقييم جميع الفرق بنجاح!\n\nشكراً لك على جهودك في التقييم.")
+        // Optionally redirect to judge dashboard
+        // router.push('/judge')
+      } else {
+        alert("يجب إكمال تقييم جميع المعايير قبل إنهاء التقييم")
+      }
     }
   }
 
@@ -600,13 +608,15 @@ export default function JudgeEvaluation() {
             {/* Next Button */}
             <motion.button
               onClick={goToNext}
-              disabled={isLastStep || saving}
-              whileHover={{ scale: isLastStep || saving ? 1 : 1.05 }}
-              whileTap={{ scale: isLastStep || saving ? 1 : 0.95 }}
+              disabled={saving}
+              whileHover={{ scale: saving ? 1 : 1.05 }}
+              whileTap={{ scale: saving ? 1 : 0.95 }}
               className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold transition-all duration-300 ${
-                isLastStep || saving
+                saving
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
-                  : 'bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white shadow-lg hover:shadow-xl hover:from-[#01645e]/90 hover:to-[#3ab666]/90'
+                  : isLastStep
+                    ? 'bg-gradient-to-r from-[#d97706] to-[#f59e0b] text-white shadow-lg hover:shadow-xl hover:from-[#d97706]/90 hover:to-[#f59e0b]/90'
+                    : 'bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white shadow-lg hover:shadow-xl hover:from-[#01645e]/90 hover:to-[#3ab666]/90'
               }`}
             >
               {saving ? (

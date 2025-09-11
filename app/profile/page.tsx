@@ -475,7 +475,7 @@ export default function ProfilePage() {
                                       {participation.team ? 'في فريق' : 'انتظار الفريق'}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                      {participation.team ? participation.team.name : 'قريباً'}
+                                      {participation.team ? participation.team?.name : 'قريباً'}
                                     </p>
                                   </div>
                                 </div>
@@ -577,22 +577,22 @@ export default function ProfilePage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                               <div>
                                 <p className="text-sm text-[#8b7632] mb-1">اسم الفريق:</p>
-                                <p className="font-semibold text-[#01645e]">{participation.team.name}</p>
+                                <p className="font-semibold text-[#01645e]">{participation.team?.name || 'غير محدد'}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-[#8b7632] mb-1">رقم الفريق:</p>
-                                <p className="font-semibold text-[#01645e]">فريق #{participation.team.teamNumber}</p>
+                                <p className="font-semibold text-[#01645e]">فريق #{participation.team?.teamNumber || 'غير محدد'}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-[#8b7632] mb-1">عدد الأعضاء:</p>
-                                <p className="font-semibold text-[#01645e]">{participation.team.members.length} أعضاء</p>
+                                <p className="font-semibold text-[#01645e]">{participation.team?.members?.length || 0} أعضاء</p>
                               </div>
                             </div>
 
                             <div>
                               <p className="text-sm text-[#8b7632] mb-2">أعضاء الفريق:</p>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {participation.team.members.map((member) => (
+                                {participation.team?.members?.map((member) => (
                                   <div key={member.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
                                     <div className="w-8 h-8 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center">
                                       <User className="w-4 h-4 text-white" />

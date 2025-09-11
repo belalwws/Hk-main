@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient()
+// Lazy import prisma to avoid build-time errors
+let prisma: any = null
+async function getPrisma() {
+  if (!prisma) {
+    try {
+      const { prisma: prismaClient } = await import('@/lib/prisma')
+      prisma = prismaClient
+    } catch (error) {
+      console.error('Failed to import prisma:', error)
+      return null
+    }
+  }
+  return prisma
+}
 
 // POST /api/admin/hackathons/[id]/pin - Pin/Unpin hackathon for homepage
 export async function POST(
@@ -12,7 +24,7 @@ export async function POST(
   try {
     const token = request.cookies.get('auth-token')?.value
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
-    
+
     const payload = await verifyToken(token)
     if (!payload || payload.role !== 'admin') {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
@@ -24,10 +36,17 @@ export async function POST(
 
     console.log('🔄 Pin request:', { hackathonId: resolvedParams.id, isPinned })
 
+    // Get prisma client
+    const prismaClient = await getPrisma()
+    if (!prismaClient) {
+      console.error('❌ Failed to get prisma client')
+      return NextResponse.json({ error: 'خطأ في الاتصال بقاعدة البيانات' }, { status: 500 })
+    }
+
     // إذا كان المطلوب تفعيل Pin، إلغاء Pin من باقي الهاكاثونات أولاً
     if (isPinned) {
       console.log('📌 Unpinning other hackathons...')
-      await prisma.hackathon.updateMany({
+      await prismaClient.hackathon.updateMany({
         where: { isPinned: true },
         data: { isPinned: false }
       })
@@ -35,7 +54,7 @@ export async function POST(
 
     // تحديث الهاكاثون المحدد
     console.log(`${isPinned ? '📌' : '📍'} ${isPinned ? 'Pinning' : 'Unpinning'} hackathon:`, resolvedParams.id)
-    const hackathon = await prisma.hackathon.update({
+    const hackathon = await prismaClient.hackathon.update({
       where: { id: resolvedParams.id },
       data: { isPinned }
     })
