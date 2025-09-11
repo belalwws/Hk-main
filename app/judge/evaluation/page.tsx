@@ -96,7 +96,7 @@ export default function JudgeEvaluation() {
     }))
   }
 
-  const goToNext = () => {
+  const goToNext = async () => {
     if (!selectedHackathon) return
 
     // If not the last criterion, go to next criterion
