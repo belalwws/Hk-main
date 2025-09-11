@@ -47,39 +47,110 @@ export async function GET(request: NextRequest) {
     // Get prisma client
     const prismaClient = await getPrisma()
     if (!prismaClient) {
+      console.log('❌ [VERIFY-SESSION] Database connection failed')
       return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })
     }
-    
-    // Get user from database
-    const user = await prismaClient.user.findUnique({
-      where: { id: payload.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        phone: true,
-        university: true,
-        major: true,
-        graduationYear: true,
-        city: true,
-        nationality: true,
-        skills: true,
-        experience: true,
-        preferredRole: true,
-        profileImage: true,
-        createdAt: true
-      }
-    })
 
+    // Get user from database
+    let user = null
+    try {
+      user = await prismaClient.user.findUnique({
+        where: { id: payload.userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          phone: true,
+          university: true,
+          major: true,
+          graduationYear: true,
+          city: true,
+          nationality: true,
+          skills: true,
+          experience: true,
+          preferredRole: true,
+          profileImage: true,
+          createdAt: true
+        }
+      })
+      console.log('🔍 [VERIFY-SESSION] Database query result:', user ? 'User found' : 'User not found')
+    } catch (dbError) {
+      console.error('❌ [VERIFY-SESSION] Database query failed:', dbError)
+      // Continue without database user - might be dev admin or file-based user
+      user = null
+    }
+
+    // Handle special cases (dev admin, file-based users)
     if (!user) {
-      console.log('❌ User not found in database')
+      console.log('🔍 [VERIFY-SESSION] User not found in database, checking special cases...')
+
+      // Check if this is dev admin
+      const DEV_ADMIN_EMAIL = process.env.DEV_ADMIN_EMAIL || 'admin@hackathon.gov.sa'
+      if (payload.userId === 'dev-admin' && payload.email === DEV_ADMIN_EMAIL) {
+        console.log('✅ [VERIFY-SESSION] Dev admin session verified')
+        return NextResponse.json({
+          user: {
+            id: 'dev-admin',
+            name: 'Dev Admin',
+            email: DEV_ADMIN_EMAIL,
+            role: 'admin',
+            isActive: true,
+            phone: null,
+            university: null,
+            major: null,
+            graduationYear: null,
+            city: null,
+            nationality: null,
+            skills: null,
+            experience: null,
+            preferredRole: null,
+            profileImage: null,
+            createdAt: new Date().toISOString()
+          }
+        })
+      }
+
+      // Try to find in file-based storage
+      try {
+        const { getAllParticipants } = await import('@/lib/participants-storage')
+        const participants = getAllParticipants()
+        const fileUser = participants.find((p: any) => p.id === payload.userId || p.email === payload.email)
+
+        if (fileUser) {
+          console.log('✅ [VERIFY-SESSION] File-based user found:', fileUser.email)
+          return NextResponse.json({
+            user: {
+              id: fileUser.id,
+              name: fileUser.name,
+              email: fileUser.email,
+              role: fileUser.role || 'participant',
+              isActive: true,
+              phone: fileUser.phone || null,
+              university: fileUser.university || null,
+              major: fileUser.major || null,
+              graduationYear: fileUser.graduationYear || null,
+              city: fileUser.city || null,
+              nationality: fileUser.nationality || null,
+              skills: fileUser.skills || null,
+              experience: fileUser.experience || null,
+              preferredRole: fileUser.preferredRole || null,
+              profileImage: fileUser.profileImage || null,
+              createdAt: fileUser.createdAt || new Date().toISOString()
+            }
+          })
+        }
+      } catch (fileError) {
+        console.log('🔍 [VERIFY-SESSION] File-based user lookup failed:', fileError.message)
+      }
+
+      console.log('❌ [VERIFY-SESSION] User not found in any storage')
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     if (!user.isActive) {
-      console.log('❌ User account is inactive')
+      console.log('❌ [VERIFY-SESSION] User account is inactive')
       return NextResponse.json({ error: 'Account inactive' }, { status: 403 })
     }
 

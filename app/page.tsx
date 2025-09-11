@@ -365,7 +365,8 @@ import AnimatedBlobs from "@/components/3d/AnimatedBlobs"
 
 export default function LandingPage() {
   const [showDemo, setShowDemo] = useState(false)
-  // Removed pinned hackathon functionality
+  const [pinnedHackathon, setPinnedHackathon] = useState(null)
+  const [loadingPinned, setLoadingPinned] = useState(true)
   const router = useRouter()
   const { user, loading } = useAuth()
 
@@ -375,7 +376,29 @@ export default function LandingPage() {
   }, [user, loading])
 
   // جلب الهاكاثون المثبت
-  // Removed pinned hackathon fetch
+  const fetchPinnedHackathon = async () => {
+    try {
+      setLoadingPinned(true)
+      const response = await fetch('/api/hackathons/pinned')
+      if (response.ok) {
+        const data = await response.json()
+        setPinnedHackathon(data.hackathon)
+        console.log('📌 Pinned hackathon loaded:', data.hackathon?.title || 'None')
+      } else {
+        console.error('❌ Failed to fetch pinned hackathon')
+        setPinnedHackathon(null)
+      }
+    } catch (error) {
+      console.error('❌ Error fetching pinned hackathon:', error)
+      setPinnedHackathon(null)
+    } finally {
+      setLoadingPinned(false)
+    }
+  }
+
+  React.useEffect(() => {
+    fetchPinnedHackathon()
+  }, [])
 
   if (loading) {
     return (
@@ -765,7 +788,7 @@ export default function LandingPage() {
                       أهلاً بك، <span className="text-[#3ab666]">{user.name}</span>
                     </h1>
 
-                    {false ? (
+                    {pinnedHackathon && !loadingPinned ? (
                       // عرض الهاكاثون المثبت للمستخدمين المسجلين
                       <>
                         <motion.div
@@ -774,12 +797,51 @@ export default function LandingPage() {
                           transition={{ delay: 0.5, duration: 0.8 }}
                           className="mb-8"
                         >
-                          <h2 className="text-2xl md:text-3xl font-bold text-[#01645e] mb-4">
-                            {pinnedHackathon.title}
-                          </h2>
-                          <p className="text-lg md:text-xl text-[#8b7632] mb-6 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                            {pinnedHackathon.description}
-                          </p>
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1">
+                              <h2 className="text-2xl md:text-3xl font-bold text-[#01645e] mb-4">
+                                {pinnedHackathon.title}
+                              </h2>
+                              <p className="text-lg md:text-xl text-[#8b7632] mb-6 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                                {pinnedHackathon.description}
+                              </p>
+                            </div>
+
+                            {/* زر إلغاء التثبيت للمدراء */}
+                            {user?.role === 'admin' && (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={async () => {
+                                  if (!confirm('هل أنت متأكد من إلغاء تثبيت هذا الهاكاثون من الصفحة الرئيسية؟')) {
+                                    return
+                                  }
+
+                                  try {
+                                    const response = await fetch(`/api/admin/hackathons/${pinnedHackathon.id}/pin`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ isPinned: false })
+                                    })
+
+                                    if (response.ok) {
+                                      setPinnedHackathon(null)
+                                      alert('✅ تم إلغاء تثبيت الهاكاثون من الصفحة الرئيسية')
+                                    } else {
+                                      alert('❌ فشل في إلغاء التثبيت')
+                                    }
+                                  } catch (error) {
+                                    console.error('Error unpinning hackathon:', error)
+                                    alert('❌ حدث خطأ في إلغاء التثبيت')
+                                  }
+                                }}
+                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2"
+                              >
+                                <span>📍</span>
+                                إلغاء التثبيت
+                              </motion.button>
+                            )}
+                          </div>
 
                           <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 border border-[#01645e]/20 rounded-2xl p-6 mb-6">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -801,9 +863,9 @@ export default function LandingPage() {
                               </div>
                               <div>
                                 <div className="text-2xl font-bold text-[#8b7632]">
-                                  {pinnedHackathon.status === 'OPEN' ? '🟢 مفتوح' :
-                                   pinnedHackathon.status === 'DRAFT' ? '🟡 قريباً' :
-                                   pinnedHackathon.status === 'CLOSED' ? '🔴 مغلق' : '✅ منتهي'}
+                                  {pinnedHackathon.status === 'open' ? '🟢 مفتوح' :
+                                   pinnedHackathon.status === 'draft' ? '🟡 قريباً' :
+                                   pinnedHackathon.status === 'closed' ? '🔴 مغلق' : '✅ منتهي'}
                                 </div>
                                 <div className="text-sm text-[#8b7632]">الحالة</div>
                               </div>
@@ -820,7 +882,7 @@ export default function LandingPage() {
                     )}
 
                     <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-                      {false && (
+                      {pinnedHackathon && pinnedHackathon.status === 'open' && (
                         <Link href={`/hackathons/${pinnedHackathon.id}/register`}>
                           <motion.button
                             whileHover={{ scale: 1.05, y: -2 }}
