@@ -427,17 +427,21 @@ export default function JudgeEvaluation() {
                               </div>
                             </div>
 
-                            <motion.a
-                              href={`/uploads/${currentTeam.ideaFile}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <motion.button
+                              onClick={() => {
+                                const link = document.createElement('a')
+                                link.href = `/api/uploads/${currentTeam.ideaFile}`
+                                link.target = '_blank'
+                                link.rel = 'noopener noreferrer'
+                                link.click()
+                              }}
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               className="inline-flex items-center gap-2 bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full justify-center"
                             >
                               <Eye className="w-5 h-5" />
                               فتح العرض التقديمي
-                            </motion.a>
+                            </motion.button>
 
                             <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
                               <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
