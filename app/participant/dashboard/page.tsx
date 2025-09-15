@@ -151,13 +151,33 @@ export default function ParticipantDashboard() {
 
       if (response.ok) {
         const result = await response.json()
-        alert(`تم رفع العرض التقديمي بنجاح! \n${result.teamName || ''}`)
+        // رسالة نجاح محسنة
+        const successMessage = `✅ تم رفع العرض التقديمي بنجاح!
+
+📁 اسم الملف: ${ideaForm.file?.name}
+👥 الفريق: ${result.teamName || 'غير محدد'}
+📝 العنوان: ${ideaForm.title}
+
+يمكن للمحكمين الآن مراجعة عرضكم التقديمي.`
+
+        alert(successMessage)
         setIdeaForm({ title: '', description: '', file: null })
+
+        // إعادة تعيين input الملف
+        const fileInput = document.getElementById('file-upload') as HTMLInputElement
+        if (fileInput) fileInput.value = ''
+
         fetchProfile() // Refresh data
       } else {
         const error = await response.json()
         console.error('Upload error:', error)
-        alert(`فشل في رفع الملف: ${error.error || 'خطأ غير معروف'}\n${error.debug ? JSON.stringify(error.debug) : ''}`)
+
+        let errorMessage = `❌ فشل في رفع الملف: ${error.error || 'خطأ غير معروف'}`
+        if (error.debug) {
+          errorMessage += `\n\nتفاصيل إضافية:\n${JSON.stringify(error.debug, null, 2)}`
+        }
+
+        alert(errorMessage)
       }
     } catch (error) {
       console.error('Error uploading file:', error)
@@ -319,23 +339,55 @@ export default function ParticipantDashboard() {
                   </div>
 
                   {currentParticipation.team.ideaFile ? (
-                    <div className="space-y-3">
-                      <Badge className="bg-green-100 text-green-800">تم الرفع</Badge>
-                      <div>
-                        <p className="font-semibold text-[#01645e]">{currentParticipation.team.ideaTitle}</p>
-                        {currentParticipation.team.ideaDescription && (
-                          <p className="text-sm text-[#8b7632] mt-1">{currentParticipation.team.ideaDescription}</p>
-                        )}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          تم الرفع بنجاح
+                        </Badge>
+                        <span className="text-xs text-gray-500">
+                          {new Date().toLocaleDateString('ar-SA')}
+                        </span>
                       </div>
-                      <a
-                        href={`/uploads/${currentParticipation.team.ideaFile}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-sm text-[#01645e] hover:underline"
-                      >
-                        <FileText className="w-4 h-4 ml-1" />
-                        عرض الملف
-                      </a>
+
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <FileText className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-green-800 mb-1">
+                              {currentParticipation.team.ideaTitle}
+                            </h4>
+                            {currentParticipation.team.ideaDescription && (
+                              <p className="text-sm text-green-700 mb-3">
+                                {currentParticipation.team.ideaDescription}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-4">
+                              <a
+                                href={`/uploads/${currentParticipation.team.ideaFile}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-700 transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                عرض الملف
+                              </a>
+                              <span className="text-xs text-green-600">
+                                📁 {currentParticipation.team.ideaFile}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p className="text-sm text-blue-800 flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
+                            ✓
+                          </div>
+                          يمكن للمحكمين الآن مراجعة عرضكم التقديمي. يمكنك تحديث الملف في أي وقت.
+                        </p>
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -367,36 +419,119 @@ export default function ParticipantDashboard() {
 
                       <div>
                         <label className="block text-sm font-medium text-[#01645e] mb-2">
-                          ملف العرض التقديمي (PowerPoint) *
+                          ملف العرض التقديمي *
                         </label>
-                        <input
-                          type="file"
-                          accept=".ppt,.pptx,.pdf"
-                          onChange={(e) => setIdeaForm({...ideaForm, file: e.target.files?.[0] || null})}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01645e] focus:border-transparent"
-                        />
-                        <p className="text-xs text-[#8b7632] mt-1">
-                          الملفات المدعومة: PowerPoint (.ppt, .pptx) أو PDF
-                        </p>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#01645e] transition-colors">
+                          <input
+                            type="file"
+                            accept=".ppt,.pptx,.pdf"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                // التحقق من حجم الملف (الحد الأقصى 50 ميجابايت)
+                                const maxSize = 50 * 1024 * 1024 // 50MB
+                                if (file.size > maxSize) {
+                                  alert('حجم الملف كبير جداً. الحد الأقصى المسموح 50 ميجابايت.')
+                                  e.target.value = ''
+                                  return
+                                }
+
+                                // التحقق من نوع الملف
+                                const allowedTypes = [
+                                  'application/vnd.ms-powerpoint',
+                                  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                                  'application/pdf'
+                                ]
+                                if (!allowedTypes.includes(file.type)) {
+                                  alert('نوع الملف غير مدعوم. يرجى اختيار ملف PowerPoint أو PDF.')
+                                  e.target.value = ''
+                                  return
+                                }
+
+                                setIdeaForm({...ideaForm, file})
+                              } else {
+                                setIdeaForm({...ideaForm, file: null})
+                              }
+                            }}
+                            className="hidden"
+                            id="file-upload"
+                          />
+                          <label htmlFor="file-upload" className="cursor-pointer">
+                            <div className="space-y-2">
+                              <Upload className="w-12 h-12 text-gray-400 mx-auto" />
+                              <div>
+                                <p className="text-[#01645e] font-medium">
+                                  {ideaForm.file ? ideaForm.file.name : 'اضغط لاختيار ملف أو اسحب الملف هنا'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  الملفات المدعومة: PowerPoint (.ppt, .pptx) أو PDF
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  الحد الأقصى لحجم الملف: 50 ميجابايت
+                                </p>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                        {ideaForm.file && (
+                          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-green-600" />
+                                <span className="text-sm text-green-800">{ideaForm.file.name}</span>
+                              </div>
+                              <div className="text-xs text-green-600">
+                                {(ideaForm.file.size / (1024 * 1024)).toFixed(2)} ميجابايت
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      <Button
-                        onClick={() => handleFileUpload(currentParticipation.team!.id)}
-                        disabled={uploadingFile || !ideaForm.file || !ideaForm.title.trim()}
-                        className="w-full bg-gradient-to-r from-[#01645e] to-[#3ab666]"
-                      >
-                        {uploadingFile ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin ml-2" />
-                            جاري الرفع...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-4 h-4 ml-2" />
-                            رفع العرض التقديمي
-                          </>
+                      <div className="space-y-3">
+                        {/* معلومات إضافية قبل الرفع */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
+                              ℹ
+                            </div>
+                            <div className="text-sm text-blue-800">
+                              <p className="font-medium mb-1">نصائح مهمة:</p>
+                              <ul className="text-xs space-y-1 list-disc list-inside">
+                                <li>تأكد من أن العرض التقديمي يحتوي على جميع تفاصيل المشروع</li>
+                                <li>يمكن للمحكمين مراجعة العرض أثناء التقييم</li>
+                                <li>يمكنك تحديث الملف في أي وقت قبل انتهاء فترة التقديم</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => handleFileUpload(currentParticipation.team!.id)}
+                          disabled={uploadingFile || !ideaForm.file || !ideaForm.title.trim()}
+                          className="w-full bg-gradient-to-r from-[#01645e] to-[#3ab666] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {uploadingFile ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin ml-2" />
+                              جاري الرفع... ({Math.round((Date.now() % 100))}%)
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 ml-2" />
+                              {ideaForm.file ? `رفع "${ideaForm.file.name}"` : 'رفع العرض التقديمي'}
+                            </>
+                          )}
+                        </Button>
+
+                        {(!ideaForm.file || !ideaForm.title.trim()) && (
+                          <p className="text-xs text-red-500 text-center">
+                            {!ideaForm.title.trim() && 'يرجى إدخال عنوان الفكرة'}
+                            {!ideaForm.file && !ideaForm.title.trim() && ' و '}
+                            {!ideaForm.file && 'اختيار ملف العرض التقديمي'}
+                          </p>
                         )}
-                      </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>

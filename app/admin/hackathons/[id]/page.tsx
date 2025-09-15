@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -78,8 +78,8 @@ export default function HackathonManagementPage() {
   const [hackathon, setHackathon] = useState<Hackathon | null>(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
-  const [cityFilter, setCityFilter] = useState<string>('')
-  const [nationalityFilter, setNationalityFilter] = useState<string>('')
+  const [cityFilter, setCityFilter] = useState<string>('all')
+  const [nationalityFilter, setNationalityFilter] = useState<string>('all')
   const [showTeamPreview, setShowTeamPreview] = useState(false)
   const [previewTeams, setPreviewTeams] = useState<any[]>([])
   const [creatingTeams, setCreatingTeams] = useState(false)
@@ -87,11 +87,14 @@ export default function HackathonManagementPage() {
   const [evaluationCriteria, setEvaluationCriteria] = useState<any[]>([])
   const [newCriterion, setNewCriterion] = useState({ name: '', description: '', maxScore: 10 })
   const [sendingEmails, setSendingEmails] = useState(false)
+  const [certificateTemplate, setCertificateTemplate] = useState<string | null>(null)
+  const [uploadingCertificate, setUploadingCertificate] = useState(false)
   const { showSuccess, showError, showWarning, showConfirm, ModalComponents } = useModal()
 
   useEffect(() => {
     fetchHackathon()
     checkExistingTeams()
+    fetchCertificateTemplate()
   }, [params.id])
 
   const checkExistingTeams = async () => {
@@ -254,6 +257,74 @@ export default function HackathonManagementPage() {
       console.error('Error fetching hackathon:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCertificateTemplate = async () => {
+    try {
+      const response = await fetch(`/api/admin/hackathons/${params.id}/certificate-template`)
+      if (response.ok) {
+        const data = await response.json()
+        setCertificateTemplate(data.templatePath)
+      }
+    } catch (error) {
+      console.error('Error fetching certificate template:', error)
+    }
+  }
+
+  const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingCertificate(true)
+    try {
+      const formData = new FormData()
+      formData.append('certificateTemplate', file)
+
+      const response = await fetch(`/api/admin/hackathons/${params.id}/certificate-template`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCertificateTemplate(data.filePath)
+        showSuccess('تم رفع قالب الشهادة بنجاح!')
+      } else {
+        const error = await response.json()
+        showError(`خطأ في رفع قالب الشهادة: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading certificate template:', error)
+      showError('حدث خطأ في رفع قالب الشهادة')
+    } finally {
+      setUploadingCertificate(false)
+    }
+  }
+
+  const handleRemoveCertificateTemplate = async () => {
+    const confirmed = await showConfirm(
+      'حذف قالب الشهادة',
+      'هل أنت متأكد من حذف قالب الشهادة المخصص؟ سيتم استخدام القالب الافتراضي.'
+    )
+
+    if (!confirmed) return
+
+    try {
+      const response = await fetch(`/api/admin/hackathons/${params.id}/certificate-template`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setCertificateTemplate(null)
+        showSuccess('تم حذف قالب الشهادة بنجاح!')
+      } else {
+        const error = await response.json()
+        showError(`خطأ في حذف قالب الشهادة: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error removing certificate template:', error)
+      showError('حدث خطأ في حذف قالب الشهادة')
     }
   }
 
@@ -579,10 +650,10 @@ export default function HackathonManagementPage() {
     if (filter !== 'all' && participant.status.toLowerCase() !== filter) return false
 
     // City filter
-    if (cityFilter && (!participant.user.city || !participant.user.city.toLowerCase().includes(cityFilter.toLowerCase()))) return false
+    if (cityFilter && cityFilter !== 'all' && (!participant.user.city || !participant.user.city.toLowerCase().includes(cityFilter.toLowerCase()))) return false
 
     // Nationality filter
-    if (nationalityFilter && (!participant.user.nationality || !participant.user.nationality.toLowerCase().includes(nationalityFilter.toLowerCase()))) return false
+    if (nationalityFilter && nationalityFilter !== 'all' && (!participant.user.nationality || !participant.user.nationality.toLowerCase().includes(nationalityFilter.toLowerCase()))) return false
 
     return true
   }) || []
@@ -1265,6 +1336,83 @@ export default function HackathonManagementPage() {
                             </Button>
                           </Link>
                         </div>
+                      </div>
+
+                      {/* Certificate Template Section */}
+                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h4 className="font-semibold text-blue-800 flex items-center gap-2">
+                              <FileText className="w-5 h-5" />
+                              قالب الشهادة المخصص
+                            </h4>
+                            <p className="text-sm text-blue-600">رفع قالب شهادة مخصص لهذا الهاكاثون</p>
+                          </div>
+                        </div>
+
+                        {certificateTemplate ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <img
+                                src={certificateTemplate}
+                                alt="قالب الشهادة"
+                                className="w-32 h-20 object-cover rounded-lg border"
+                              />
+                              <div className="flex-1">
+                                <p className="text-sm text-green-600 font-medium">✅ تم رفع قالب مخصص</p>
+                                <p className="text-xs text-gray-500">سيتم استخدام هذا القالب لجميع شهادات هذا الهاكاثون</p>
+                              </div>
+                              <Button
+                                onClick={handleRemoveCertificateTemplate}
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 border-red-600 hover:bg-red-50"
+                              >
+                                حذف القالب
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center">
+                              <FileText className="w-12 h-12 text-blue-400 mx-auto mb-2" />
+                              <p className="text-blue-600 font-medium mb-2">لا يوجد قالب مخصص</p>
+                              <p className="text-sm text-blue-500 mb-4">سيتم استخدام القالب الافتراضي</p>
+
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleCertificateUpload}
+                                  className="hidden"
+                                  disabled={uploadingCertificate}
+                                />
+                                <Button
+                                  as="span"
+                                  disabled={uploadingCertificate}
+                                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+                                >
+                                  {uploadingCertificate ? (
+                                    <>
+                                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin ml-2" />
+                                      جاري الرفع...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Upload className="w-4 h-4 ml-2" />
+                                      رفع قالب مخصص
+                                    </>
+                                  )}
+                                </Button>
+                              </label>
+                            </div>
+                            <div className="text-xs text-gray-500 space-y-1">
+                              <p>• يجب أن يكون الملف صورة (JPG, PNG, WebP)</p>
+                              <p>• الحد الأقصى لحجم الملف: 5 ميجابايت</p>
+                              <p>• الأبعاد المقترحة: 1920x1080 بكسل أو أكبر</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">

@@ -24,6 +24,7 @@ model Hackathon {
   status                HackathonStatus @default(draft)
   prizes                Json?    // {first: "", second: "", third: ""}
   settings              Json?    // Store hackathon-specific settings
+  certificateTemplate   String?  // Path to custom certificate template image
   isPinned              Boolean  @default(false)  // للعرض في الصفحة الرئيسية
   evaluationOpen        Boolean  @default(false)  // هل التقييم مفتوح للمحكمين
   createdBy             String   // Admin user ID who created this hackathon

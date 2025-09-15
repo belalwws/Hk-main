@@ -159,6 +159,17 @@ export default function CertificateSettingsPage() {
         const result = await response.json()
         alert('✅ تم حفظ إعدادات الشهادة بنجاح!\nسيتم تطبيقها على جميع الشهادات الجديدة.')
         setSettings(result.settings)
+
+        // إعادة رسم الشهادة بالإعدادات الجديدة
+        const canvas = canvasRef.current
+        if (canvas && imageLoaded) {
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            const img = new Image()
+            img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
+            img.src = '/row-certificat.png'
+          }
+        }
       } else {
         const error = await response.json()
         alert(`❌ خطأ في الحفظ: ${error.error}`)

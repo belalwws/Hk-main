@@ -290,6 +290,7 @@ ${isWinner ?
                   date={previewParticipant.date || new Date().toLocaleDateString('ar-SA')}
                   rank={previewParticipant.rank}
                   isWinner={previewParticipant.isWinner}
+                  hackathonId={selectedHackathon?.id}
                 />
               </div>
             </div>

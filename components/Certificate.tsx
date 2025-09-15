@@ -9,6 +9,7 @@ interface CertificateProps {
   date: string
   rank?: number
   isWinner?: boolean
+  hackathonId?: string
 }
 
 function Certificate({
@@ -16,31 +17,67 @@ function Certificate({
   hackathonTitle,
   date,
   rank,
-  isWinner = false
+  isWinner = false,
+  hackathonId
 }: CertificateProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [settings, setSettings] = useState(DEFAULT_CERTIFICATE_CONFIG)
+  const [certificateImageSrc, setCertificateImageSrc] = useState('/row-certificat.png')
 
   useEffect(() => {
     loadSettings()
+    loadCertificateTemplate()
   }, [])
+
+  // إعادة تحميل الإعدادات عند تغيير البيانات
+  useEffect(() => {
+    if (participantName) {
+      loadSettings()
+      loadCertificateTemplate()
+    }
+  }, [participantName, hackathonId])
 
   const loadSettings = async () => {
     try {
-      const response = await fetch('/api/admin/certificate-settings')
+      // إضافة timestamp لتجنب التخزين المؤقت
+      const response = await fetch(`/api/admin/certificate-settings?t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       if (response.ok) {
         const data = await response.json()
+        console.log('Loaded certificate settings:', data)
         setSettings({
           ...DEFAULT_CERTIFICATE_CONFIG,
           namePositionY: data.namePositionY || data.namePosition || DEFAULT_CERTIFICATE_CONFIG.namePositionY,
           namePositionX: data.namePositionX || DEFAULT_CERTIFICATE_CONFIG.namePositionX,
-          nameFont: data.nameFont,
-          nameColor: data.nameColor
+          nameFont: data.nameFont || DEFAULT_CERTIFICATE_CONFIG.nameFont,
+          nameColor: data.nameColor || DEFAULT_CERTIFICATE_CONFIG.nameColor
         })
       }
     } catch (error) {
       console.error('Error loading certificate settings:', error)
+    }
+  }
+
+  const loadCertificateTemplate = async () => {
+    if (!hackathonId) return
+
+    try {
+      const response = await fetch(`/api/admin/hackathons/${hackathonId}/certificate-template?t=${Date.now()}`, {
+        cache: 'no-store'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.templatePath) {
+          setCertificateImageSrc(data.templatePath)
+        } else {
+          setCertificateImageSrc('/row-certificat.png')
+        }
+      }
+    } catch (error) {
+      console.error('Error loading certificate template:', error)
+      setCertificateImageSrc('/row-certificat.png')
     }
   }
 
@@ -76,8 +113,8 @@ function Certificate({
       console.error('Failed to load certificate image')
     }
 
-    img.src = '/row-certificat.png'
-  }, [participantName, hackathonTitle, date, rank, isWinner, settings])
+    img.src = certificateImageSrc
+  }, [participantName, hackathonTitle, date, rank, isWinner, settings, certificateImageSrc])
 
   return (
     <div className="flex flex-col items-center">
@@ -104,25 +141,47 @@ export function CertificateGenerator({
   hackathonTitle,
   date,
   rank,
-  isWinner = false
+  isWinner = false,
+  hackathonId
 }: CertificateProps) {
   const downloadCertificate = async () => {
     // Load current settings
     let currentSettings = DEFAULT_CERTIFICATE_CONFIG
+    let certificateImageSrc = '/row-certificat.png'
+
     try {
-      const response = await fetch('/api/admin/certificate-settings')
+      const response = await fetch(`/api/admin/certificate-settings?t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       if (response.ok) {
         const data = await response.json()
         currentSettings = {
           ...DEFAULT_CERTIFICATE_CONFIG,
           namePositionY: data.namePositionY || data.namePosition || DEFAULT_CERTIFICATE_CONFIG.namePositionY,
           namePositionX: data.namePositionX || DEFAULT_CERTIFICATE_CONFIG.namePositionX,
-          nameFont: data.nameFont,
-          nameColor: data.nameColor
+          nameFont: data.nameFont || DEFAULT_CERTIFICATE_CONFIG.nameFont,
+          nameColor: data.nameColor || DEFAULT_CERTIFICATE_CONFIG.nameColor
         }
       }
     } catch (error) {
       console.error('Error loading settings for download:', error)
+    }
+
+    // Load certificate template if hackathonId is provided
+    if (hackathonId) {
+      try {
+        const response = await fetch(`/api/admin/hackathons/${hackathonId}/certificate-template?t=${Date.now()}`, {
+          cache: 'no-store'
+        })
+        if (response.ok) {
+          const data = await response.json()
+          if (data.templatePath) {
+            certificateImageSrc = data.templatePath
+          }
+        }
+      } catch (error) {
+        console.error('Error loading certificate template for download:', error)
+      }
     }
 
     const canvas = document.createElement('canvas')
@@ -154,7 +213,7 @@ export function CertificateGenerator({
       link.click()
     }
 
-    img.src = '/row-certificat.png'
+    img.src = certificateImageSrc
   }
 
   return (

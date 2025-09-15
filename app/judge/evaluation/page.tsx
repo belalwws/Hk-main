@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Users, FileText, Star, ChevronLeft, ChevronRight, Save, BarChart3 } from 'lucide-react'
+import { Trophy, Users, FileText, Star, ChevronLeft, ChevronRight, Save, BarChart3, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -414,18 +414,43 @@ export default function JudgeEvaluation() {
                           <p className="text-[#8b7632] leading-relaxed">{currentTeam.ideaDescription}</p>
                         )}
                       </div>
-                      {currentTeam.ideaFile && (
-                        <motion.a
-                          href={`/uploads/${currentTeam.ideaFile}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="inline-flex items-center gap-2 bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                        >
-                          <FileText className="w-5 h-5" />
-                          عرض العرض التقديمي
-                        </motion.a>
+                      {currentTeam.ideaFile ? (
+                        <div className="space-y-3">
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <FileText className="w-5 h-5 text-white" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-blue-800">العرض التقديمي</h4>
+                                <p className="text-sm text-blue-600">متاح للمراجعة والتقييم</p>
+                              </div>
+                            </div>
+
+                            <motion.a
+                              href={`/uploads/${currentTeam.ideaFile}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full justify-center"
+                            >
+                              <Eye className="w-5 h-5" />
+                              فتح العرض التقديمي
+                            </motion.a>
+
+                            <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
+                              <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                              سيتم فتح الملف في نافذة جديدة
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                          <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-gray-600 font-medium">لم يتم رفع عرض تقديمي</p>
+                          <p className="text-sm text-gray-500">لا يوجد ملف متاح للمراجعة</p>
+                        </div>
                       )}
                     </div>
                   ) : (
