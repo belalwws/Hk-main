@@ -70,14 +70,15 @@ function Certificate({
       if (response.ok) {
         const data = await response.json()
         if (data.templatePath) {
-          setCertificateImageSrc(data.templatePath)
+          // إضافة timestamp لتجنب التخزين المؤقت
+          setCertificateImageSrc(`${data.templatePath}?t=${Date.now()}`)
         } else {
-          setCertificateImageSrc('/row-certificat.png')
+          setCertificateImageSrc(`/row-certificat.png?t=${Date.now()}`)
         }
       }
     } catch (error) {
       console.error('Error loading certificate template:', error)
-      setCertificateImageSrc('/row-certificat.png')
+      setCertificateImageSrc(`/row-certificat.png?t=${Date.now()}`)
     }
   }
 
@@ -176,7 +177,8 @@ export function CertificateGenerator({
         if (response.ok) {
           const data = await response.json()
           if (data.templatePath) {
-            certificateImageSrc = data.templatePath
+            // إضافة timestamp لتجنب التخزين المؤقت
+            certificateImageSrc = `${data.templatePath}?t=${Date.now()}`
           }
         }
       } catch (error) {

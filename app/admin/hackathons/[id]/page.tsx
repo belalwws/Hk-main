@@ -275,10 +275,15 @@ export default function HackathonManagementPage() {
 
   const fetchCertificateTemplate = async () => {
     try {
-      const response = await fetch(`/api/admin/hackathons/${params.id}/certificate-template`)
+      // إضافة timestamp لتجنب التخزين المؤقت
+      const response = await fetch(`/api/admin/hackathons/${params.id}/certificate-template?t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       if (response.ok) {
         const data = await response.json()
-        setCertificateTemplate(data.templatePath)
+        // إضافة timestamp للصورة أيضاً
+        const templatePath = data.templatePath ? `${data.templatePath}?t=${Date.now()}` : null
+        setCertificateTemplate(templatePath)
       }
     } catch (error) {
       console.error('Error fetching certificate template:', error)
@@ -301,8 +306,20 @@ export default function HackathonManagementPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setCertificateTemplate(data.filePath)
+        // إضافة timestamp لتجنب التخزين المؤقت
+        const newTemplatePath = `${data.filePath}?t=${Date.now()}`
+        setCertificateTemplate(newTemplatePath)
         showSuccess('تم رفع قالب الشهادة بنجاح!')
+
+        // إعادة تحميل قالب الشهادة
+        setTimeout(() => {
+          fetchCertificateTemplate()
+        }, 1000)
+
+        // إعادة تحميل الصفحة بعد 3 ثوان لضمان التحديث
+        setTimeout(() => {
+          window.location.reload()
+        }, 3000)
       } else {
         const error = await response.json()
         showError(`خطأ في رفع قالب الشهادة: ${error.error}`)

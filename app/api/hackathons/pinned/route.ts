@@ -1,29 +1,11 @@
 import { NextResponse } from 'next/server'
 
-// Lazy import prisma to avoid build-time errors
-let prisma: any = null
-async function getPrisma() {
-  if (!prisma) {
-    try {
-      const { prisma: prismaClient } = await import('@/lib/prisma')
-      prisma = prismaClient
-    } catch (error) {
-      console.error('Failed to import prisma:', error)
-      return null
-    }
-  }
-  return prisma
-}
+import { prisma } from '@/lib/prisma'
 
 // GET /api/hackathons/pinned - Get pinned hackathon for homepage
 export async function GET() {
   try {
-    const prismaClient = await getPrisma()
-    if (!prismaClient) {
-      return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
-    }
-
-    const pinnedHackathon = await prismaClient.hackathon.findFirst({
+    const pinnedHackathon = await prisma.hackathon.findFirst({
       where: { isPinned: true },
       include: {
         _count: {

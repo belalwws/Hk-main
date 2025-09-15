@@ -1,20 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-
-// Lazy import prisma to avoid build-time errors
-let prisma: any = null
-async function getPrisma() {
-  if (!prisma) {
-    try {
-      const { prisma: prismaClient } = await import('@/lib/prisma')
-      prisma = prismaClient
-    } catch (error) {
-      console.error('Failed to import prisma:', error)
-      return null
-    }
-  }
-  return prisma
-}
+import { prisma } from '@/lib/prisma'
 
 // GET /api/verify-session - Verify user session and return user data
 export async function GET(request: NextRequest) {
@@ -45,16 +31,12 @@ export async function GET(request: NextRequest) {
     console.log('✅ Token verified for user:', payload.userId, 'role:', payload.role)
     
     // Get prisma client
-    const prismaClient = await getPrisma()
-    if (!prismaClient) {
-      console.log('❌ [VERIFY-SESSION] Database connection failed')
-      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })
-    }
+    console.log('🔍 [VERIFY-SESSION] Using direct prisma import')
 
     // Get user from database
     let user = null
     try {
-      user = await prismaClient.user.findUnique({
+      user = await prisma.user.findUnique({
         where: { id: payload.userId },
         select: {
           id: true,

@@ -41,6 +41,13 @@ export default function CertificateSettingsPage() {
     loadCertificateImage()
   }, [user, router])
 
+  // إعادة تحميل الصورة عند تغيير المصدر
+  useEffect(() => {
+    console.log('Certificate image source changed:', certificateImageSrc)
+    setImageLoaded(false) // إعادة تعيين حالة التحميل
+    loadCertificateImage()
+  }, [certificateImageSrc])
+
   const loadSettings = async () => {
     try {
       const response = await fetch('/api/admin/certificate-settings')
@@ -70,7 +77,11 @@ export default function CertificateSettingsPage() {
       drawCertificate(ctx, canvas, img, scale)
       setImageLoaded(true)
     }
-    img.src = certificateImageSrc
+    img.onerror = () => {
+      console.error('Failed to load certificate image:', certificateImageSrc)
+    }
+    // إضافة timestamp لتجنب التخزين المؤقت
+    img.src = `${certificateImageSrc}?t=${Date.now()}`
   }
 
   const drawCertificate = (
@@ -236,7 +247,9 @@ export default function CertificateSettingsPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setCertificateImageSrc(data.filePath)
+        // إضافة timestamp لتجنب التخزين المؤقت
+        const newImageSrc = `${data.filePath}?t=${Date.now()}`
+        setCertificateImageSrc(newImageSrc)
         alert('✅ تم رفع قالب الشهادة بنجاح!')
 
         // إعادة رسم الشهادة بالقالب الجديد
@@ -245,10 +258,21 @@ export default function CertificateSettingsPage() {
           const ctx = canvas.getContext('2d')
           if (ctx) {
             const img = new Image()
-            img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-            img.src = data.filePath
+            img.onload = () => {
+              drawCertificate(ctx, canvas, img, 0.6)
+              setImageLoaded(true)
+            }
+            img.onerror = () => {
+              console.error('Failed to load new certificate image')
+            }
+            img.src = newImageSrc
           }
         }
+
+        // إعادة تحميل الصفحة بعد ثانيتين لضمان التحديث
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
       } else {
         const error = await response.json()
         alert(`❌ خطأ في رفع قالب الشهادة: ${error.error}`)

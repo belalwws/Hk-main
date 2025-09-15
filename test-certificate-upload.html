@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار رفع الشهادة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .preview img {
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار رفع الشهادة</h1>
+        
+        <div class="test-section">
+            <h3>1. رفع قالب الشهادة العام</h3>
+            <input type="file" id="generalCertificate" accept="image/*">
+            <button onclick="uploadGeneralCertificate()" id="uploadGeneralBtn">رفع الشهادة العامة</button>
+            <div id="general-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. رفع قالب شهادة لهاكاثون محدد</h3>
+            <input type="text" id="hackathonId" placeholder="معرف الهاكاثون" value="cm4h9qtwl00097p1e5asju4sv">
+            <input type="file" id="hackathonCertificate" accept="image/*">
+            <button onclick="uploadHackathonCertificate()" id="uploadHackathonBtn">رفع شهادة الهاكاثون</button>
+            <div id="hackathon-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. معاينة الشهادة المرفوعة</h3>
+            <button onclick="previewCertificate()">معاينة الشهادة</button>
+            <div class="preview" id="preview-section"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. تسجيل الدخول أولاً</h3>
+            <input type="email" id="email" placeholder="البريد الإلكتروني" value="admin@hackathon.com">
+            <input type="password" id="password" placeholder="كلمة المرور" value="admin123">
+            <button onclick="login()">تسجيل الدخول</button>
+            <div id="login-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:3001';
+        let authToken = null;
+
+        async function login() {
+            const resultDiv = document.getElementById('login-result');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            resultDiv.textContent = 'جاري تسجيل الدخول...';
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ تم تسجيل الدخول بنجاح!\nالمستخدم: ${data.user?.name}\nالدور: ${data.user?.role}`;
+                    authToken = data.token;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ فشل تسجيل الدخول!\nالخطأ: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `💥 خطأ في الشبكة: ${error.message}`;
+            }
+        }
+
+        async function uploadGeneralCertificate() {
+            const resultDiv = document.getElementById('general-result');
+            const fileInput = document.getElementById('generalCertificate');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ يرجى اختيار ملف أولاً';
+                return;
+            }
+            
+            resultDiv.textContent = 'جاري رفع الشهادة...';
+            const uploadBtn = document.getElementById('uploadGeneralBtn');
+            uploadBtn.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('certificateImage', file);
+                
+                const response = await fetch(`${baseUrl}/api/admin/certificate-template`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ تم رفع الشهادة العامة بنجاح!\nاسم الملف: ${data.fileName}\nالمسار: ${data.filePath}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ فشل رفع الشهادة!\nالخطأ: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `💥 خطأ في الشبكة: ${error.message}`;
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        }
+
+        async function uploadHackathonCertificate() {
+            const resultDiv = document.getElementById('hackathon-result');
+            const fileInput = document.getElementById('hackathonCertificate');
+            const hackathonId = document.getElementById('hackathonId').value;
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ يرجى اختيار ملف أولاً';
+                return;
+            }
+            
+            if (!hackathonId) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ يرجى إدخال معرف الهاكاثون';
+                return;
+            }
+            
+            resultDiv.textContent = 'جاري رفع شهادة الهاكاثون...';
+            const uploadBtn = document.getElementById('uploadHackathonBtn');
+            uploadBtn.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('certificateTemplate', file);
+                
+                const response = await fetch(`${baseUrl}/api/admin/hackathons/${hackathonId}/certificate-template`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ تم رفع شهادة الهاكاثون بنجاح!\nاسم الملف: ${data.fileName}\nالمسار: ${data.filePath}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ فشل رفع الشهادة!\nالخطأ: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `💥 خطأ في الشبكة: ${error.message}`;
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        }
+
+        async function previewCertificate() {
+            const previewSection = document.getElementById('preview-section');
+            const hackathonId = document.getElementById('hackathonId').value;
+            
+            previewSection.innerHTML = 'جاري تحميل المعاينة...';
+            
+            try {
+                let imageUrl = '/row-certificat.png';
+                
+                if (hackathonId) {
+                    const response = await fetch(`${baseUrl}/api/admin/hackathons/${hackathonId}/certificate-template?t=${Date.now()}`, {
+                        credentials: 'include'
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.templatePath) {
+                            imageUrl = data.templatePath;
+                        }
+                    }
+                }
+                
+                previewSection.innerHTML = `
+                    <h4>معاينة الشهادة:</h4>
+                    <img src="${baseUrl}${imageUrl}?t=${Date.now()}" alt="معاينة الشهادة" onerror="this.src='${baseUrl}/row-certificat.png'">
+                    <p>مسار الصورة: ${imageUrl}</p>
+                `;
+            } catch (error) {
+                previewSection.innerHTML = `<p class="error">خطأ في تحميل المعاينة: ${error.message}</p>`;
+            }
+        }
+
+        // تسجيل دخول تلقائي عند تحميل الصفحة
+        window.onload = function() {
+            setTimeout(login, 1000);
+        };
+    </script>
+</body>
+</html>
