@@ -34,12 +34,26 @@ interface Team {
   }>
 }
 
+interface JudgeSettings {
+  showTeamNames: boolean
+  showProjectTitles: boolean
+  showProjectDescriptions: boolean
+  showPresentationFiles: boolean
+  showTeamMembers: boolean
+  allowFileDownload: boolean
+  evaluationOnly: boolean
+  showPreviousScores: boolean
+  anonymousMode: boolean
+  customMessage: string
+}
+
 interface Hackathon {
   id: string
   title: string
   evaluationOpen: boolean
   evaluationCriteria: EvaluationCriterion[]
   teams: Team[]
+  judgeSettings?: JudgeSettings
 }
 
 export default function JudgeEvaluation() {
@@ -76,9 +90,23 @@ export default function JudgeEvaluation() {
       
       if (response.ok) {
         const data = await response.json()
-        setHackathons(data.hackathons)
-        if (data.hackathons.length > 0) {
-          setSelectedHackathon(data.hackathons[0])
+        const hackathonsWithSettings = await Promise.all(
+          (data.hackathons || []).map(async (hackathon: Hackathon) => {
+            try {
+              const settingsResponse = await fetch(`/api/admin/hackathons/${hackathon.id}/judge-settings`)
+              if (settingsResponse.ok) {
+                const settingsData = await settingsResponse.json()
+                return { ...hackathon, judgeSettings: settingsData.settings }
+              }
+            } catch (error) {
+              console.error('Error fetching judge settings for hackathon:', hackathon.id, error)
+            }
+            return hackathon
+          })
+        )
+        setHackathons(hackathonsWithSettings)
+        if (hackathonsWithSettings.length > 0) {
+          setSelectedHackathon(hackathonsWithSettings[0])
         }
       }
     } catch (error) {
@@ -90,6 +118,18 @@ export default function JudgeEvaluation() {
 
   const currentTeam = selectedHackathon?.teams[currentTeamIndex]
   const currentCriterion = selectedHackathon?.evaluationCriteria[currentCriterionIndex]
+  const judgeSettings = selectedHackathon?.judgeSettings || {
+    showTeamNames: true,
+    showProjectTitles: true,
+    showProjectDescriptions: true,
+    showPresentationFiles: true,
+    showTeamMembers: true,
+    allowFileDownload: true,
+    evaluationOnly: false,
+    showPreviousScores: false,
+    anonymousMode: false,
+    customMessage: ''
+  }
 
   const handleScoreChange = (criterionId: string, score: number) => {
     setScores(prev => ({
@@ -331,6 +371,14 @@ export default function JudgeEvaluation() {
 
             <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-6 max-w-2xl mx-auto border border-[#01645e]/20 shadow-xl">
               <h2 className="text-2xl font-semibold text-[#01645e] mb-2">{selectedHackathon.title}</h2>
+
+              {/* Custom Message for Judges */}
+              {judgeSettings.customMessage && (
+                <div className="bg-gradient-to-r from-[#c3e956]/10 to-[#3ab666]/10 border border-[#3ab666]/20 rounded-xl p-4 mb-4">
+                  <p className="text-[#01645e] text-center font-medium">{judgeSettings.customMessage}</p>
+                </div>
+              )}
+
               <div className="flex items-center justify-center gap-6 mt-4">
                 <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-[#01645e]/30">
                   <span className="text-[#01645e] text-sm font-medium">الفريق الحالي</span>
@@ -362,7 +410,10 @@ export default function JudgeEvaluation() {
                     <span className="text-[#01645e] font-bold text-xl">{currentTeam.teamNumber}</span>
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-[#01645e]">{currentTeam.name}</h2>
+                    <h2 className="text-3xl font-bold text-[#01645e]">
+                      {judgeSettings.anonymousMode ? `فريق رقم ${currentTeam.teamNumber}` :
+                       judgeSettings.showTeamNames ? currentTeam.name : `فريق رقم ${currentTeam.teamNumber}`}
+                    </h2>
                     <p className="text-[#8b7632]">فريق رقم {currentTeam.teamNumber}</p>
                   </div>
                 </div>
@@ -370,102 +421,121 @@ export default function JudgeEvaluation() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Team Members */}
-                <div className="bg-gradient-to-br from-[#01645e]/5 to-[#3ab666]/5 backdrop-blur-sm rounded-2xl p-6 border border-[#01645e]/20 shadow-lg">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center shadow-lg">
-                      <Users className="w-5 h-5 text-white" />
+                {judgeSettings.showTeamMembers && !judgeSettings.evaluationOnly && (
+                  <div className="bg-gradient-to-br from-[#01645e]/5 to-[#3ab666]/5 backdrop-blur-sm rounded-2xl p-6 border border-[#01645e]/20 shadow-lg">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center shadow-lg">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#01645e]">أعضاء الفريق</h3>
                     </div>
-                    <h3 className="text-xl font-bold text-[#01645e]">أعضاء الفريق</h3>
+                    <div className="space-y-4">
+                      {currentTeam.participants.map((participant, index) => (
+                        <motion.div
+                          key={participant.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 * index }}
+                          className="flex items-center gap-4 bg-white/80 rounded-xl p-4 border border-[#01645e]/10 shadow-md hover:shadow-lg transition-all duration-300"
+                        >
+                          <div className="w-10 h-10 bg-gradient-to-r from-[#c3e956] to-[#3ab666] rounded-full flex items-center justify-center shadow-md">
+                            <span className="text-[#01645e] font-bold">{index + 1}</span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[#01645e] font-semibold">
+                              {judgeSettings.anonymousMode ? `عضو ${index + 1}` : participant.user.name}
+                            </p>
+                            <p className="text-[#8b7632] text-sm">{participant.teamRole}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-4">
-                    {currentTeam.participants.map((participant, index) => (
-                      <motion.div
-                        key={participant.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 * index }}
-                        className="flex items-center gap-4 bg-white/80 rounded-xl p-4 border border-[#01645e]/10 shadow-md hover:shadow-lg transition-all duration-300"
-                      >
-                        <div className="w-10 h-10 bg-gradient-to-r from-[#c3e956] to-[#3ab666] rounded-full flex items-center justify-center shadow-md">
-                          <span className="text-[#01645e] font-bold">{index + 1}</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[#01645e] font-semibold">{participant.user.name}</p>
-                          <p className="text-[#8b7632] text-sm">{participant.teamRole}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
+                )}
 
                 {/* Project Idea */}
-                <div className="bg-gradient-to-br from-[#3ab666]/5 to-[#c3e956]/5 backdrop-blur-sm rounded-2xl p-6 border border-[#3ab666]/20 shadow-lg">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#3ab666] to-[#c3e956] rounded-full flex items-center justify-center shadow-lg">
-                      <FileText className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-[#01645e]">فكرة المشروع</h3>
-                  </div>
-                  {currentTeam.ideaTitle ? (
-                    <div className="space-y-4">
-                      <div className="bg-white/80 rounded-xl p-4 border border-[#3ab666]/10 shadow-md">
-                        <h4 className="text-lg font-bold text-[#01645e] mb-2">{currentTeam.ideaTitle}</h4>
-                        {currentTeam.ideaDescription && (
-                          <p className="text-[#8b7632] leading-relaxed">{currentTeam.ideaDescription}</p>
-                        )}
+                {!judgeSettings.evaluationOnly && (
+                  <div className="bg-gradient-to-br from-[#3ab666]/5 to-[#c3e956]/5 backdrop-blur-sm rounded-2xl p-6 border border-[#3ab666]/20 shadow-lg">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 bg-gradient-to-r from-[#3ab666] to-[#c3e956] rounded-full flex items-center justify-center shadow-lg">
+                        <FileText className="w-5 h-5 text-white" />
                       </div>
-                      {currentTeam.ideaFile ? (
-                        <div className="space-y-3">
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                                <FileText className="w-5 h-5 text-white" />
+                      <h3 className="text-xl font-bold text-[#01645e]">فكرة المشروع</h3>
+                    </div>
+                    {currentTeam.ideaTitle ? (
+                      <div className="space-y-4">
+                        {(judgeSettings.showProjectTitles || judgeSettings.showProjectDescriptions) && (
+                          <div className="bg-white/80 rounded-xl p-4 border border-[#3ab666]/10 shadow-md">
+                            {judgeSettings.showProjectTitles && (
+                              <h4 className="text-lg font-bold text-[#01645e] mb-2">{currentTeam.ideaTitle}</h4>
+                            )}
+                            {judgeSettings.showProjectDescriptions && currentTeam.ideaDescription && (
+                              <p className="text-[#8b7632] leading-relaxed">{currentTeam.ideaDescription}</p>
+                            )}
+                          </div>
+                        )}
+                        {judgeSettings.showPresentationFiles && currentTeam.ideaFile ? (
+                          <div className="space-y-3">
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                  <FileText className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold text-blue-800">العرض التقديمي</h4>
+                                  <p className="text-sm text-blue-600">متاح للمراجعة والتقييم</p>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-semibold text-blue-800">العرض التقديمي</h4>
-                                <p className="text-sm text-blue-600">متاح للمراجعة والتقييم</p>
+
+                              <motion.button
+                                onClick={() => {
+                                  if (judgeSettings.allowFileDownload) {
+                                    const link = document.createElement('a')
+                                    link.href = `/api/uploads/${currentTeam.ideaFile}`
+                                    link.target = '_blank'
+                                    link.rel = 'noopener noreferrer'
+                                    link.click()
+                                  } else {
+                                    alert('تم تعطيل تحميل الملفات من قبل الإدارة')
+                                  }
+                                }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full justify-center ${
+                                  judgeSettings.allowFileDownload
+                                    ? 'bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white'
+                                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                }`}
+                                disabled={!judgeSettings.allowFileDownload}
+                              >
+                                <Eye className="w-5 h-5" />
+                                {judgeSettings.allowFileDownload ? 'فتح العرض التقديمي' : 'تم تعطيل التحميل'}
+                              </motion.button>
+
+                              <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
+                                <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                                {judgeSettings.allowFileDownload ? 'سيتم فتح الملف في نافذة جديدة' : 'تم تعطيل تحميل الملفات'}
                               </div>
-                            </div>
-
-                            <motion.button
-                              onClick={() => {
-                                const link = document.createElement('a')
-                                link.href = `/api/uploads/${currentTeam.ideaFile}`
-                                link.target = '_blank'
-                                link.rel = 'noopener noreferrer'
-                                link.click()
-                              }}
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full justify-center"
-                            >
-                              <Eye className="w-5 h-5" />
-                              فتح العرض التقديمي
-                            </motion.button>
-
-                            <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
-                              <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                              سيتم فتح الملف في نافذة جديدة
                             </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-                          <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-gray-600 font-medium">لم يتم رفع عرض تقديمي</p>
-                          <p className="text-sm text-gray-500">لا يوجد ملف متاح للمراجعة</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-[#01645e]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FileText className="w-8 h-8 text-[#01645e]/50" />
+                        ) : judgeSettings.showPresentationFiles && !currentTeam.ideaFile ? (
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                            <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-gray-600 font-medium">لم يتم رفع عرض تقديمي</p>
+                            <p className="text-sm text-gray-500">لا يوجد ملف متاح للمراجعة</p>
+                          </div>
+                        ) : null}
                       </div>
-                      <p className="text-[#8b7632]">لم يتم رفع العرض التقديمي بعد</p>
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 bg-[#01645e]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <FileText className="w-8 h-8 text-[#01645e]/50" />
+                        </div>
+                        <p className="text-[#8b7632]">لم يتم رفع العرض التقديمي بعد</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

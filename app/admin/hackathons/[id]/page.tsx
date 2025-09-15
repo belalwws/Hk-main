@@ -1443,6 +1443,36 @@ export default function HackathonManagementPage() {
                               تعديل الهاكاثون
                             </Button>
                           </Link>
+                          <Link href={`/admin/hackathons/${hackathon.id}/judge-settings`}>
+                            <Button variant="outline" className="border-[#8b7632] text-[#8b7632] hover:bg-[#8b7632] hover:text-white">
+                              <Settings className="w-4 h-4 ml-2" />
+                              إعدادات المحكم
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/hackathons/${hackathon.id}/file-tracking`}>
+                            <Button variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
+                              <FileText className="w-4 h-4 ml-2" />
+                              تتبع الملفات
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/hackathons/${hackathon.id}/email-templates`}>
+                            <Button variant="outline" className="border-[#c3e956] text-[#8b7632] hover:bg-[#c3e956] hover:text-[#01645e]">
+                              <Mail className="w-4 h-4 ml-2" />
+                              قوالب الإيميلات
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/hackathons/${hackathon.id}/custom-fields`}>
+                            <Button variant="outline" className="border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
+                              <Settings className="w-4 h-4 ml-2" />
+                              النماذج المخصصة
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/hackathons/${hackathon.id}/bulk-upload`}>
+                            <Button variant="outline" className="border-[#8b7632] text-[#8b7632] hover:bg-[#8b7632] hover:text-white">
+                              <Upload className="w-4 h-4 ml-2" />
+                              رفع بيانات مجمعة
+                            </Button>
+                          </Link>
                         </div>
                       </div>
 

@@ -90,13 +90,17 @@ export default function ParticipantDashboard() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/user/profile')
+      // إضافة timestamp لتجنب التخزين المؤقت
+      const response = await fetch(`/api/user/profile?t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       if (!response.ok) {
         router.push('/login')
         return
       }
       const data = await response.json()
       setProfile(data.user)
+      console.log('Profile refreshed:', data.user)
     } catch (error) {
       console.error('Error fetching profile:', error)
       router.push('/login')
@@ -158,7 +162,7 @@ export default function ParticipantDashboard() {
 👥 الفريق: ${result.teamName || 'غير محدد'}
 📝 العنوان: ${ideaForm.title}
 
-يمكن للمحكمين الآن مراجعة عرضكم التقديمي.`
+سيتم تحديث الصفحة تلقائياً خلال ثوانٍ...`
 
         alert(successMessage)
         setIdeaForm({ title: '', description: '', file: null })
@@ -167,7 +171,13 @@ export default function ParticipantDashboard() {
         const fileInput = document.getElementById('file-upload') as HTMLInputElement
         if (fileInput) fileInput.value = ''
 
-        fetchProfile() // Refresh data
+        // إعادة تحميل البيانات فوراً
+        fetchProfile()
+
+        // إعادة تحميل الصفحة بعد ثانيتين لضمان التحديث
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
       } else {
         const error = await response.json()
         console.error('Upload error:', error)

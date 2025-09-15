@@ -27,6 +27,9 @@ model Hackathon {
   certificateTemplate   String?  // Path to custom certificate template image
   isPinned              Boolean  @default(false)  // للعرض في الصفحة الرئيسية
   evaluationOpen        Boolean  @default(false)  // هل التقييم مفتوح للمحكمين
+  judgeSettings         Json?    // إعدادات المحكم (ما يراه/لا يراه)
+  emailTemplates        Json?    // قوالب الإيميلات المخصصة
+  customFields          Json?    // الحقول المخصصة لنموذج التسجيل
   createdBy             String   // Admin user ID who created this hackathon
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

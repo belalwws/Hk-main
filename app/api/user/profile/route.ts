@@ -2,20 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 
-// Lazy import prisma to avoid build-time errors
-let prisma: any = null
-async function getPrisma() {
-  if (!prisma) {
-    try {
-      const { prisma: prismaClient } = await import('@/lib/prisma')
-      prisma = prismaClient
-    } catch (error) {
-      console.error('Failed to import prisma:', error)
-      return null
-    }
-  }
-  return prisma
-}
+import { prisma } from '@/lib/prisma'
 
 // GET /api/user/profile - Get current user profile
 export async function GET(request: NextRequest) {
@@ -31,13 +18,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const prismaClient = await getPrisma()
-    if (!prismaClient) {
-      return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
-    }
+    console.log('🔍 Fetching user profile for:', payload.userId)
 
     // Find user by verified token's userId with participations and team details
-    const user = await prismaClient.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
         id: true,
@@ -129,13 +113,10 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { name, phone, city, nationality, skills, experience, preferredRole } = body
 
-    const prismaClient = await getPrisma()
-    if (!prismaClient) {
-      return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
-    }
+    console.log('🔄 Updating user profile for:', payload.userId)
 
     // Update user profile
-    const updatedUser = await prismaClient.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: payload.userId },
       data: {
         name: name || undefined,
