@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
-import { getPrisma } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(
   request: NextRequest,
@@ -57,11 +57,6 @@ export async function POST(
     await writeFile(filePath, buffer)
 
     // Update hackathon in database
-    const prisma = await getPrisma()
-    if (!prisma) {
-      return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
-    }
-
     await prisma.hackathon.update({
       where: { id: hackathonId },
       data: {
@@ -88,11 +83,6 @@ export async function GET(
 ) {
   try {
     const { id: hackathonId } = await params
-
-    const prisma = await getPrisma()
-    if (!prisma) {
-      return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
-    }
 
     const hackathon = await prisma.hackathon.findUnique({
       where: { id: hackathonId },
@@ -132,11 +122,6 @@ export async function DELETE(
     const payload = await verifyToken(token)
     if (!payload || payload.role !== 'admin') {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
-    }
-
-    const prisma = await getPrisma()
-    if (!prisma) {
-      return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
     }
 
     // Update hackathon to remove certificate template

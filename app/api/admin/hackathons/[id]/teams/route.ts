@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // GET /api/admin/hackathons/[id]/teams - Get all teams for a hackathon
 export async function GET(
@@ -38,9 +36,12 @@ export async function GET(
       teams: teams.map(team => ({
         id: team.id,
         name: team.name,
+        teamNumber: team.teamNumber,
+        projectName: team.ideaTitle,
         createdAt: team.createdAt,
-        members: team.participants.map(participant => ({
+        participants: team.participants.map(participant => ({
           id: participant.id,
+          registeredAt: participant.registeredAt,
           user: {
             name: participant.user.name,
             email: participant.user.email,

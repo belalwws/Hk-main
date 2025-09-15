@@ -83,6 +83,7 @@ export default function HackathonManagementPage() {
   const [nationalityFilter, setNationalityFilter] = useState<string>('all')
   const [showTeamPreview, setShowTeamPreview] = useState(false)
   const [previewTeams, setPreviewTeams] = useState<any[]>([])
+  const [teams, setTeams] = useState<any[]>([])
   const [creatingTeams, setCreatingTeams] = useState(false)
   const [hasExistingTeams, setHasExistingTeams] = useState(false)
   const [evaluationCriteria, setEvaluationCriteria] = useState<any[]>([])
@@ -100,13 +101,18 @@ export default function HackathonManagementPage() {
 
   const checkExistingTeams = async () => {
     try {
+      console.log('🔄 Checking existing teams for hackathon:', params.id)
       const response = await fetch(`/api/admin/hackathons/${params.id}/teams`)
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Teams data received:', data)
+        setTeams(data.teams || [])
         setHasExistingTeams(data.teams.length > 0)
+      } else {
+        console.error('❌ Failed to fetch teams, status:', response.status)
       }
     } catch (error) {
-      console.error('Error checking teams:', error)
+      console.error('❌ Error checking teams:', error)
     }
   }
 
@@ -249,13 +255,19 @@ export default function HackathonManagementPage() {
 
   const fetchHackathon = async () => {
     try {
+      console.log('🔄 Fetching hackathon data for ID:', params.id)
       const response = await fetch(`/api/admin/hackathons/${params.id}`)
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Hackathon data received:', data)
         setHackathon(data.hackathon)
+      } else {
+        console.error('❌ Failed to fetch hackathon, status:', response.status)
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Error details:', errorData)
       }
     } catch (error) {
-      console.error('Error fetching hackathon:', error)
+      console.error('❌ Error fetching hackathon:', error)
     } finally {
       setLoading(false)
     }
@@ -331,12 +343,12 @@ export default function HackathonManagementPage() {
 
   // حساب الإحصائيات من بيانات الهاكاثون
   const stats = hackathon ? {
-    totalParticipants: hackathon.participants.length,
-    pendingParticipants: hackathon.participants.filter(p => p.status === 'pending').length,
-    approvedParticipants: hackathon.participants.filter(p => p.status === 'approved').length,
-    rejectedParticipants: hackathon.participants.filter(p => p.status === 'rejected').length,
-    approvedWithoutTeam: hackathon.participants.filter(p => p.status === 'approved' && !p.teamId).length,
-    approvedWithTeam: hackathon.participants.filter(p => p.status === 'approved' && p.teamId).length
+    totalParticipants: hackathon.participants?.length || 0,
+    pendingParticipants: hackathon.participants?.filter(p => p.status === 'pending').length || 0,
+    approvedParticipants: hackathon.participants?.filter(p => p.status === 'approved').length || 0,
+    rejectedParticipants: hackathon.participants?.filter(p => p.status === 'rejected').length || 0,
+    approvedWithoutTeam: hackathon.participants?.filter(p => p.status === 'approved' && !p.teamId).length || 0,
+    approvedWithTeam: hackathon.participants?.filter(p => p.status === 'approved' && p.teamId).length || 0
   } : {
     totalParticipants: 0,
     pendingParticipants: 0,
@@ -403,7 +415,12 @@ export default function HackathonManagementPage() {
   }
 
   const previewTeamFormation = async () => {
-    const approvedParticipants = hackathon?.participants.filter(p => p.status === 'approved' && !p.teamId) || []
+    if (!hackathon || !hackathon.participants) {
+      alert('لا توجد بيانات هاكاثون')
+      return
+    }
+
+    const approvedParticipants = hackathon.participants.filter(p => p.status === 'approved' && !p.teamId) || []
 
     if (approvedParticipants.length === 0) {
       alert('لا توجد مشاركين مقبولين بدون فرق لتكوين فرق جديدة')

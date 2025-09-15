@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // DELETE /api/admin/hackathons/[id]/teams/[teamId] - Delete a team
 export async function DELETE(
