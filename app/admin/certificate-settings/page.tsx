@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Settings, Save, RotateCcw, Eye, ArrowLeft } from 'lucide-react'
+import { Settings, Save, RotateCcw, Eye, ArrowLeft, Upload } from 'lucide-react'
 
 interface CertificateSettings {
   namePositionY: number  // موضع عمودي
@@ -29,6 +29,8 @@ export default function CertificateSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [previewName, setPreviewName] = useState('محمد أحمد علي')
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [uploadingCertificate, setUploadingCertificate] = useState(false)
+  const [certificateImageSrc, setCertificateImageSrc] = useState('/row-certificat.png')
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -68,7 +70,7 @@ export default function CertificateSettingsPage() {
       drawCertificate(ctx, canvas, img, scale)
       setImageLoaded(true)
     }
-    img.src = '/row-certificat.png'
+    img.src = certificateImageSrc
   }
 
   const drawCertificate = (
@@ -139,7 +141,7 @@ export default function CertificateSettingsPage() {
     if (ctx) {
       const img = new Image()
       img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-      img.src = '/row-certificat.png'
+      img.src = certificateImageSrc
     }
   }
 
@@ -167,7 +169,7 @@ export default function CertificateSettingsPage() {
           if (ctx) {
             const img = new Image()
             img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-            img.src = '/row-certificat.png'
+            img.src = certificateImageSrc
           }
         }
       } else {
@@ -197,8 +199,66 @@ export default function CertificateSettingsPage() {
       if (ctx) {
         const img = new Image()
         img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-        img.src = '/row-certificat.png'
+        img.src = certificateImageSrc
       }
+    }
+  }
+
+  const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // التحقق من حجم الملف (الحد الأقصى 4 ميجابايت)
+    const maxSize = 4 * 1024 * 1024 // 4MB
+    if (file.size > maxSize) {
+      alert('حجم الملف كبير جداً. الحد الأقصى المسموح 4 ميجابايت.')
+      event.target.value = ''
+      return
+    }
+
+    // التحقق من نوع الملف
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      alert('نوع الملف غير مدعوم. يرجى اختيار صورة (JPG, PNG, WebP).')
+      event.target.value = ''
+      return
+    }
+
+    setUploadingCertificate(true)
+    try {
+      const formData = new FormData()
+      formData.append('certificateImage', file)
+
+      const response = await fetch('/api/admin/certificate-template', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCertificateImageSrc(data.filePath)
+        alert('✅ تم رفع قالب الشهادة بنجاح!')
+
+        // إعادة رسم الشهادة بالقالب الجديد
+        const canvas = canvasRef.current
+        if (canvas) {
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            const img = new Image()
+            img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
+            img.src = data.filePath
+          }
+        }
+      } else {
+        const error = await response.json()
+        alert(`❌ خطأ في رفع قالب الشهادة: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading certificate template:', error)
+      alert('❌ حدث خطأ في رفع قالب الشهادة')
+    } finally {
+      setUploadingCertificate(false)
+      event.target.value = ''
     }
   }
 
@@ -397,6 +457,49 @@ export default function CertificateSettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01645e] focus:border-transparent"
                     placeholder="أدخل اسم للمعاينة"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Certificate Template Upload */}
+            <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-6 border border-[#01645e]/20 shadow-xl">
+              <h3 className="text-lg font-bold text-[#01645e] mb-4 flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                رفع قالب شهادة مخصص
+              </h3>
+
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#01645e] transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCertificateUpload}
+                    className="hidden"
+                    id="certificate-upload"
+                    disabled={uploadingCertificate}
+                  />
+                  <label htmlFor="certificate-upload" className="cursor-pointer">
+                    <div className="space-y-2">
+                      <Upload className="w-12 h-12 text-gray-400 mx-auto" />
+                      <div>
+                        <p className="text-[#01645e] font-medium">
+                          اضغط لاختيار صورة الشهادة أو اسحب الملف هنا
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          الملفات المدعومة: JPG, PNG, WebP
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          الحد الأقصى لحجم الملف: 4 ميجابايت
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="text-xs text-gray-500 space-y-1">
+                  <p>• سيتم استخدام هذا القالب لجميع الشهادات الجديدة</p>
+                  <p>• الأبعاد المقترحة: 1920x1080 بكسل أو أكبر</p>
+                  <p>• تأكد من وجود مساحة كافية لكتابة الاسم</p>
                 </div>
               </div>
             </div>

@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Calendar, Users, Trophy, Settings, Eye, Edit, Trash2, Pin, PinOff } from 'lucide-react'
+import { Plus, Calendar, Users, Trophy, Settings, Eye, Edit, Trash2, Pin, PinOff, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
+import { ExcelExporter } from '@/lib/excel-export'
 
 interface Hackathon {
   id: string
@@ -146,6 +147,38 @@ export default function AdminHackathonsPage() {
     })
   }
 
+  const exportToExcel = async () => {
+    try {
+      await ExcelExporter.exportToExcel({
+        filename: 'الهاكاثونات.xlsx',
+        sheetName: 'الهاكاثونات',
+        columns: [
+          { key: 'title', header: 'عنوان الهاكاثون', width: 25 },
+          { key: 'description', header: 'الوصف', width: 35 },
+          { key: 'status', header: 'الحالة', width: 12 },
+          { key: 'startDate', header: 'تاريخ البداية', width: 15, format: 'date' },
+          { key: 'endDate', header: 'تاريخ النهاية', width: 15, format: 'date' },
+          { key: 'totalParticipants', header: 'إجمالي المشاركين', width: 15, format: 'number' },
+          { key: 'approvedParticipants', header: 'المشاركين المقبولين', width: 18, format: 'number' },
+          { key: 'pendingParticipants', header: 'في الانتظار', width: 15, format: 'number' },
+          { key: 'createdAt', header: 'تاريخ الإنشاء', width: 18, format: 'date' }
+        ],
+        data: hackathons.map(hackathon => ({
+          ...hackathon,
+          status: hackathon.status === 'open' ? 'مفتوح' :
+                  hackathon.status === 'closed' ? 'مغلق' :
+                  hackathon.status === 'completed' ? 'مكتمل' : hackathon.status,
+          totalParticipants: hackathon.stats.total,
+          approvedParticipants: hackathon.stats.approved,
+          pendingParticipants: hackathon.stats.pending
+        }))
+      })
+    } catch (error) {
+      console.error('Error exporting hackathons:', error)
+      alert('حدث خطأ في تصدير البيانات')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 p-6">
@@ -175,12 +208,23 @@ export default function AdminHackathonsPage() {
             <p className="text-[#8b7632] text-lg">إنشاء وإدارة الهاكاثونات والمسابقات</p>
           </div>
 
-          <Link href="/admin/hackathons/create">
-            <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52] text-white">
-              <Plus className="w-5 h-5 ml-2" />
-              إنشاء هاكاثون جديد
+          <div className="flex gap-3">
+            <Button
+              onClick={exportToExcel}
+              disabled={hackathons.length === 0}
+              variant="outline"
+              className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white"
+            >
+              <Download className="w-4 h-4 ml-2" />
+              تصدير Excel ({hackathons.length})
             </Button>
-          </Link>
+            <Link href="/admin/hackathons/create">
+              <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52] text-white">
+                <Plus className="w-5 h-5 ml-2" />
+                إنشاء هاكاثون جديد
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Statistics Cards */}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Upload, FileText, CheckCircle, Clock, XCircle, Calendar, Trophy } from 'lucide-react'
+import { Users, Upload, FileText, CheckCircle, Clock, XCircle, Calendar, Trophy, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -225,7 +225,7 @@ export default function ParticipantDashboard() {
           </div>
 
           <div className="flex space-x-4 rtl:space-x-reverse">
-            {currentParticipation?.status === 'APPROVED' && (
+            {currentParticipation?.status === 'approved' && (
               <>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Upload className="w-5 h-5 ml-2" />
@@ -260,15 +260,15 @@ export default function ParticipantDashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-[#01645e]">حالة المشاركة</h3>
-                  {currentParticipation.status === 'APPROVED' && <CheckCircle className="w-6 h-6 text-green-600" />}
-                  {currentParticipation.status === 'PENDING' && <Clock className="w-6 h-6 text-yellow-600" />}
-                  {currentParticipation.status === 'REJECTED' && <XCircle className="w-6 h-6 text-red-600" />}
+                  {currentParticipation.status === 'approved' && <CheckCircle className="w-6 h-6 text-green-600" />}
+                  {currentParticipation.status === 'pending' && <Clock className="w-6 h-6 text-yellow-600" />}
+                  {currentParticipation.status === 'rejected' && <XCircle className="w-6 h-6 text-red-600" />}
                 </div>
                 {getStatusBadge(currentParticipation.status)}
                 <p className="text-sm text-[#8b7632] mt-2">
-                  {currentParticipation.status === 'APPROVED' && 'تم قبول مشاركتك بنجاح'}
-                  {currentParticipation.status === 'PENDING' && 'طلبك قيد المراجعة'}
-                  {currentParticipation.status === 'REJECTED' && 'لم يتم قبول مشاركتك'}
+                  {currentParticipation.status === 'approved' && 'تم قبول مشاركتك بنجاح'}
+                  {currentParticipation.status === 'pending' && 'طلبك قيد المراجعة'}
+                  {currentParticipation.status === 'rejected' && 'لم يتم قبول مشاركتك'}
                 </p>
               </CardContent>
             </Card>
@@ -290,7 +290,7 @@ export default function ParticipantDashboard() {
                 ) : (
                   <div className="text-center py-4">
                     <p className="text-sm text-[#8b7632]">
-                      {currentParticipation.status === 'APPROVED' ?
+                      {currentParticipation.status === 'approved' ?
                         'سيتم تعيينك في فريق قريباً' :
                         'في انتظار قبول المشاركة'
                       }
@@ -319,7 +319,7 @@ export default function ParticipantDashboard() {
                   <div className="text-center py-4">
                     <Badge className="bg-gray-100 text-gray-800">لم يتم الرفع</Badge>
                     <p className="text-sm text-[#8b7632] mt-2">
-                      {currentParticipation.status === 'APPROVED' ?
+                      {currentParticipation.status === 'approved' ?
                         'يمكنك رفع مشروعك الآن' :
                         'في انتظار قبول المشاركة'
                       }
@@ -330,7 +330,7 @@ export default function ParticipantDashboard() {
             </Card>
 
             {/* Team Presentation Upload */}
-            {currentParticipation.team && currentParticipation.status === 'APPROVED' && (
+            {currentParticipation.team && currentParticipation.status === 'approved' && (
               <Card className="hover:shadow-lg transition-shadow duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -428,10 +428,10 @@ export default function ParticipantDashboard() {
                             onChange={(e) => {
                               const file = e.target.files?.[0]
                               if (file) {
-                                // التحقق من حجم الملف (الحد الأقصى 50 ميجابايت)
-                                const maxSize = 50 * 1024 * 1024 // 50MB
+                                // التحقق من حجم الملف (الحد الأقصى 4 ميجابايت)
+                                const maxSize = 4 * 1024 * 1024 // 4MB
                                 if (file.size > maxSize) {
-                                  alert('حجم الملف كبير جداً. الحد الأقصى المسموح 50 ميجابايت.')
+                                  alert('حجم الملف كبير جداً. الحد الأقصى المسموح 4 ميجابايت.')
                                   e.target.value = ''
                                   return
                                 }
@@ -467,7 +467,7 @@ export default function ParticipantDashboard() {
                                   الملفات المدعومة: PowerPoint (.ppt, .pptx) أو PDF
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  الحد الأقصى لحجم الملف: 50 ميجابايت
+                                  الحد الأقصى لحجم الملف: 4 ميجابايت
                                 </p>
                               </div>
                             </div>

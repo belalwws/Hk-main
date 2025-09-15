@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Search, Mail, MapPin, Calendar, UserCheck, ArrowLeft, Shield, Phone, Trash2 } from 'lucide-react'
+import { Users, Search, Mail, MapPin, Calendar, UserCheck, ArrowLeft, Shield, Phone, Trash2, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useModal } from '@/hooks/use-modal'
+import { ExcelExporter } from '@/lib/excel-export'
 
 interface User {
   id: string
@@ -81,6 +82,31 @@ export default function UsersManagement() {
     (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const exportToExcel = async () => {
+    try {
+      await ExcelExporter.exportToExcel({
+        filename: 'المستخدمين.xlsx',
+        sheetName: 'المستخدمين',
+        columns: [
+          { key: 'name', header: 'الاسم', width: 20 },
+          { key: 'email', header: 'البريد الإلكتروني', width: 25 },
+          { key: 'phone', header: 'رقم الهاتف', width: 15 },
+          { key: 'city', header: 'المدينة', width: 15 },
+          { key: 'nationality', header: 'الجنسية', width: 15 },
+          { key: 'role', header: 'الدور', width: 12 },
+          { key: 'createdAt', header: 'تاريخ التسجيل', width: 18, format: 'date' }
+        ],
+        data: filtered.map(user => ({
+          ...user,
+          role: user.role === 'admin' ? 'مدير' : user.role === 'judge' ? 'محكم' : 'مشارك'
+        }))
+      })
+    } catch (error) {
+      console.error('Error exporting users:', error)
+      alert('حدث خطأ في تصدير البيانات')
+    }
+  }
+
   const roleBadge = (role: User['role']) => (
     role === 'ADMIN' ? <Badge className="bg-red-100 text-red-800 border-red-200"><Shield className="w-3 h-3 ml-1" />مدير</Badge> :
     role === 'JUDGE' ? <Badge className="bg-purple-100 text-purple-800 border-purple-200"><UserCheck className="w-3 h-3 ml-1" />محكم</Badge> :
@@ -101,17 +127,28 @@ export default function UsersManagement() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/admin/dashboard">
-            <Button variant="outline" size="sm" className="border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
-              <ArrowLeft className="w-4 h-4 ml-2" />
-              العودة للداشبورد
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-[#01645e]">إدارة المستخدمين</h1>
-            <p className="text-[#8b7632] mt-1">جميع المستخدمين ({users.length})</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Link href="/admin/dashboard">
+              <Button variant="outline" size="sm" className="border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
+                <ArrowLeft className="w-4 h-4 ml-2" />
+                العودة للداشبورد
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-[#01645e]">إدارة المستخدمين</h1>
+              <p className="text-[#8b7632] mt-1">جميع المستخدمين ({users.length})</p>
+            </div>
           </div>
+
+          <Button
+            onClick={exportToExcel}
+            disabled={filtered.length === 0}
+            className="bg-gradient-to-r from-[#3ab666] to-[#c3e956] hover:from-[#2d8f52] hover:to-[#a8c247]"
+          >
+            <Download className="w-4 h-4 ml-2" />
+            تصدير Excel ({filtered.length})
+          </Button>
         </div>
 
         <Card className="mb-6">

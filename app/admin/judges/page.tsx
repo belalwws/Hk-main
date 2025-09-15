@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Users, Eye, Edit, Trash2, UserCheck, UserX, Mail } from 'lucide-react'
+import { Plus, Users, Eye, Edit, Trash2, UserCheck, UserX, Mail, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { useModal } from '@/hooks/use-modal'
+import { ExcelExporter } from '@/lib/excel-export'
 
 interface Judge {
   id: string
@@ -168,6 +169,34 @@ export default function AdminJudgesPage() {
     )
   }
 
+  const exportToExcel = async () => {
+    try {
+      await ExcelExporter.exportToExcel({
+        filename: 'المحكمين.xlsx',
+        sheetName: 'المحكمين',
+        columns: [
+          { key: 'userName', header: 'اسم المحكم', width: 20 },
+          { key: 'userEmail', header: 'البريد الإلكتروني', width: 25 },
+          { key: 'userPhone', header: 'رقم الهاتف', width: 15 },
+          { key: 'hackathonTitle', header: 'الهاكاثون المعين له', width: 25 },
+          { key: 'status', header: 'الحالة', width: 12 },
+          { key: 'assignedAt', header: 'تاريخ التعيين', width: 18, format: 'date' }
+        ],
+        data: judges.map(judge => ({
+          userName: judge.user.name,
+          userEmail: judge.user.email,
+          userPhone: judge.user.phone || 'غير محدد',
+          hackathonTitle: judge.hackathon.title,
+          status: judge.isActive ? 'نشط' : 'غير نشط',
+          assignedAt: judge.assignedAt
+        }))
+      })
+    } catch (error) {
+      console.error('Error exporting judges:', error)
+      alert('حدث خطأ في تصدير البيانات')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 p-6">
@@ -197,14 +226,30 @@ export default function AdminJudgesPage() {
             <p className="text-[#8b7632] text-lg">إنشاء وإدارة المحكمين وربطهم بالهاكاثونات</p>
           </div>
           
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666]">
-                <Plus className="w-5 h-5 ml-2" />
-                إضافة محكم جديد
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+          <div className="flex gap-3">
+            <Button
+              onClick={exportToExcel}
+              disabled={judges.length === 0}
+              variant="outline"
+              className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white"
+            >
+              <Download className="w-4 h-4 ml-2" />
+              تصدير Excel ({judges.length})
+            </Button>
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666]">
+                  <Plus className="w-5 h-5 ml-2" />
+                  إضافة محكم جديد
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+          </div>
+        </motion.div>
+
+        {/* Create Judge Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>إضافة محكم جديد</DialogTitle>
                 <DialogDescription>
@@ -274,8 +319,7 @@ export default function AdminJudgesPage() {
                 <Button type="submit" onClick={createJudge}>إنشاء المحكم</Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
-        </motion.div>
+        </Dialog>
 
         {/* Stats */}
         <motion.div

@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Search, Check, X, Eye, Mail, Phone, MapPin, Calendar, FileText } from 'lucide-react'
+import { Users, Search, Check, X, Eye, Mail, Phone, MapPin, Calendar, FileText, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { ExcelExporter } from '@/lib/excel-export'
 
 interface Participant {
   id: string
@@ -83,6 +84,44 @@ export default function TempParticipantsManagement() {
     return statusMap[status as keyof typeof statusMap] || { label: status, color: 'bg-gray-100 text-gray-800' }
   }
 
+  const exportToExcel = async () => {
+    try {
+      await ExcelExporter.exportToExcel({
+        filename: 'المشاركين_المؤقت.xlsx',
+        sheetName: 'المشاركين',
+        columns: [
+          { key: 'userName', header: 'اسم المشارك', width: 20 },
+          { key: 'userEmail', header: 'البريد الإلكتروني', width: 25 },
+          { key: 'userPhone', header: 'رقم الهاتف', width: 15 },
+          { key: 'userCity', header: 'المدينة', width: 15 },
+          { key: 'userNationality', header: 'الجنسية', width: 15 },
+          { key: 'teamType', header: 'نوع المشاركة', width: 15 },
+          { key: 'teamRole', header: 'الدور المفضل', width: 15 },
+          { key: 'experience', header: 'الخبرة', width: 20 },
+          { key: 'skills', header: 'المهارات', width: 30 },
+          { key: 'status', header: 'الحالة', width: 12 },
+          { key: 'registeredAt', header: 'تاريخ التسجيل', width: 18, format: 'date' }
+        ],
+        data: filteredParticipants.map(participant => ({
+          userName: participant.user.name,
+          userEmail: participant.user.email,
+          userPhone: participant.user.phone,
+          userCity: participant.user.city,
+          userNationality: participant.user.nationality,
+          teamType: participant.teamType === 'INDIVIDUAL' ? 'فردي' : 'فريق',
+          teamRole: participant.teamRole,
+          experience: participant.experience,
+          skills: Array.isArray(participant.skills) ? participant.skills.join(', ') : participant.skills,
+          status: getStatusBadge(participant.status).label,
+          registeredAt: participant.registeredAt
+        }))
+      })
+    } catch (error) {
+      console.error('Error exporting participants:', error)
+      alert('حدث خطأ في تصدير البيانات')
+    }
+  }
+
   const filteredParticipants = participants.filter(participant => {
     const matchesSearch = participant.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          participant.user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -104,7 +143,7 @@ export default function TempParticipantsManagement() {
     <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex justify-between items-center mb-8"
@@ -113,10 +152,20 @@ export default function TempParticipantsManagement() {
             <h1 className="text-4xl font-bold text-[#01645e] mb-2">المشاركين المسجلين</h1>
             <p className="text-[#8b7632] text-lg">عرض وإدارة المشاركين المسجلين في النظام (تخزين مؤقت)</p>
           </div>
-          
-          <div className="text-center">
-            <div className="text-3xl font-bold text-[#01645e]">{participants.length}</div>
-            <div className="text-sm text-[#8b7632]">إجمالي المشاركين</div>
+
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={exportToExcel}
+              disabled={filteredParticipants.length === 0}
+              className="bg-gradient-to-r from-[#3ab666] to-[#c3e956] hover:from-[#2d8f52] hover:to-[#a8c247]"
+            >
+              <Download className="w-4 h-4 ml-2" />
+              تصدير Excel ({filteredParticipants.length})
+            </Button>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-[#01645e]">{participants.length}</div>
+              <div className="text-sm text-[#8b7632]">إجمالي المشاركين</div>
+            </div>
           </div>
         </motion.div>
 

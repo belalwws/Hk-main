@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
+import { ExcelExporter } from '@/lib/excel-export'
 
 interface Hackathon {
   id: string
@@ -139,6 +140,67 @@ export default function ResultsPage() {
     }
   }
 
+  const exportToExcel = async () => {
+    if (!selectedHackathon || results.length === 0) {
+      alert('لا توجد بيانات للتصدير')
+      return
+    }
+
+    try {
+      // Prepare results data
+      const resultsData = results.map(team => ({
+        rank: team.rank,
+        teamName: team.name,
+        teamNumber: team.teamNumber,
+        projectName: team.projectName || 'غير محدد',
+        totalScore: team.totalScore?.toFixed(2) || '0.00',
+        evaluationsCount: team.evaluationsCount || 0,
+        membersCount: team.participants?.length || 0,
+        members: team.participants?.map(p => p.user.name).join(', ') || 'غير محدد'
+      }))
+
+      // Prepare judges summary data
+      const judgesData = judgesSummary?.map(judge => ({
+        judgeName: judge.name,
+        judgeEmail: judge.email,
+        totalEvaluations: judge.totalEvaluations,
+        averageScore: judge.averageScore?.toFixed(2) || '0.00',
+        lastEvaluation: judge.lastEvaluation
+      })) || []
+
+      await ExcelExporter.exportMultipleSheets(`نتائج_${selectedHackathon.title}.xlsx`, [
+        {
+          name: 'النتائج النهائية',
+          columns: [
+            { key: 'rank', header: 'الترتيب', width: 10, format: 'number' },
+            { key: 'teamName', header: 'اسم الفريق', width: 20 },
+            { key: 'teamNumber', header: 'رقم الفريق', width: 12 },
+            { key: 'projectName', header: 'اسم المشروع', width: 25 },
+            { key: 'totalScore', header: 'النتيجة الإجمالية', width: 15 },
+            { key: 'evaluationsCount', header: 'عدد التقييمات', width: 15, format: 'number' },
+            { key: 'membersCount', header: 'عدد الأعضاء', width: 12, format: 'number' },
+            { key: 'members', header: 'أعضاء الفريق', width: 40 }
+          ],
+          data: resultsData
+        },
+        {
+          name: 'ملخص المحكمين',
+          columns: [
+            { key: 'judgeName', header: 'اسم المحكم', width: 20 },
+            { key: 'judgeEmail', header: 'البريد الإلكتروني', width: 25 },
+            { key: 'totalEvaluations', header: 'عدد التقييمات', width: 15, format: 'number' },
+            { key: 'averageScore', header: 'متوسط النتيجة', width: 15 },
+            { key: 'lastEvaluation', header: 'آخر تقييم', width: 18, format: 'date' }
+          ],
+          data: judgesData
+        }
+      ])
+    } catch (error) {
+      console.error('Error exporting results:', error)
+      alert('حدث خطأ في تصدير البيانات')
+    }
+  }
+
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1: return <Trophy className="w-6 h-6 text-yellow-500" />
@@ -213,9 +275,13 @@ export default function ResultsPage() {
                 )}
                 تحديث البيانات
               </Button>
-              <Button className="bg-[#3ab666] hover:bg-[#3ab666]/90">
+              <Button
+                onClick={exportToExcel}
+                disabled={!selectedHackathon || results.length === 0}
+                className="bg-[#3ab666] hover:bg-[#3ab666]/90"
+              >
                 <Download className="w-4 h-4 ml-2" />
-                تصدير النتائج
+                تصدير النتائج ({results.length})
               </Button>
             </div>
           </div>

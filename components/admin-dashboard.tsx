@@ -41,23 +41,35 @@ export function AdminDashboard() {
     }
   }
 
-  const exportResults = () => {
-    const csvContent = [
-      ["الترتيب", "رقم الفريق", "متوسط النتيجة", "عدد التقييمات"].join(","),
-      ...results.map((result, index) =>
-        [index + 1, result.team_number, result.average_score?.toFixed(2) || "0.00", result.total_evaluations].join(","),
-      ),
-    ].join("\n")
+  const exportResults = async () => {
+    if (!results || results.length === 0) {
+      alert('لا توجد نتائج للتصدير')
+      return
+    }
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const link = document.createElement("a")
-    const url = URL.createObjectURL(blob)
-    link.setAttribute("href", url)
-    link.setAttribute("download", `hackathon_results_${new Date().toISOString().split("T")[0]}.csv`)
-    link.style.visibility = "hidden"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    try {
+      const { ExcelExporter } = await import('@/lib/excel-export')
+
+      await ExcelExporter.exportToExcel({
+        filename: 'نتائج_الهاكاثون.xlsx',
+        sheetName: 'النتائج',
+        columns: [
+          { key: 'rank', header: 'الترتيب', width: 10, format: 'number' },
+          { key: 'teamNumber', header: 'رقم الفريق', width: 12, format: 'number' },
+          { key: 'averageScore', header: 'متوسط النتيجة', width: 15 },
+          { key: 'totalEvaluations', header: 'عدد التقييمات', width: 15, format: 'number' }
+        ],
+        data: results.map((result, index) => ({
+          rank: index + 1,
+          teamNumber: result.team_number,
+          averageScore: result.average_score?.toFixed(2) || "0.00",
+          totalEvaluations: result.total_evaluations
+        }))
+      })
+    } catch (error) {
+      console.error('Error exporting results:', error)
+      alert('حدث خطأ في تصدير النتائج')
+    }
   }
 
   const getRankIcon = (rank: number) => {

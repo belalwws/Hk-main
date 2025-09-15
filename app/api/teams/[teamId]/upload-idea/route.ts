@@ -88,16 +88,24 @@ export async function POST(
       return NextResponse.json({ error: 'الملف وعنوان الفكرة مطلوبان' }, { status: 400 })
     }
 
+    // Validate file size (max 4MB)
+    const maxSize = 4 * 1024 * 1024 // 4MB
+    if (file.size > maxSize) {
+      return NextResponse.json({
+        error: 'حجم الملف كبير جداً. الحد الأقصى المسموح 4 ميجابايت'
+      }, { status: 400 })
+    }
+
     // Validate file type
     const allowedTypes = [
       'application/vnd.ms-powerpoint',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'application/pdf'
     ]
-    
+
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ 
-        error: 'نوع الملف غير مدعوم. يجب أن يكون PowerPoint أو PDF' 
+      return NextResponse.json({
+        error: 'نوع الملف غير مدعوم. يجب أن يكون PowerPoint أو PDF'
       }, { status: 400 })
     }
 

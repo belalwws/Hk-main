@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,6 +15,7 @@ import Link from 'next/link'
 import TeamsDisplay from '@/components/admin/TeamsDisplay'
 import { AlertModal, ConfirmModal } from '@/components/ui/modal'
 import { useModal } from '@/hooks/use-modal'
+import { ExcelExporter } from '@/lib/excel-export'
 
 interface Participant {
   id: string
@@ -497,6 +498,69 @@ export default function HackathonManagementPage() {
     } catch (error) {
       console.error('Error deleting teams:', error)
       alert('حدث خطأ في حذف الفرق')
+    }
+  }
+
+  const exportTeamsToExcel = async () => {
+    if (!teams || teams.length === 0) {
+      alert('لا توجد فرق للتصدير')
+      return
+    }
+
+    try {
+      // Prepare teams data
+      const teamsData = teams.map(team => ({
+        teamNumber: team.teamNumber,
+        teamName: team.name,
+        projectName: team.projectName || 'غير محدد',
+        membersCount: team.participants?.length || 0,
+        members: team.participants?.map(p => p.user.name).join(', ') || 'غير محدد',
+        memberEmails: team.participants?.map(p => p.user.email).join(', ') || 'غير محدد',
+        createdAt: team.createdAt
+      }))
+
+      // Prepare detailed members data
+      const membersData = teams.flatMap(team =>
+        team.participants?.map(participant => ({
+          teamNumber: team.teamNumber,
+          teamName: team.name,
+          memberName: participant.user.name,
+          memberEmail: participant.user.email,
+          preferredRole: participant.user.preferredRole || 'غير محدد',
+          joinedAt: participant.registeredAt
+        })) || []
+      )
+
+      await ExcelExporter.exportMultipleSheets(`فرق_${hackathon?.title || 'الهاكاثون'}.xlsx`, [
+        {
+          name: 'الفرق',
+          columns: [
+            { key: 'teamNumber', header: 'رقم الفريق', width: 12, format: 'number' },
+            { key: 'teamName', header: 'اسم الفريق', width: 20 },
+            { key: 'projectName', header: 'اسم المشروع', width: 25 },
+            { key: 'membersCount', header: 'عدد الأعضاء', width: 12, format: 'number' },
+            { key: 'members', header: 'أعضاء الفريق', width: 40 },
+            { key: 'memberEmails', header: 'بريد الأعضاء', width: 40 },
+            { key: 'createdAt', header: 'تاريخ الإنشاء', width: 18, format: 'date' }
+          ],
+          data: teamsData
+        },
+        {
+          name: 'تفاصيل الأعضاء',
+          columns: [
+            { key: 'teamNumber', header: 'رقم الفريق', width: 12, format: 'number' },
+            { key: 'teamName', header: 'اسم الفريق', width: 20 },
+            { key: 'memberName', header: 'اسم العضو', width: 20 },
+            { key: 'memberEmail', header: 'البريد الإلكتروني', width: 25 },
+            { key: 'preferredRole', header: 'الدور المفضل', width: 20 },
+            { key: 'joinedAt', header: 'تاريخ الانضمام', width: 18, format: 'date' }
+          ],
+          data: membersData
+        }
+      ])
+    } catch (error) {
+      console.error('Error exporting teams:', error)
+      alert('حدث خطأ في تصدير البيانات')
     }
   }
 
@@ -1008,14 +1072,24 @@ export default function HackathonManagementPage() {
                         </div>
                         <div className="flex gap-2">
                           {hasExistingTeams && (
-                            <Button
-                              onClick={deleteAllTeams}
-                              variant="destructive"
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              <Trash2 className="w-4 h-4 ml-1" />
-                              حذف جميع الفرق
-                            </Button>
+                            <>
+                              <Button
+                                onClick={exportTeamsToExcel}
+                                variant="outline"
+                                className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white"
+                              >
+                                <Download className="w-4 h-4 ml-1" />
+                                تصدير Excel ({teams?.length || 0})
+                              </Button>
+                              <Button
+                                onClick={deleteAllTeams}
+                                variant="destructive"
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                <Trash2 className="w-4 h-4 ml-1" />
+                                حذف جميع الفرق
+                              </Button>
+                            </>
                           )}
                           <Button
                             onClick={previewTeamFormation}

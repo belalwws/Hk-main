@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BarChart3, Users, Trophy, Calendar, TrendingUp, Download, FileText, PieChart } from 'lucide-react'
+import { ExcelExporter } from '@/lib/excel-export'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -44,22 +45,158 @@ export default function ReportsPage() {
     }
   }
 
-  const exportReport = async (type: string) => {
+  const exportComprehensiveReport = async () => {
+    if (!stats) {
+      alert('لا توجد بيانات للتصدير')
+      return
+    }
+
     try {
-      const response = await fetch(`/api/admin/reports/export?type=${type}`)
+      await ExcelExporter.exportMultipleSheets('تقرير_شامل_المنصة.xlsx', [
+        {
+          name: 'الإحصائيات العامة',
+          columns: [
+            { key: 'metric', header: 'المؤشر', width: 25 },
+            { key: 'value', header: 'القيمة', width: 15, format: 'number' },
+            { key: 'description', header: 'الوصف', width: 40 }
+          ],
+          data: [
+            { metric: 'إجمالي المستخدمين', value: stats.totalUsers, description: 'العدد الكلي للمستخدمين المسجلين في المنصة' },
+            { metric: 'إجمالي الهاكاثونات', value: stats.totalHackathons, description: 'العدد الكلي للهاكاثونات المنشأة' },
+            { metric: 'الهاكاثونات النشطة', value: stats.activeHackathons, description: 'عدد الهاكاثونات الجارية حالياً' },
+            { metric: 'إجمالي المشاركين', value: stats.totalParticipants, description: 'العدد الكلي للمشاركات في جميع الهاكاثونات' },
+            { metric: 'المشاركين المقبولين', value: stats.approvedParticipants, description: 'عدد المشاركين المقبولين' },
+            { metric: 'المشاركين المعلقين', value: stats.pendingParticipants, description: 'عدد المشاركين في انتظار الموافقة' },
+            { metric: 'المشاركين المرفوضين', value: stats.rejectedParticipants, description: 'عدد المشاركين المرفوضين' }
+          ]
+        },
+        {
+          name: 'التوزيع حسب المدن',
+          columns: [
+            { key: 'city', header: 'المدينة', width: 20 },
+            { key: 'count', header: 'عدد المستخدمين', width: 15, format: 'number' },
+            { key: 'percentage', header: 'النسبة المئوية', width: 15 }
+          ],
+          data: stats.usersByCity.map(item => ({
+            city: item.city,
+            count: item.count,
+            percentage: `${((item.count / stats.totalUsers) * 100).toFixed(1)}%`
+          }))
+        },
+        {
+          name: 'التوزيع حسب الجنسية',
+          columns: [
+            { key: 'nationality', header: 'الجنسية', width: 20 },
+            { key: 'count', header: 'عدد المستخدمين', width: 15, format: 'number' },
+            { key: 'percentage', header: 'النسبة المئوية', width: 15 }
+          ],
+          data: stats.usersByNationality.map(item => ({
+            nationality: item.nationality,
+            count: item.count,
+            percentage: `${((item.count / stats.totalUsers) * 100).toFixed(1)}%`
+          }))
+        },
+        {
+          name: 'حالة الهاكاثونات',
+          columns: [
+            { key: 'status', header: 'الحالة', width: 20 },
+            { key: 'count', header: 'العدد', width: 15, format: 'number' },
+            { key: 'percentage', header: 'النسبة المئوية', width: 15 }
+          ],
+          data: stats.hackathonsByStatus.map(item => ({
+            status: getStatusLabel(item.status),
+            count: item.count,
+            percentage: `${((item.count / stats.totalHackathons) * 100).toFixed(1)}%`
+          }))
+        }
+      ])
+    } catch (error) {
+      console.error('Error exporting comprehensive report:', error)
+      alert('حدث خطأ في تصدير التقرير')
+    }
+  }
+
+  const exportUsersReport = async () => {
+    try {
+      const response = await fetch('/api/admin/users')
       if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${type}-report-${new Date().toISOString().split('T')[0]}.csv`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
+        const data = await response.json()
+        await ExcelExporter.exportToExcel({
+          filename: 'تقرير_المستخدمين.xlsx',
+          sheetName: 'المستخدمين',
+          columns: [
+            { key: 'name', header: 'الاسم', width: 20 },
+            { key: 'email', header: 'البريد الإلكتروني', width: 25 },
+            { key: 'phone', header: 'رقم الهاتف', width: 15 },
+            { key: 'city', header: 'المدينة', width: 15 },
+            { key: 'nationality', header: 'الجنسية', width: 15 },
+            { key: 'role', header: 'الدور', width: 12 },
+            { key: 'createdAt', header: 'تاريخ التسجيل', width: 18, format: 'date' }
+          ],
+          data: data.users || []
+        })
       }
     } catch (error) {
-      console.error('Error exporting report:', error)
+      console.error('Error exporting users report:', error)
+      alert('حدث خطأ في تصدير تقرير المستخدمين')
+    }
+  }
+
+  const exportParticipantsReport = async () => {
+    try {
+      const response = await fetch('/api/admin/participants')
+      if (response.ok) {
+        const data = await response.json()
+        await ExcelExporter.exportToExcel({
+          filename: 'تقرير_المشاركين.xlsx',
+          sheetName: 'المشاركين',
+          columns: [
+            { key: 'userName', header: 'اسم المشارك', width: 20 },
+            { key: 'userEmail', header: 'البريد الإلكتروني', width: 25 },
+            { key: 'userPhone', header: 'رقم الهاتف', width: 15 },
+            { key: 'userCity', header: 'المدينة', width: 15 },
+            { key: 'userNationality', header: 'الجنسية', width: 15 },
+            { key: 'hackathonTitle', header: 'الهاكاثون', width: 25 },
+            { key: 'status', header: 'حالة المشاركة', width: 15 },
+            { key: 'teamName', header: 'اسم الفريق', width: 20 },
+            { key: 'registeredAt', header: 'تاريخ التسجيل', width: 18, format: 'date' }
+          ],
+          data: data.participants?.map((p: any) => ({
+            userName: p.user.name,
+            userEmail: p.user.email,
+            userPhone: p.user.phone || 'غير محدد',
+            userCity: p.user.city || 'غير محدد',
+            userNationality: p.user.nationality || 'غير محدد',
+            hackathonTitle: p.hackathon.title,
+            status: getParticipantStatusLabel(p.status),
+            teamName: p.team?.name || 'غير مُعيَّن',
+            registeredAt: p.registeredAt
+          })) || []
+        })
+      }
+    } catch (error) {
+      console.error('Error exporting participants report:', error)
+      alert('حدث خطأ في تصدير تقرير المشاركين')
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'draft': return 'مسودة'
+      case 'published': return 'منشور'
+      case 'active': return 'نشط'
+      case 'completed': return 'مكتمل'
+      case 'cancelled': return 'ملغي'
+      default: return status
+    }
+  }
+
+  const getParticipantStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending': return 'في الانتظار'
+      case 'approved': return 'مقبول'
+      case 'rejected': return 'مرفوض'
+      default: return status
     }
   }
 
@@ -98,11 +235,27 @@ export default function ReportsPage() {
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={() => exportReport('users')} variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
+              <Button
+                onClick={exportComprehensiveReport}
+                disabled={!stats}
+                className="bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52] text-white"
+              >
+                <Download className="w-4 h-4 ml-2" />
+                تقرير شامل
+              </Button>
+              <Button
+                onClick={exportUsersReport}
+                variant="outline"
+                className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white"
+              >
                 <Download className="w-4 h-4 ml-2" />
                 تصدير المستخدمين
               </Button>
-              <Button onClick={() => exportReport('participants')} variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
+              <Button
+                onClick={exportParticipantsReport}
+                variant="outline"
+                className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white"
+              >
                 <Download className="w-4 h-4 ml-2" />
                 تصدير المشاركين
               </Button>
