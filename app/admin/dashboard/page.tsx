@@ -333,6 +333,16 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </Link>
+
+          <Link href="/admin/email-templates">
+            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
+              <CardContent className="p-6 text-center">
+                <Mail className="w-12 h-12 text-[#3ab666] mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-bold text-[#01645e] mb-2">قوالب الإيميلات</h3>
+                <p className="text-[#8b7632] text-sm">تخصيص وإدارة قوالب الإيميلات التلقائية</p>
+              </CardContent>
+            </Card>
+          </Link>
         </motion.div>
 
         {/* Recent Participants */}

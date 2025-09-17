@@ -316,10 +316,7 @@ export default function HackathonManagementPage() {
           fetchCertificateTemplate()
         }, 1000)
 
-        // إعادة تحميل الصفحة بعد 3 ثوان لضمان التحديث
-        setTimeout(() => {
-          window.location.reload()
-        }, 3000)
+        // لا نحتاج لإعادة تحميل الصفحة - الصورة تم تحديثها بالفعل
       } else {
         const error = await response.json()
         showError(`خطأ في رفع قالب الشهادة: ${error.error}`)

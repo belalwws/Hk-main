@@ -15,12 +15,22 @@ const protectedRoutes: { prefix: string; roles: ("admin" | "judge")[] }[] = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip Next.js internals and static assets
+  // Skip Next.js internals, static assets, and public routes
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
     pathname.startsWith("/assets") ||
-    pathname.startsWith("/static")
+    pathname.startsWith("/static") ||
+    pathname.startsWith("/certificates") ||
+    pathname.startsWith("/uploads") ||
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/hackathons" ||
+    pathname.startsWith("/hackathons/") ||
+    pathname === "/results" ||
+    pathname.startsWith("/certificate/") ||
+    pathname.startsWith("/forms/")
   ) {
     return NextResponse.next()
   }

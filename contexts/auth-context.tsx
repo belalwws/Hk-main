@@ -39,6 +39,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 				// First try to get user from localStorage as backup
 				const storedUser = localStorage.getItem('auth-user')
+				const lastVerified = localStorage.getItem('auth-last-verified')
+				const now = Date.now()
+
+				// If we have a stored user and it was verified recently (within 5 minutes), use it
+				if (storedUser && lastVerified && (now - parseInt(lastVerified)) < 5 * 60 * 1000) {
+					try {
+						const userData = JSON.parse(storedUser)
+						console.log('💾 Using cached user from localStorage:', userData.email)
+						setUser(userData)
+						setLoading(false)
+						return
+					} catch (e) {
+						console.log('❌ Invalid localStorage data, clearing...')
+						localStorage.removeItem('auth-user')
+						localStorage.removeItem('auth-last-verified')
+					}
+				}
+
+				// Set user from localStorage first if available
 				if (storedUser) {
 					try {
 						const userData = JSON.parse(storedUser)
@@ -68,19 +87,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					if (data.user) {
 						console.log('✅ User verified from server:', data.user.email, 'role:', data.user.role)
 						setUser(data.user)
-						// Store in localStorage as backup
+						// Store in localStorage as backup with timestamp
 						localStorage.setItem('auth-user', JSON.stringify(data.user))
+						localStorage.setItem('auth-last-verified', now.toString())
 					} else {
 						console.log('❌ No user in response')
 						setUser(null)
 						localStorage.removeItem('auth-user')
+						localStorage.removeItem('auth-last-verified')
 					}
 				} else {
 					console.log('❌ Auth init failed, status:', response.status)
-					// If we have localStorage user, keep it for now
-					if (!storedUser) {
+					// If we have localStorage user and it's not too old, keep it
+					if (storedUser && lastVerified && (now - parseInt(lastVerified)) < 30 * 60 * 1000) {
+						console.log('⚠️ Server verification failed but keeping cached user')
+					} else {
 						setUser(null)
 						localStorage.removeItem('auth-user')
+						localStorage.removeItem('auth-last-verified')
 					}
 				}
 			} catch (error) {
@@ -147,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		} finally {
 			setUser(null)
 			localStorage.removeItem('auth-user')
+			localStorage.removeItem('auth-last-verified')
 			console.log('✅ User logged out and localStorage cleared')
 		}
 	}, [])
@@ -154,6 +179,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const refreshUser = useCallback(async () => {
 		try {
 			console.log('🔄 Refreshing user session...')
+
+			// Check if we recently verified (within 2 minutes)
+			const lastVerified = localStorage.getItem('auth-last-verified')
+			const now = Date.now()
+			if (lastVerified && (now - parseInt(lastVerified)) < 2 * 60 * 1000) {
+				console.log('⚡ Skipping refresh - recently verified')
+				return user
+			}
+
 			const res = await fetch("/api/verify-session", {
 				method: 'GET',
 				credentials: 'include',
@@ -172,8 +206,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				if (data.user) {
 					console.log('✅ User refreshed:', data.user.email, 'role:', data.user.role)
 					setUser(data.user)
-					// Update localStorage
+					// Update localStorage with timestamp
 					localStorage.setItem('auth-user', JSON.stringify(data.user))
+					localStorage.setItem('auth-last-verified', now.toString())
 					return data.user
 				} else {
 					console.log('❌ No user in refresh response')
@@ -181,11 +216,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				}
 			} else {
 				console.log('❌ Refresh failed, status:', res.status)
+				// Only clear user on 401 (unauthorized)
 				if (res.status === 401) {
 					console.log('🚪 Setting user to null due to 401')
 					setUser(null)
+					localStorage.removeItem('auth-user')
+					localStorage.removeItem('auth-last-verified')
 				}
-				return null
+				return user // Return current user if refresh fails but not unauthorized
 			}
 		} catch (error) {
 			console.error('❌ Refresh error:', error)

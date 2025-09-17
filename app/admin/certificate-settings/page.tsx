@@ -269,10 +269,7 @@ export default function CertificateSettingsPage() {
           }
         }
 
-        // إعادة تحميل الصفحة بعد ثانيتين لضمان التحديث
-        setTimeout(() => {
-          window.location.reload()
-        }, 2000)
+        // لا نحتاج لإعادة تحميل الصفحة - الصورة تم تحديثها بالفعل
       } else {
         const error = await response.json()
         alert(`❌ خطأ في رفع قالب الشهادة: ${error.error}`)

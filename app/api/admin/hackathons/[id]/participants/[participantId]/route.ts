@@ -65,22 +65,30 @@ export async function PATCH(
 
     try {
       const isApproved = status === 'approved'
-      const subject = isApproved
-        ? `🎉 تم قبولك في ${participant.hackathon.title}!`
-        : `شكراً لاهتمامك بـ ${participant.hackathon.title}`
-
-      const emailContent = isApproved
-        ? getApprovalEmailContent(participant.user.name, participant.hackathon.title)
-        : getRejectionEmailContent(participant.user.name, participant.hackathon.title)
+      const templateType = isApproved ? 'acceptance' : 'rejection'
 
       console.log(`📧 Sending ${status} email to ${participant.user.email}`)
 
-      await transporter.sendMail({
-        from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
-        to: participant.user.email,
-        subject: subject,
-        html: emailContent
-      })
+      // Use the new templated email system
+      const { sendTemplatedEmail } = await import('@/lib/mailer')
+
+      await sendTemplatedEmail(
+        templateType,
+        participant.user.email,
+        {
+          participantName: participant.user.name,
+          participantEmail: participant.user.email,
+          hackathonTitle: participant.hackathon.title,
+          hackathonDate: participant.hackathon.startDate.toLocaleDateString('ar-SA'),
+          hackathonTime: participant.hackathon.startDate.toLocaleTimeString('ar-SA'),
+          hackathonLocation: 'سيتم الإعلان عنه قريباً',
+          registrationDate: participant.registeredAt.toLocaleDateString('ar-SA'),
+          organizerName: 'فريق الهاكاثون',
+          organizerEmail: process.env.MAIL_FROM || 'no-reply@hackathon.com',
+          teamRole: participant.teamRole || 'مطور'
+        },
+        participant.hackathonId
+      )
 
       console.log(`✅ ${status} email sent successfully to ${participant.user.email}`)
     } catch (emailError) {

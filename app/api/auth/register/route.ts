@@ -99,10 +99,22 @@ export async function POST(request: NextRequest) {
       { expiresIn: '7d' }
     )
 
-    // Send welcome email
+    // Send welcome email using template system
     try {
       console.log('📧 Attempting to send welcome email to:', user.email)
-      await sendWelcomeEmail(user.email, user.name)
+      const { sendTemplatedEmail } = await import('@/lib/mailer')
+
+      await sendTemplatedEmail(
+        'welcome',
+        user.email,
+        {
+          participantName: user.name,
+          participantEmail: user.email,
+          registrationDate: new Date().toLocaleDateString('ar-SA'),
+          organizerName: 'فريق المنصة',
+          organizerEmail: process.env.MAIL_FROM || 'no-reply@hackathon.com'
+        }
+      )
       console.log('✅ Welcome email sent successfully to:', user.email)
     } catch (emailError) {
       console.error('❌ Failed to send welcome email:', emailError)

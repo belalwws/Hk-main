@@ -25,7 +25,17 @@ export async function GET(request: NextRequest) {
 
     if (!payload || !payload.userId) {
       console.log('❌ Invalid token payload:', payload)
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+
+      // Clear the invalid token cookie
+      const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      response.cookies.set("auth-token", "", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 0,
+      })
+      return response
     }
 
     console.log('✅ Token verified for user:', payload.userId, 'role:', payload.role)

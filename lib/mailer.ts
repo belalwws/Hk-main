@@ -120,6 +120,33 @@ export async function sendMail(options: MailOptions) {
   }
 }
 
+/**
+ * Send email using template system
+ */
+export async function sendTemplatedEmail(
+  templateType: keyof import('./email-templates').EmailTemplates,
+  to: string,
+  variables: Record<string, any>,
+  hackathonId?: string
+) {
+  try {
+    const { processEmailTemplate } = await import('./email-templates')
+    const { subject, body } = await processEmailTemplate(templateType, variables, hackathonId)
+
+    console.log(`📧 [mailer] Sending templated email (${templateType}) to:`, to)
+
+    return await sendMail({
+      to,
+      subject,
+      html: body.replace(/\n/g, '<br>'),
+      text: body
+    })
+  } catch (error) {
+    console.error(`❌ [mailer] Failed to send templated email (${templateType}):`, error)
+    throw error
+  }
+}
+
 export function mailerStatus() {
   const status = cachedStatus || { installed: !!cachedTransporter, provider: null as any, configured: !!cachedTransporter }
   const mode = FORCE_SEND ? 'force' : (process.env.NODE_ENV === 'production' ? 'prod' : 'dev')

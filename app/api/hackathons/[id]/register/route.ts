@@ -140,56 +140,28 @@ export async function POST(
       console.log(`📧 Sending registration confirmation email to ${payload.email}`)
 
       try {
-        await transporter.sendMail({
-          from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
-          to: payload.email,
-          subject: `✅ تم تسجيلك في ${hackathon.title}!`,
-          html: `
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تأكيد التسجيل</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 20px;">
-    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
-        <div style="background: linear-gradient(135deg, #01645e 0%, #3ab666 50%, #c3e956 100%); color: white; padding: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">🎉 تم التسجيل بنجاح!</h1>
-            <p style="margin: 10px 0 0 0;">${hackathon.title}</p>
-        </div>
-        <div style="padding: 30px;">
-            <p>مرحباً <strong>${payload.name}</strong>,</p>
-            <p>تم تسجيلك بنجاح في <strong>${hackathon.title}</strong>!</p>
-            
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #01645e; margin-top: 0;">تفاصيل التسجيل:</h3>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="margin: 10px 0;"><strong>الدور المفضل:</strong> ${teamRole}</li>
-                    <li style="margin: 10px 0;"><strong>اسم الفريق:</strong> ${teamName || 'غير محدد'}</li>
-                    <li style="margin: 10px 0;"><strong>عنوان المشروع:</strong> ${projectTitle || 'غير محدد'}</li>
-                    <li style="margin: 10px 0;"><strong>حالة التسجيل:</strong> <span style="color: #8b7632;">في انتظار المراجعة</span></li>
-                </ul>
-            </div>
-            
-            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #3ab666; margin-top: 0;">تواريخ مهمة:</h3>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="margin: 10px 0;"><strong>بداية الهاكاثون:</strong> ${new Date(hackathon.startDate).toLocaleDateString('ar-SA')}</li>
-                    <li style="margin: 10px 0;"><strong>نهاية الهاكاثون:</strong> ${new Date(hackathon.endDate).toLocaleDateString('ar-SA')}</li>
-                </ul>
-            </div>
-            
-            <p>سيتم مراجعة طلبك وإرسال إشعار بالقبول أو الرفض قريباً.</p>
-        </div>
-        <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
-            <p style="margin: 0;">© 2024 هاكاثون الابتكار التقني. جميع الحقوق محفوظة.</p>
-        </div>
-    </div>
-</body>
-</html>
-          `
-        })
+        // Use the new templated email system
+        const { sendTemplatedEmail } = await import('@/lib/mailer')
+
+        await sendTemplatedEmail(
+          'registration_confirmation',
+          payload.email,
+          {
+            participantName: user.name,
+            participantEmail: payload.email,
+            hackathonTitle: hackathon.title,
+            hackathonDate: hackathon.startDate.toLocaleDateString('ar-SA'),
+            hackathonTime: hackathon.startDate.toLocaleTimeString('ar-SA'),
+            hackathonLocation: 'سيتم الإعلان عنه قريباً',
+            registrationDate: new Date().toLocaleDateString('ar-SA'),
+            organizerName: 'فريق الهاكاثون',
+            organizerEmail: process.env.MAIL_FROM || 'no-reply@hackathon.com',
+            teamRole: teamRole,
+            teamName: teamName || 'غير محدد',
+            projectTitle: projectTitle || 'غير محدد'
+          },
+          hackathon.id
+        )
       } catch (emailError) {
         console.error('Failed to send confirmation email:', emailError)
         // Don't fail the registration if email fails
