@@ -41,6 +41,7 @@ model Hackathon {
   scores             Score[]
   admins             Admin[]
   evaluationCriteria EvaluationCriterion[]
+  registrationForm   HackathonForm?
 
   @@map("hackathons")
 }
@@ -273,4 +274,22 @@ model GlobalSettings {
   updatedAt DateTime @updatedAt
 
   @@map("global_settings")
+}
+
+// Dynamic Registration Forms for Hackathons
+model HackathonForm {
+  id           String   @id @default(cuid())
+  hackathonId  String   @unique
+  title        String
+  description  String?
+  isActive     Boolean  @default(true)
+  fields       String   // JSON string of form fields
+  settings     String   // JSON string of form settings
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  hackathon    Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+
+  @@map("hackathon_forms")
 }

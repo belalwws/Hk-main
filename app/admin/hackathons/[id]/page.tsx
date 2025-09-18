@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -1438,6 +1438,18 @@ export default function HackathonManagementPage() {
                           <Link href={`/admin/hackathons/${hackathon.id}/edit`}>
                             <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666]">
                               تعديل الهاكاثون
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/hackathons/${hackathon.id}/registration-form`}>
+                            <Button variant="outline" className="border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
+                              <FormInput className="w-4 h-4 ml-2" />
+                              نموذج التسجيل الديناميكي
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/hackathons/${hackathon.id}/form-submissions`}>
+                            <Button variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
+                              <FileText className="w-4 h-4 ml-2" />
+                              النماذج المرسلة
                             </Button>
                           </Link>
                           <Link href={`/admin/hackathons/${hackathon.id}/judge-settings`}>

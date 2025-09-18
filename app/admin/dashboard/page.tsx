@@ -270,12 +270,12 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/emails">
+          <Link href="/admin/messages">
             <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
               <CardContent className="p-6 text-center">
                 <Mail className="w-12 h-12 text-[#c3e956] mx-auto mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-[#01645e] mb-2">إدارة الرسائل</h3>
-                <p className="text-[#8b7632] text-sm">إرسال رسائل للمشاركين</p>
+                <p className="text-[#8b7632] text-sm">الرسائل التلقائية والمخصصة</p>
               </CardContent>
             </Card>
           </Link>

@@ -92,18 +92,23 @@ export async function POST(request: NextRequest) {
         })
       } else if (recipients === 'hackathon' && hackathonId) {
         console.log('👥 [broadcast] Fetching hackathon participants')
-        targetUsers = await prisma.user.findMany({
-          where: {
-            participations: {
-              some: {
-                hackathonId: hackathonId,
-                status: 'accepted'
-              }
+        try {
+          const participants = await prisma.participant.findMany({
+            where: {
+              hackathonId: hackathonId,
+              status: 'approved'
             },
-            email: { not: null }
-          },
-          select: { email: true, name: true }
-        })
+            include: {
+              user: {
+                select: { email: true, name: true }
+              }
+            }
+          })
+          targetUsers = participants.map(p => p.user).filter(u => u.email)
+        } catch (dbError) {
+          console.error('❌ [broadcast] Database error:', dbError)
+          return NextResponse.json({ error: 'خطأ في قاعدة البيانات' }, { status: 500 })
+        }
       }
       
       console.log('👥 [broadcast] Found', targetUsers.length, 'target users')

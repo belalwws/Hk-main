@@ -132,6 +132,10 @@ const DEFAULT_TEMPLATES = {
 مع أطيب التحيات,
 فريق المنصة`
   },
+  custom: {
+    subject: '{{subject}}',
+    body: `{{content}}`
+  },
   certificate_ready: {
     subject: 'شهادتك جاهزة للتحميل - {{hackathonTitle}}',
     body: `مرحباً {{participantName}},
