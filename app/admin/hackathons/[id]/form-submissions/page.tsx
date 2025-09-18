@@ -51,6 +51,9 @@ export default function FormSubmissionsPage() {
   const [filteredSubmissions, setFilteredSubmissions] = useState<FormSubmission[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null)
+  const [showDetails, setShowDetails] = useState(false)
+  const [updating, setUpdating] = useState<string | null>(null)
 
   useEffect(() => {
     fetchHackathon()
@@ -102,6 +105,37 @@ export default function FormSubmissionsPage() {
     }
 
     setFilteredSubmissions(filtered)
+  }
+
+  const updateParticipantStatus = async (participantId: string, newStatus: 'pending' | 'approved' | 'rejected') => {
+    setUpdating(participantId)
+    try {
+      const response = await fetch(`/api/admin/participants/${participantId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (response.ok) {
+        // Update local state
+        setSubmissions(prev => prev.map(submission =>
+          submission.participantId === participantId
+            ? { ...submission, participant: { ...submission.participant, status: newStatus } }
+            : submission
+        ))
+
+        // Show success message
+        console.log(`تم تحديث حالة المشارك إلى: ${newStatus}`)
+      } else {
+        console.error('Failed to update participant status')
+      }
+    } catch (error) {
+      console.error('Error updating participant status:', error)
+    } finally {
+      setUpdating(null)
+    }
   }
 
   const updateSubmissionStatus = async (participantId: string, status: 'approved' | 'rejected') => {
@@ -183,53 +217,80 @@ export default function FormSubmissionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-4 mb-4">
-            <Link href={`/admin/hackathons/${hackathonId}`}>
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                العودة
-              </Button>
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <FileText className="w-8 h-8 text-[#01645e]" />
-              النماذج المرسلة
-            </h1>
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link href={`/admin/hackathons/${hackathonId}`}>
+                  <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    العودة
+                  </Button>
+                </Link>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                    <div className="p-2 bg-[#01645e]/10 rounded-lg">
+                      <FileText className="w-8 h-8 text-[#01645e]" />
+                    </div>
+                    النماذج المرسلة
+                  </h1>
+                  {hackathon && (
+                    <p className="text-gray-600 mt-2">
+                      إدارة النماذج المرسلة لـ {hackathon.title}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={exportSubmissions}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  تصدير CSV
+                </Button>
+              </div>
+            </div>
           </div>
-          {hackathon && (
-            <p className="text-gray-600">
-              إدارة النماذج المرسلة لـ {hackathon.title}
-            </p>
-          )}
         </motion.div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+        >
+          <Card className="shadow-sm border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Users className="w-8 h-8 text-blue-500" />
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <Users className="w-6 h-6 text-blue-600" />
+                </div>
                 <div>
-                  <p className="text-2xl font-bold">{submissions.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{submissions.length}</p>
                   <p className="text-sm text-gray-600">إجمالي النماذج</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="shadow-sm border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8 text-yellow-500" />
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-yellow-100 rounded-lg">
+                  <Clock className="w-6 h-6 text-yellow-600" />
+                </div>
                 <div>
-                  <p className="text-2xl font-bold">
+                  <p className="text-2xl font-bold text-gray-900">
                     {submissions.filter(s => s.participant.status === 'pending').length}
                   </p>
                   <p className="text-sm text-gray-600">في الانتظار</p>
@@ -265,7 +326,7 @@ export default function FormSubmissionsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Filters */}
         <Card className="mb-6">
@@ -355,26 +416,52 @@ export default function FormSubmissionsPage() {
                     </div>
 
                     {/* Actions */}
-                    {submission.participant.status === 'pending' && (
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => updateSubmissionStatus(submission.participantId, 'approved')}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          قبول
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => updateSubmissionStatus(submission.participantId, 'rejected')}
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          رفض
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex flex-col gap-2 ml-4">
+                      {submission.participant.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => updateParticipantStatus(submission.participantId, 'approved')}
+                            disabled={updating === submission.participantId}
+                          >
+                            {updating === submission.participantId ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                            )}
+                            قبول
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => updateParticipantStatus(submission.participantId, 'rejected')}
+                            disabled={updating === submission.participantId}
+                          >
+                            {updating === submission.participantId ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
+                            ) : (
+                              <XCircle className="w-4 h-4 mr-1" />
+                            )}
+                            رفض
+                          </Button>
+                        </div>
+                      )}
+
+                      {submission.participant.status !== 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateParticipantStatus(submission.participantId, 'pending')}
+                            disabled={updating === submission.participantId}
+                          >
+                            <Clock className="w-4 h-4 mr-1" />
+                            إعادة للانتظار
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

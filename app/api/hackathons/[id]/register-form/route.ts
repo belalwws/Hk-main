@@ -37,6 +37,75 @@ async function sendEmailDirect(to: string, subject: string, html: string) {
   }
 }
 
+// Dedicated function to send confirmation email
+async function sendRegistrationConfirmationEmail(userData: any, hackathonTitle?: string) {
+  console.log('📧 Attempting to send confirmation email to:', userData.email)
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+      <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h2 style="color: #01645e; text-align: center; margin-bottom: 30px;">تأكيد التسجيل في الهاكاثون</h2>
+
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">مرحباً ${userData.name}،</p>
+
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          تم تسجيلك بنجاح في ${hackathonTitle || 'الهاكاثون'}
+        </p>
+
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #01645e; margin-top: 0;">تفاصيل التسجيل:</h3>
+          <p><strong>الاسم:</strong> ${userData.name}</p>
+          <p><strong>البريد الإلكتروني:</strong> ${userData.email}</p>
+          ${userData.phone ? `<p><strong>الهاتف:</strong> ${userData.phone}</p>` : ''}
+          <p><strong>تاريخ التسجيل:</strong> ${new Date().toLocaleDateString('ar-SA')}</p>
+        </div>
+
+        <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
+          سيتم مراجعة طلبك وإرسال تأكيد القبول قريباً
+        </p>
+
+        <div style="text-align: center; margin-top: 30px;">
+          <p style="color: #01645e; font-weight: bold;">منصة هاكاثون الابتكار التقني</p>
+        </div>
+      </div>
+    </div>
+  `
+
+  try {
+    // Try template system first
+    await sendTemplatedEmail({
+      to: userData.email,
+      subject: `تأكيد التسجيل في ${hackathonTitle || 'الهاكاثون'}`,
+      template: 'registration_confirmation',
+      variables: {
+        participantName: userData.name,
+        participantEmail: userData.email,
+        hackathonTitle: hackathonTitle || 'الهاكاثون',
+        registrationDate: new Date().toLocaleDateString('ar-SA'),
+        hackathonDate: 'سيتم تحديده لاحقاً',
+        hackathonLocation: 'سيتم تحديده لاحقاً'
+      }
+    })
+    console.log('✅ Confirmation email sent via template system')
+    return { success: true, method: 'template' }
+  } catch (templateError) {
+    console.error('❌ Template email failed, trying direct send:', templateError)
+
+    try {
+      await sendEmailDirect(
+        userData.email,
+        `تأكيد التسجيل في ${hackathonTitle || 'الهاكاثون'}`,
+        emailContent
+      )
+      console.log('✅ Confirmation email sent via direct method')
+      return { success: true, method: 'direct' }
+    } catch (directError) {
+      console.error('❌ Direct email also failed:', directError)
+      return { success: false, error: directError }
+    }
+  }
+}
+
 // GET /api/hackathons/[id]/register-form - Get hackathon registration form for public
 export async function GET(
   request: NextRequest,
@@ -143,6 +212,12 @@ export async function POST(
     const body = await request.json()
     const { formId, data } = body
 
+    console.log('📝 Registration form submission:', {
+      hackathonId: params.id,
+      email: data?.email,
+      name: data?.name
+    })
+
     // Validate required data
     if (!data || typeof data !== 'object') {
       return NextResponse.json({ error: 'بيانات النموذج مطلوبة' }, { status: 400 })
@@ -156,6 +231,21 @@ export async function POST(
     if (!data.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
       return NextResponse.json({ error: 'البريد الإلكتروني غير صحيح' }, { status: 400 })
     }
+
+    // Send confirmation email immediately (before database operations)
+    let hackathonTitle = 'الهاكاثون'
+    try {
+      const hackathonResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/hackathons/${params.id}`)
+      if (hackathonResponse.ok) {
+        const hackathonData = await hackathonResponse.json()
+        hackathonTitle = hackathonData.title || 'الهاكاثون'
+      }
+    } catch (error) {
+      console.log('Could not fetch hackathon title, using default')
+    }
+
+    const emailResult = await sendRegistrationConfirmationEmail(data, hackathonTitle)
+    console.log('📧 Email sending result:', emailResult)
 
     try {
       // Get hackathon details
@@ -230,68 +320,7 @@ export async function POST(
         }
       })
 
-      // Send confirmation email
-      try {
-        await sendTemplatedEmail({
-          to: user.email,
-          subject: `تأكيد التسجيل في ${hackathon.title}`,
-          template: 'registration_confirmation',
-          variables: {
-            participantName: user.name,
-            participantEmail: user.email,
-            hackathonTitle: hackathon.title,
-            registrationDate: new Date().toLocaleDateString('ar-SA'),
-            hackathonDate: new Date(hackathon.startDate).toLocaleDateString('ar-SA'),
-            hackathonLocation: hackathon.location || 'سيتم تحديده لاحقاً'
-          }
-        })
-        console.log('✅ Confirmation email sent via template system')
-      } catch (emailError) {
-        console.error('❌ Template email failed, trying direct send:', emailError)
-
-        // Fallback to direct email sending
-        try {
-          const emailContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
-              <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <h2 style="color: #01645e; text-align: center; margin-bottom: 30px;">تأكيد التسجيل في الهاكاثون</h2>
-
-                <p style="color: #333; font-size: 16px; line-height: 1.6;">مرحباً ${user.name}،</p>
-
-                <p style="color: #333; font-size: 16px; line-height: 1.6;">
-                  تم تسجيلك بنجاح في <strong>${hackathon.title}</strong>
-                </p>
-
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <h3 style="color: #01645e; margin-top: 0;">تفاصيل التسجيل:</h3>
-                  <p><strong>الاسم:</strong> ${user.name}</p>
-                  <p><strong>البريد الإلكتروني:</strong> ${user.email}</p>
-                  <p><strong>تاريخ التسجيل:</strong> ${new Date().toLocaleDateString('ar-SA')}</p>
-                  <p><strong>تاريخ الهاكاثون:</strong> ${new Date(hackathon.startDate).toLocaleDateString('ar-SA')}</p>
-                </div>
-
-                <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
-                  سيتم مراجعة طلبك وإرسال تأكيد القبول قريباً
-                </p>
-
-                <div style="text-align: center; margin-top: 30px;">
-                  <p style="color: #01645e; font-weight: bold;">منصة هاكاثون الابتكار التقني</p>
-                </div>
-              </div>
-            </div>
-          `
-
-          await sendEmailDirect(
-            user.email,
-            `تأكيد التسجيل في ${hackathon.title}`,
-            emailContent
-          )
-          console.log('✅ Confirmation email sent via direct method')
-        } catch (directEmailError) {
-          console.error('❌ Direct email also failed:', directEmailError)
-          // Don't fail the registration if email fails
-        }
-      }
+      console.log('✅ Registration saved to database successfully')
 
       return NextResponse.json({
         success: true,
@@ -319,46 +348,7 @@ export async function POST(
         timestamp: new Date().toISOString()
       })
 
-      // Send confirmation email even in fallback mode
-      try {
-        const emailContent = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
-            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-              <h2 style="color: #01645e; text-align: center; margin-bottom: 30px;">تأكيد التسجيل في الهاكاثون</h2>
-
-              <p style="color: #333; font-size: 16px; line-height: 1.6;">مرحباً ${data.name}،</p>
-
-              <p style="color: #333; font-size: 16px; line-height: 1.6;">
-                تم تسجيلك بنجاح في الهاكاثون
-              </p>
-
-              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #01645e; margin-top: 0;">تفاصيل التسجيل:</h3>
-                <p><strong>الاسم:</strong> ${data.name}</p>
-                <p><strong>البريد الإلكتروني:</strong> ${data.email}</p>
-                <p><strong>تاريخ التسجيل:</strong> ${new Date().toLocaleDateString('ar-SA')}</p>
-              </div>
-
-              <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
-                سيتم مراجعة طلبك وإرسال تأكيد القبول قريباً
-              </p>
-
-              <div style="text-align: center; margin-top: 30px;">
-                <p style="color: #01645e; font-weight: bold;">منصة هاكاثون الابتكار التقني</p>
-              </div>
-            </div>
-          </div>
-        `
-
-        await sendEmailDirect(
-          data.email,
-          'تأكيد التسجيل في الهاكاثون',
-          emailContent
-        )
-        console.log('✅ Confirmation email sent successfully (fallback mode)')
-      } catch (emailError) {
-        console.error('❌ Failed to send confirmation email (fallback mode):', emailError)
-      }
+      console.log('✅ Registration logged in fallback mode')
 
       return NextResponse.json({
         success: true,

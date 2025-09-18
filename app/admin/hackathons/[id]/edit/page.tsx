@@ -200,27 +200,58 @@ export default function EditHackathonPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-4 mb-4">
-            <Link href={`/admin/hackathons/${params.id}`}>
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                العودة
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Settings className="w-8 h-8 text-[#01645e]" />
-                تعديل الهاكاثون
-              </h1>
-              <p className="text-gray-600 mt-1">{hackathon?.title}</p>
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link href={`/admin/hackathons/${params.id}`}>
+                  <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    العودة
+                  </Button>
+                </Link>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                    <Settings className="w-8 h-8 text-[#01645e]" />
+                    تعديل الهاكاثون
+                  </h1>
+                  <p className="text-gray-600 mt-2">{hackathon?.title || 'تعديل معلومات الهاكاثون والمواعيد'}</p>
+                </div>
+              </div>
+              {hackathon && (
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">الحالة الحالية</p>
+                  <div className="mt-1">
+                    {formData.status === 'draft' && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
+                        مسودة
+                      </span>
+                    )}
+                    {formData.status === 'open' && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                        مفتوح للتسجيل
+                      </span>
+                    )}
+                    {formData.status === 'closed' && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 text-red-800">
+                        مغلق
+                      </span>
+                    )}
+                    {formData.status === 'completed' && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                        مكتمل
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -235,15 +266,17 @@ export default function EditHackathonPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-[#01645e]">
-                      <FileText className="w-5 h-5" />
+                <Card className="shadow-sm border-0 bg-white/80 backdrop-blur-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-[#01645e] text-xl">
+                      <div className="p-2 bg-[#01645e]/10 rounded-lg">
+                        <FileText className="w-5 h-5" />
+                      </div>
                       المعلومات الأساسية
                     </CardTitle>
-                    <CardDescription>معلومات عامة عن الهاكاثون</CardDescription>
+                    <CardDescription className="text-gray-600">معلومات عامة عن الهاكاثون</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 pt-0">
                     <div>
                       <Label htmlFor="title">عنوان الهاكاثون *</Label>
                       <Input
@@ -307,15 +340,17 @@ export default function EditHackathonPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-[#01645e]">
-                      <Calendar className="w-5 h-5" />
+                <Card className="shadow-sm border-0 bg-white/80 backdrop-blur-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-[#01645e] text-xl">
+                      <div className="p-2 bg-[#01645e]/10 rounded-lg">
+                        <Calendar className="w-5 h-5" />
+                      </div>
                       المواعيد والتوقيت
                     </CardTitle>
-                    <CardDescription>تحديد مواعيد الهاكاثون والتسجيل</CardDescription>
+                    <CardDescription className="text-gray-600">تحديد مواعيد الهاكاثون والتسجيل</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 pt-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <Label htmlFor="startDate">تاريخ البداية *</Label>
