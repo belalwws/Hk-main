@@ -100,6 +100,8 @@ model Participant {
   registeredAt        DateTime        @default(now())
   approvedAt          DateTime?
   rejectedAt          DateTime?
+  updatedAt           DateTime        @updatedAt
+  additionalInfo      Json?           // معلومات إضافية (نوع التسجيل، الخبرة، إلخ)
 
   // Relations
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)

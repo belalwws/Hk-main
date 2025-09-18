@@ -137,6 +137,12 @@ export default function AdminDashboard() {
                 إدارة المستخدمين
               </Button>
             </Link>
+            <Link href="/admin/simple-participants">
+              <Button variant="outline">
+                <Users className="w-5 h-5 ml-2" />
+                المشاركون المبسطون
+              </Button>
+            </Link>
             <Link href="/admin/reports">
               <Button variant="outline">
                 <BarChart3 className="w-5 h-5 ml-2" />

@@ -245,13 +245,30 @@ export default function HackathonDetailsPage() {
                     <p className="text-[#8b7632] text-sm">
                       التسجيل مفتوح حتى {formatDate(hackathon.registrationDeadline)}
                     </p>
-                    <Button 
-                      onClick={handleRegisterClick}
-                      className="w-full bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52]"
-                    >
-                      <Users className="w-4 h-4 ml-2" />
-                      {user ? 'سجل في الهاكاثون' : 'سجل دخول للمشاركة'}
-                    </Button>
+                    <div className="space-y-3">
+                      <Button
+                        onClick={handleRegisterClick}
+                        className="w-full bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52]"
+                      >
+                        <Users className="w-4 h-4 ml-2" />
+                        {user ? 'سجل في الهاكاثون' : 'سجل دخول للمشاركة'}
+                      </Button>
+
+                      <div className="text-center text-sm text-gray-500">أو</div>
+
+                      <Button
+                        onClick={() => router.push(`/hackathons/${params.id}/simple-register`)}
+                        variant="outline"
+                        className="w-full border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white"
+                      >
+                        <Users className="w-4 h-4 ml-2" />
+                        تسجيل سريع بدون حساب
+                      </Button>
+
+                      <p className="text-xs text-gray-500 text-center">
+                        التسجيل السريع لا يتطلب إنشاء حساب أو كلمة مرور
+                      </p>
+                    </div>
                   </>
                 ) : (
                   <div className="text-center">
