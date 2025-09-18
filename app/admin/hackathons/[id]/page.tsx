@@ -1412,12 +1412,14 @@ export default function HackathonManagementPage() {
                         </Button>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="p-4 bg-gray-50 rounded-lg space-y-4">
                         <div>
-                          <h4 className="font-semibold text-[#01645e]">تعديل التفاصيل</h4>
+                          <h4 className="font-semibold text-[#01645e] mb-2">تعديل التفاصيل</h4>
                           <p className="text-sm text-[#8b7632]">تعديل معلومات الهاكاثون والمواعيد</p>
                         </div>
-                        <div className="flex gap-2">
+                        
+                        {/* Primary Actions */}
+                        <div className="flex flex-wrap gap-2">
                           <Button
                             onClick={togglePin}
                             variant="outline"
@@ -1440,48 +1442,69 @@ export default function HackathonManagementPage() {
                               تعديل الهاكاثون
                             </Button>
                           </Link>
-                          <Link href={`/admin/hackathons/${hackathon.id}/registration-form`}>
-                            <Button variant="outline" className="border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
-                              <FormInput className="w-4 h-4 ml-2" />
-                              نموذج التسجيل الديناميكي
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/hackathons/${hackathon.id}/form-submissions`}>
-                            <Button variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
-                              <FileText className="w-4 h-4 ml-2" />
-                              النماذج المرسلة
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/hackathons/${hackathon.id}/judge-settings`}>
-                            <Button variant="outline" className="border-[#8b7632] text-[#8b7632] hover:bg-[#8b7632] hover:text-white">
-                              <Settings className="w-4 h-4 ml-2" />
-                              إعدادات المحكم
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/hackathons/${hackathon.id}/file-tracking`}>
-                            <Button variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
-                              <FileText className="w-4 h-4 ml-2" />
-                              تتبع الملفات
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/hackathons/${hackathon.id}/email-templates`}>
-                            <Button variant="outline" className="border-[#c3e956] text-[#8b7632] hover:bg-[#c3e956] hover:text-[#01645e]">
-                              <Mail className="w-4 h-4 ml-2" />
-                              قوالب الإيميلات
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/hackathons/${hackathon.id}/custom-fields`}>
-                            <Button variant="outline" className="border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
-                              <Settings className="w-4 h-4 ml-2" />
-                              النماذج المخصصة
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/hackathons/${hackathon.id}/bulk-upload`}>
-                            <Button variant="outline" className="border-[#8b7632] text-[#8b7632] hover:bg-[#8b7632] hover:text-white">
-                              <Upload className="w-4 h-4 ml-2" />
-                              رفع بيانات مجمعة
-                            </Button>
-                          </Link>
+                        </div>
+
+                        {/* Form Management */}
+                        <div>
+                          <h5 className="font-medium text-[#01645e] mb-2 text-sm">إدارة النماذج والتسجيل</h5>
+                          <div className="flex flex-wrap gap-2">
+                            <Link href={`/admin/hackathons/${hackathon.id}/registration-form`}>
+                              <Button variant="outline" className="border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
+                                <FormInput className="w-4 h-4 ml-2" />
+                                نموذج التسجيل الديناميكي
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/hackathons/${hackathon.id}/form-submissions`}>
+                              <Button variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
+                                <FileText className="w-4 h-4 ml-2" />
+                                النماذج المرسلة
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/hackathons/${hackathon.id}/custom-fields`}>
+                              <Button variant="outline" className="border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
+                                <Settings className="w-4 h-4 ml-2" />
+                                النماذج المخصصة
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+
+                        {/* Communication & Templates */}
+                        <div>
+                          <h5 className="font-medium text-[#01645e] mb-2 text-sm">الاتصالات والقوالب</h5>
+                          <div className="flex flex-wrap gap-2">
+                            <Link href={`/admin/hackathons/${hackathon.id}/email-templates`}>
+                              <Button variant="outline" className="border-[#c3e956] text-[#8b7632] hover:bg-[#c3e956] hover:text-[#01645e]">
+                                <Mail className="w-4 h-4 ml-2" />
+                                إدارة الإيميلات
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/hackathons/${hackathon.id}/file-tracking`}>
+                              <Button variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
+                                <FileText className="w-4 h-4 ml-2" />
+                                تتبع الملفات
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+
+                        {/* Advanced Settings */}
+                        <div>
+                          <h5 className="font-medium text-[#01645e] mb-2 text-sm">الإعدادات المتقدمة</h5>
+                          <div className="flex flex-wrap gap-2">
+                            <Link href={`/admin/hackathons/${hackathon.id}/judge-settings`}>
+                              <Button variant="outline" className="border-[#8b7632] text-[#8b7632] hover:bg-[#8b7632] hover:text-white">
+                                <Settings className="w-4 h-4 ml-2" />
+                                إعدادات المحكم
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/hackathons/${hackathon.id}/bulk-upload`}>
+                              <Button variant="outline" className="border-[#8b7632] text-[#8b7632] hover:bg-[#8b7632] hover:text-white">
+                                <Upload className="w-4 h-4 ml-2" />
+                                رفع بيانات مجمعة
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
                       </div>
 
