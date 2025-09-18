@@ -270,7 +270,7 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/messages">
+          <Link href="/admin/email-templates">
             <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
               <CardContent className="p-6 text-center">
                 <Mail className="w-12 h-12 text-[#c3e956] mx-auto mb-4 group-hover:scale-110 transition-transform" />

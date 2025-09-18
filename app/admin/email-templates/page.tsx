@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Save, RotateCcw, Copy, Eye, Settings, FileText, Users, CheckCircle, XCircle, UserPlus, Bell } from 'lucide-react'
+import { Mail, Save, RotateCcw, Copy, Eye, Settings, FileText, Users, CheckCircle, XCircle, UserPlus, Bell, Send, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/contexts/auth-context'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
@@ -86,11 +87,32 @@ export default function EmailTemplatesPage() {
   const [activeTemplate, setActiveTemplate] = useState<keyof EmailTemplates>('registration_confirmation')
   const [previewMode, setPreviewMode] = useState(false)
 
+  // Custom message states
+  const [customMessage, setCustomMessage] = useState({
+    subject: '',
+    content: '',
+    recipients: 'all',
+    hackathonId: '',
+    filters: {}
+  })
+  const [sendingCustom, setSendingCustom] = useState(false)
+  const [hackathons, setHackathons] = useState<any[]>([])
+  const [filterOptions, setFilterOptions] = useState<any>({})
+  const [recipientCount, setRecipientCount] = useState(0)
+
   useEffect(() => {
     if (!authLoading && user?.role === 'admin') {
       fetchTemplates()
+      fetchHackathons()
+      fetchFilterOptions()
     }
   }, [authLoading, user])
+
+  useEffect(() => {
+    if (customMessage.recipients && customMessage.hackathonId) {
+      calculateRecipients()
+    }
+  }, [customMessage.recipients, customMessage.hackathonId, customMessage.filters])
 
   const fetchTemplates = async () => {
     try {
@@ -132,6 +154,108 @@ export default function EmailTemplatesPage() {
       alert('❌ حدث خطأ في حفظ القوالب')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const fetchHackathons = async () => {
+    try {
+      const response = await fetch('/api/admin/hackathons')
+      if (response.ok) {
+        const data = await response.json()
+        setHackathons(data.hackathons || [])
+      }
+    } catch (error) {
+      console.error('Error fetching hackathons:', error)
+    }
+  }
+
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await fetch('/api/admin/messages/filter-options')
+      if (response.ok) {
+        const data = await response.json()
+        setFilterOptions(data)
+      }
+    } catch (error) {
+      console.error('Error fetching filter options:', error)
+      // Set fallback options
+      setFilterOptions({
+        hackathons: [],
+        nationalities: ['سعودي', 'مصري', 'أردني', 'لبناني', 'سوري'],
+        cities: ['الرياض', 'جدة', 'الدمام', 'مكة', 'المدينة'],
+        roles: ['مطور', 'مصمم', 'محلل', 'مدير مشروع']
+      })
+    }
+  }
+
+  const calculateRecipients = async () => {
+    try {
+      const response = await fetch('/api/admin/messages/calculate-recipients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipients: customMessage.recipients,
+          hackathonId: customMessage.hackathonId,
+          filters: customMessage.filters
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setRecipientCount(data.count || 0)
+      }
+    } catch (error) {
+      console.error('Error calculating recipients:', error)
+      setRecipientCount(0)
+    }
+  }
+
+  const sendCustomMessage = async () => {
+    if (!customMessage.subject.trim() || !customMessage.content.trim()) {
+      alert('يرجى إدخال موضوع ومحتوى الرسالة')
+      return
+    }
+
+    if (customMessage.recipients === 'hackathon' && !customMessage.hackathonId) {
+      alert('يرجى اختيار هاكاثون')
+      return
+    }
+
+    setSendingCustom(true)
+    try {
+      const response = await fetch('/api/admin/emails/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: customMessage.subject,
+          content: customMessage.content,
+          recipients: customMessage.recipients,
+          hackathonId: customMessage.hackathonId,
+          filters: customMessage.filters,
+          formId: 'custom_message'
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert(`✅ تم إرسال الرسالة بنجاح إلى ${recipientCount} مستلم`)
+        setCustomMessage({
+          subject: '',
+          content: '',
+          recipients: 'all',
+          hackathonId: '',
+          filters: {}
+        })
+        setRecipientCount(0)
+      } else {
+        const error = await response.json()
+        alert(`❌ خطأ في إرسال الرسالة: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error sending custom message:', error)
+      alert('❌ حدث خطأ في إرسال الرسالة')
+    } finally {
+      setSendingCustom(false)
     }
   }
 
@@ -244,7 +368,20 @@ export default function EmailTemplatesPage() {
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <Tabs defaultValue="templates" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="templates" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              قوالب الإيميلات
+            </TabsTrigger>
+            <TabsTrigger value="custom" className="flex items-center gap-2">
+              <Send className="w-4 h-4" />
+              رسائل مخصصة
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="templates">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Templates List */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -488,6 +625,160 @@ export default function EmailTemplatesPage() {
             </div>
           </motion.div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="custom">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Custom Message Form */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl text-[#01645e] flex items-center gap-2">
+                  <Send className="w-6 h-6" />
+                  إرسال رسالة مخصصة
+                </CardTitle>
+                <CardDescription>
+                  إنشاء وإرسال رسائل مخصصة للمستخدمين
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Subject */}
+                <div>
+                  <label className="block text-sm font-medium text-[#01645e] mb-2">
+                    موضوع الرسالة
+                  </label>
+                  <Input
+                    value={customMessage.subject}
+                    onChange={(e) => setCustomMessage(prev => ({ ...prev, subject: e.target.value }))}
+                    placeholder="اكتب موضوع الرسالة..."
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Content */}
+                <div>
+                  <label className="block text-sm font-medium text-[#01645e] mb-2">
+                    محتوى الرسالة
+                  </label>
+                  <Textarea
+                    value={customMessage.content}
+                    onChange={(e) => setCustomMessage(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="اكتب محتوى الرسالة..."
+                    rows={8}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Recipients */}
+                <div>
+                  <label className="block text-sm font-medium text-[#01645e] mb-2">
+                    المستلمون
+                  </label>
+                  <Select
+                    value={customMessage.recipients}
+                    onValueChange={(value) => setCustomMessage(prev => ({ ...prev, recipients: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر المستلمين" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع المستخدمين</SelectItem>
+                      <SelectItem value="hackathon">مشاركي هاكاثون محدد</SelectItem>
+                      <SelectItem value="judges">المحكمين</SelectItem>
+                      <SelectItem value="admins">الأدمن</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Hackathon Selection */}
+                {customMessage.recipients === 'hackathon' && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#01645e] mb-2">
+                      اختر الهاكاثون
+                    </label>
+                    <Select
+                      value={customMessage.hackathonId}
+                      onValueChange={(value) => setCustomMessage(prev => ({ ...prev, hackathonId: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر هاكاثون" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hackathons.map((hackathon) => (
+                          <SelectItem key={hackathon.id} value={hackathon.id}>
+                            {hackathon.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Recipient Count */}
+                {recipientCount > 0 && (
+                  <Alert>
+                    <Users className="h-4 w-4" />
+                    <AlertDescription>
+                      سيتم إرسال الرسالة إلى {recipientCount} مستلم
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Send Button */}
+                <div className="flex justify-end">
+                  <Button
+                    onClick={sendCustomMessage}
+                    disabled={sendingCustom || !customMessage.subject.trim() || !customMessage.content.trim()}
+                    className="bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52]"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {sendingCustom ? 'جاري الإرسال...' : 'إرسال الرسالة'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg text-[#01645e]">إرشادات</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <Mail className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    يمكنك استخدام HTML في محتوى الرسالة للتنسيق
+                  </AlertDescription>
+                </Alert>
+
+                <Alert>
+                  <Users className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    اختر "جميع المستخدمين" لإرسال الرسالة لكل المسجلين في النظام
+                  </AlertDescription>
+                </Alert>
+
+                <Alert>
+                  <Filter className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    اختر "مشاركي هاكاثون محدد" لإرسال الرسالة لمشاركي هاكاثون معين فقط
+                  </AlertDescription>
+                </Alert>
+
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    تأكد من مراجعة الرسالة قبل الإرسال - لا يمكن التراجع عن الإرسال
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </TabsContent>
+    </Tabs>
       </div>
     </div>
   )

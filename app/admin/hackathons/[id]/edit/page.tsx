@@ -200,147 +200,159 @@ export default function EditHackathonPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="mb-8"
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mb-4">
             <Link href={`/admin/hackathons/${params.id}`}>
               <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 ml-2" />
-                رجوع
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                العودة
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-[#01645e]">تعديل الهاكاثون</h1>
-              <p className="text-[#8b7632]">{hackathon?.title}</p>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Settings className="w-8 h-8 text-[#01645e]" />
+                تعديل الهاكاثون
+              </h1>
+              <p className="text-gray-600 mt-1">{hackathon?.title}</p>
             </div>
           </div>
         </motion.div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Information */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#01645e]">
-                  <FileText className="w-5 h-5" />
-                  المعلومات الأساسية
-                </CardTitle>
-                <CardDescription>معلومات عامة عن الهاكاثون</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <Label htmlFor="title">عنوان الهاكاثون *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    placeholder="مثال: هاكاثون الذكاء الاصطناعي"
-                    required
-                  />
-                </div>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Information */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-[#01645e]">
+                      <FileText className="w-5 h-5" />
+                      المعلومات الأساسية
+                    </CardTitle>
+                    <CardDescription>معلومات عامة عن الهاكاثون</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <Label htmlFor="title">عنوان الهاكاثون *</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                        placeholder="مثال: هاكاثون الذكاء الاصطناعي"
+                        required
+                        className="mt-1"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="description">وصف الهاكاثون *</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    placeholder="وصف مفصل عن الهاكاثون وأهدافه..."
-                    rows={4}
-                    required
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="description">وصف الهاكاثون *</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        placeholder="وصف مفصل عن الهاكاثون وأهدافه..."
+                        rows={4}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="status">حالة الهاكاثون</Label>
-                  <Select value={formData.status} onValueChange={(value: any) => setFormData({...formData, status: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">مسودة</SelectItem>
-                      <SelectItem value="open">مفتوح للتسجيل</SelectItem>
-                      <SelectItem value="closed">مغلق</SelectItem>
-                      <SelectItem value="completed">مكتمل</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="status">حالة الهاكاثون</Label>
+                        <Select value={formData.status} onValueChange={(value: any) => setFormData({...formData, status: value})}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">مسودة</SelectItem>
+                            <SelectItem value="open">مفتوح للتسجيل</SelectItem>
+                            <SelectItem value="closed">مغلق</SelectItem>
+                            <SelectItem value="completed">مكتمل</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-          {/* Dates and Timing */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#01645e]">
-                  <Calendar className="w-5 h-5" />
-                  المواعيد والتوقيت
-                </CardTitle>
-                <CardDescription>تحديد مواعيد الهاكاثون والتسجيل</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="startDate">تاريخ البداية *</Label>
-                    <Input
-                      id="startDate"
-                      type="datetime-local"
-                      value={formData.startDate}
-                      onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                      <div>
+                        <Label htmlFor="maxParticipants">الحد الأقصى للمشاركين</Label>
+                        <Input
+                          id="maxParticipants"
+                          type="number"
+                          value={formData.maxParticipants}
+                          onChange={(e) => setFormData({...formData, maxParticipants: e.target.value})}
+                          placeholder="مثال: 100"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Dates and Timing */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-[#01645e]">
+                      <Calendar className="w-5 h-5" />
+                      المواعيد والتوقيت
+                    </CardTitle>
+                    <CardDescription>تحديد مواعيد الهاكاثون والتسجيل</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="startDate">تاريخ البداية *</Label>
+                        <Input
+                          id="startDate"
+                          type="datetime-local"
+                          value={formData.startDate}
+                          onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="endDate">تاريخ النهاية *</Label>
+                        <Input
+                          id="endDate"
+                          type="datetime-local"
+                          value={formData.endDate}
+                          onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="registrationDeadline">آخر موعد للتسجيل *</Label>
+                      <Input
+                        id="registrationDeadline"
+                        type="datetime-local"
+                        value={formData.registrationDeadline}
+                        onChange={(e) => setFormData({...formData, registrationDeadline: e.target.value})}
                       required
+                      className="mt-1"
                     />
                   </div>
-
-                  <div>
-                    <Label htmlFor="endDate">تاريخ النهاية *</Label>
-                    <Input
-                      id="endDate"
-                      type="datetime-local"
-                      value={formData.endDate}
-                      onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="registrationDeadline">آخر موعد للتسجيل *</Label>
-                    <Input
-                      id="registrationDeadline"
-                      type="datetime-local"
-                      value={formData.registrationDeadline}
-                      onChange={(e) => setFormData({...formData, registrationDeadline: e.target.value})}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="maxParticipants">الحد الأقصى للمشاركين</Label>
-                    <Input
-                      id="maxParticipants"
-                      type="number"
-                      value={formData.maxParticipants}
-                      onChange={(e) => setFormData({...formData, maxParticipants: e.target.value})}
-                      placeholder="اتركه فارغاً لعدم وضع حد أقصى"
-                    />
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </motion.div>
@@ -497,37 +509,88 @@ export default function EditHackathonPage() {
               </CardContent>
             </Card>
           </motion.div>
+            </div>
 
-          {/* Submit Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="flex justify-end gap-4"
-          >
-            <Link href={`/admin/hackathons/${params.id}`}>
-              <Button variant="outline" type="button">
-                إلغاء
-              </Button>
-            </Link>
-            <Button
-              type="submit"
-              disabled={saving}
-              className="bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52] text-white"
-            >
-              {saving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2" />
-                  جاري الحفظ...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 ml-2" />
-                  حفظ التغييرات
-                </>
-              )}
-            </Button>
-          </motion.div>
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Save Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-[#01645e]">الإجراءات</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="w-full bg-[#01645e] hover:bg-[#01645e]/90"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                  </Button>
+
+                  <Link href={`/admin/hackathons/${params.id}`} className="block">
+                    <Button variant="outline" className="w-full">
+                      إلغاء
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Status Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-[#01645e]">معلومات الحالة</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-sm">
+                    <span className="font-medium">الحالة الحالية:</span>
+                    <div className="mt-1">
+                      {formData.status === 'draft' && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                          مسودة
+                        </span>
+                      )}
+                      {formData.status === 'open' && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                          مفتوح للتسجيل
+                        </span>
+                      )}
+                      {formData.status === 'closed' && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                          مغلق
+                        </span>
+                      )}
+                      {formData.status === 'completed' && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                          مكتمل
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-sm">
+                    <span className="font-medium">آخر تحديث:</span>
+                    <p className="text-gray-600 mt-1">
+                      {hackathon ? new Date(hackathon.startDate).toLocaleDateString('ar-SA') : '-'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tips */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-[#01645e]">نصائح</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-gray-600">
+                  <p>• تأكد من صحة التواريخ قبل الحفظ</p>
+                  <p>• يمكن تعديل المعلومات في أي وقت</p>
+                  <p>• تغيير الحالة إلى "مفتوح" يجعل الهاكاثون متاحاً للتسجيل</p>
+                  <p>• الجوائز اختيارية ويمكن إضافتها لاحقاً</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </form>
       </div>
     </div>

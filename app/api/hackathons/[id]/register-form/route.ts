@@ -1,6 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendTemplatedEmail } from '@/lib/mailer'
+import nodemailer from 'nodemailer'
+
+// Direct email sending function
+async function sendEmailDirect(to: string, subject: string, html: string) {
+  const gmailUser = process.env.GMAIL_USER
+  const gmailPass = process.env.GMAIL_PASS
+
+  if (!gmailUser || !gmailPass) {
+    console.log('⚠️ Gmail credentials not configured, skipping email')
+    return { success: false, mocked: true }
+  }
+
+  const transporter = nodemailer.createTransporter({
+    service: 'gmail',
+    auth: {
+      user: gmailUser,
+      pass: gmailPass
+    }
+  })
+
+  try {
+    const result = await transporter.sendMail({
+      from: `منصة هاكاثون الابتكار التقني <${gmailUser}>`,
+      to: to,
+      subject: subject,
+      html: html
+    })
+
+    console.log('✅ Email sent successfully:', result.messageId)
+    return { success: true, messageId: result.messageId }
+  } catch (error) {
+    console.error('❌ Failed to send email:', error)
+    throw error
+  }
+}
 
 // GET /api/hackathons/[id]/register-form - Get hackathon registration form for public
 export async function GET(
@@ -210,9 +245,52 @@ export async function POST(
             hackathonLocation: hackathon.location || 'سيتم تحديده لاحقاً'
           }
         })
+        console.log('✅ Confirmation email sent via template system')
       } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError)
-        // Don't fail the registration if email fails
+        console.error('❌ Template email failed, trying direct send:', emailError)
+
+        // Fallback to direct email sending
+        try {
+          const emailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+              <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2 style="color: #01645e; text-align: center; margin-bottom: 30px;">تأكيد التسجيل في الهاكاثون</h2>
+
+                <p style="color: #333; font-size: 16px; line-height: 1.6;">مرحباً ${user.name}،</p>
+
+                <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                  تم تسجيلك بنجاح في <strong>${hackathon.title}</strong>
+                </p>
+
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="color: #01645e; margin-top: 0;">تفاصيل التسجيل:</h3>
+                  <p><strong>الاسم:</strong> ${user.name}</p>
+                  <p><strong>البريد الإلكتروني:</strong> ${user.email}</p>
+                  <p><strong>تاريخ التسجيل:</strong> ${new Date().toLocaleDateString('ar-SA')}</p>
+                  <p><strong>تاريخ الهاكاثون:</strong> ${new Date(hackathon.startDate).toLocaleDateString('ar-SA')}</p>
+                </div>
+
+                <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
+                  سيتم مراجعة طلبك وإرسال تأكيد القبول قريباً
+                </p>
+
+                <div style="text-align: center; margin-top: 30px;">
+                  <p style="color: #01645e; font-weight: bold;">منصة هاكاثون الابتكار التقني</p>
+                </div>
+              </div>
+            </div>
+          `
+
+          await sendEmailDirect(
+            user.email,
+            `تأكيد التسجيل في ${hackathon.title}`,
+            emailContent
+          )
+          console.log('✅ Confirmation email sent via direct method')
+        } catch (directEmailError) {
+          console.error('❌ Direct email also failed:', directEmailError)
+          // Don't fail the registration if email fails
+        }
       }
 
       return NextResponse.json({
@@ -227,7 +305,7 @@ export async function POST(
 
     } catch (dbError) {
       console.error('Database error:', dbError)
-      
+
       // Fallback: log the registration and return success
       console.log('Registration data (fallback):', {
         hackathonId: params.id,
@@ -240,6 +318,47 @@ export async function POST(
         },
         timestamp: new Date().toISOString()
       })
+
+      // Send confirmation email even in fallback mode
+      try {
+        const emailContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <h2 style="color: #01645e; text-align: center; margin-bottom: 30px;">تأكيد التسجيل في الهاكاثون</h2>
+
+              <p style="color: #333; font-size: 16px; line-height: 1.6;">مرحباً ${data.name}،</p>
+
+              <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                تم تسجيلك بنجاح في الهاكاثون
+              </p>
+
+              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #01645e; margin-top: 0;">تفاصيل التسجيل:</h3>
+                <p><strong>الاسم:</strong> ${data.name}</p>
+                <p><strong>البريد الإلكتروني:</strong> ${data.email}</p>
+                <p><strong>تاريخ التسجيل:</strong> ${new Date().toLocaleDateString('ar-SA')}</p>
+              </div>
+
+              <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
+                سيتم مراجعة طلبك وإرسال تأكيد القبول قريباً
+              </p>
+
+              <div style="text-align: center; margin-top: 30px;">
+                <p style="color: #01645e; font-weight: bold;">منصة هاكاثون الابتكار التقني</p>
+              </div>
+            </div>
+          </div>
+        `
+
+        await sendEmailDirect(
+          data.email,
+          'تأكيد التسجيل في الهاكاثون',
+          emailContent
+        )
+        console.log('✅ Confirmation email sent successfully (fallback mode)')
+      } catch (emailError) {
+        console.error('❌ Failed to send confirmation email (fallback mode):', emailError)
+      }
 
       return NextResponse.json({
         success: true,
