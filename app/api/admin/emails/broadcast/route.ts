@@ -3,25 +3,34 @@ import { verifyToken } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import nodemailer from 'nodemailer'
 
-// Send email function using same method as register
+// Enhanced email sending function
 async function sendEmailDirect(to: string, subject: string, html: string) {
+  console.log('📧 [sendEmailDirect] Attempting to send email to:', to)
+  
   const gmailUser = process.env.GMAIL_USER
   const gmailPass = process.env.GMAIL_PASS
 
-  if (!gmailUser || !gmailPass) {
-    console.log('⚠️ Gmail credentials not configured, skipping email')
-    return { success: false, mocked: true }
-  }
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: gmailUser,
-      pass: gmailPass
-    }
+  console.log('🔧 [sendEmailDirect] Gmail credentials check:', {
+    hasUser: !!gmailUser,
+    hasPass: !!gmailPass,
+    userEmail: gmailUser
   })
 
+  if (!gmailUser || !gmailPass) {
+    console.log('⚠️ [sendEmailDirect] Gmail credentials not configured')
+    return { success: false, mocked: true, error: 'Gmail credentials not configured' }
+  }
+
   try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: gmailUser,
+        pass: gmailPass
+      }
+    })
+
+    console.log('📤 [sendEmailDirect] Sending email...')
     const result = await transporter.sendMail({
       from: `منصة هاكاثون الابتكار التقني <${gmailUser}>`,
       to: to,
@@ -29,11 +38,11 @@ async function sendEmailDirect(to: string, subject: string, html: string) {
       html: html
     })
     
-    console.log('✅ Email sent successfully:', result.messageId)
+    console.log('✅ [sendEmailDirect] Email sent successfully:', result.messageId)
     return { success: true, messageId: result.messageId }
   } catch (error) {
-    console.error('❌ Failed to send email:', error)
-    throw error
+    console.error('❌ [sendEmailDirect] Failed to send email:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -86,10 +95,16 @@ export async function POST(request: NextRequest) {
       
       if (recipients === 'all') {
         console.log('👥 [broadcast] Fetching all users')
-        targetUsers = await prisma.user.findMany({
-          where: { email: { not: null } },
-          select: { email: true, name: true }
-        })
+        try {
+          targetUsers = await prisma.user.findMany({
+            select: { email: true, name: true }
+          })
+          // Filter out users without valid emails
+          targetUsers = targetUsers.filter(user => user.email && user.email.trim() !== '')
+        } catch (error) {
+          console.error('❌ [broadcast] Error fetching users:', error)
+          return NextResponse.json({ error: 'خطأ في جلب المستخدمين' }, { status: 500 })
+        }
       } else if (recipients === 'hackathon' && hackathonId) {
         console.log('👥 [broadcast] Fetching hackathon participants')
         try {
@@ -138,7 +153,7 @@ export async function POST(request: NextRequest) {
           return { success: true, email: user.email, messageId: result.messageId }
         } catch (error) {
           console.error(`❌ [broadcast] Failed to send email to ${user.email}:`, error)
-          return { success: false, email: user.email, error: error.message }
+          return { success: false, email: user.email, error: error instanceof Error ? error.message : 'خطأ غير معروف' }
         }
       })
 
@@ -261,17 +276,18 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
       `
 
       try {
-        const result = await sendMail({
-          to: user.email,
-          subject: emailSubject,
-          text: emailContent,
-          html: emailHtml
-        })
+        const result = await sendEmailDirect(user.email, emailSubject, emailHtml)
         
-        return { success: true, email: user.email, messageId: result.messageId, mocked: result.mocked }
+        return { 
+          success: result.success, 
+          email: user.email, 
+          messageId: result.messageId, 
+          mocked: result.mocked,
+          error: result.error 
+        }
       } catch (error) {
         console.error(`Failed to send email to ${user.email}:`, error)
-        return { success: false, email: user.email, error: error.message }
+        return { success: false, email: user.email, error: error instanceof Error ? error.message : 'Unknown error' }
       }
     })
 
@@ -299,14 +315,16 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
 
   } catch (error) {
     console.error('❌ [broadcast] Error sending broadcast emails:', error)
-    console.error('❌ [broadcast] Error stack:', error.stack)
+    
+    const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف'
+    const errorStack = error instanceof Error ? error.stack : undefined
     
     // Check if it's a mailer configuration error
-    if (error.message && error.message.includes('mailer')) {
+    if (errorMessage.includes('mailer') || errorMessage.includes('Gmail')) {
       console.log('❌ [broadcast] Mailer configuration error detected')
       return NextResponse.json({ 
-        error: 'البريد الإلكتروني غير مُعد بشكل صحيح. يرجى التحقق من إعدادات SMTP أو Gmail.',
-        details: error.message,
+        error: 'البريد الإلكتروني غير مُعد بشكل صحيح. يرجى التحقق من إعدادات Gmail.',
+        details: errorMessage,
         mailerConfigured: false
       }, { status: 500 })
     }
@@ -314,8 +332,8 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
     console.log('❌ [broadcast] General error, returning generic message')
     return NextResponse.json({ 
       error: 'خطأ في إرسال الإيميلات',
-      details: error.message || 'خطأ غير معروف',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: errorMessage,
+      stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
     }, { status: 500 })
   }
 }
