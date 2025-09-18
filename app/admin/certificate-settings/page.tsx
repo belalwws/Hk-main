@@ -54,6 +54,12 @@ export default function CertificateSettingsPage() {
       if (response.ok) {
         const data = await response.json()
         setSettings(data)
+        
+        // If there's a custom certificate template, update the image source
+        if (data.certificateTemplate) {
+          console.log('Loading custom certificate template:', data.certificateTemplate)
+          setCertificateImageSrc(data.certificateTemplate)
+        }
       }
     } catch (error) {
       console.error('Error loading settings:', error)
@@ -195,23 +201,52 @@ export default function CertificateSettingsPage() {
     }
   }
 
-  const resetToDefault = () => {
-    setSettings({
+  const resetToDefault = async () => {
+    if (!confirm('هل أنت متأكد من إعادة تعيين جميع الإعدادات إلى القيم الافتراضية؟ سيتم حذف القالب المخصص أيضاً.')) {
+      return
+    }
+
+    const defaultSettings = {
       namePositionY: 0.52,
       namePositionX: 0.50,
       nameFont: 'bold 48px Arial',
-      nameColor: '#1a472a'
-    })
+      nameColor: '#1a472a',
+      certificateTemplate: undefined
+    }
+    
+    try {
+      // Save default settings to server
+      const response = await fetch('/api/admin/certificate-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...defaultSettings,
+          updatedBy: user?.name || 'admin'
+        })
+      })
 
-    // Redraw with default settings
-    const canvas = canvasRef.current
-    if (canvas && imageLoaded) {
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        const img = new Image()
-        img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-        img.src = certificateImageSrc
+      if (response.ok) {
+        setSettings(defaultSettings)
+        setCertificateImageSrc('/row-certificat.png') // Reset to default image
+        
+        // Redraw with default settings and image
+        const canvas = canvasRef.current
+        if (canvas) {
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            const img = new Image()
+            img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
+            img.src = '/row-certificat.png'
+          }
+        }
+        
+        alert('✅ تم إعادة تعيين الإعدادات إلى القيم الافتراضية')
+      } else {
+        alert('❌ حدث خطأ في إعادة تعيين الإعدادات')
       }
+    } catch (error) {
+      console.error('Error resetting settings:', error)
+      alert('❌ حدث خطأ في إعادة تعيين الإعدادات')
     }
   }
 
@@ -250,6 +285,26 @@ export default function CertificateSettingsPage() {
         // إضافة timestamp لتجنب التخزين المؤقت
         const newImageSrc = `${data.filePath}?t=${Date.now()}`
         setCertificateImageSrc(newImageSrc)
+        
+        // Save the new certificate template path to settings
+        try {
+          const settingsResponse = await fetch('/api/admin/certificate-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...settings,
+              certificateTemplate: data.filePath,
+              updatedBy: user?.name || 'admin'
+            })
+          })
+          
+          if (settingsResponse.ok) {
+            console.log('✅ Certificate template path saved to settings')
+          }
+        } catch (settingsError) {
+          console.error('❌ Error saving certificate template to settings:', settingsError)
+        }
+        
         alert('✅ تم رفع قالب الشهادة بنجاح!')
 
         // إعادة رسم الشهادة بالقالب الجديد
@@ -269,7 +324,8 @@ export default function CertificateSettingsPage() {
           }
         }
 
-        // لا نحتاج لإعادة تحميل الصفحة - الصورة تم تحديثها بالفعل
+        // Reload settings to get the updated certificate template
+        loadSettings()
       } else {
         const error = await response.json()
         alert(`❌ خطأ في رفع قالب الشهادة: ${error.error}`)
@@ -378,7 +434,7 @@ export default function CertificateSettingsPage() {
                         if (ctx) {
                           const img = new Image()
                           img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                          img.src = '/row-certificat.png'
+                          img.src = certificateImageSrc
                         }
                       }
                     }}
@@ -412,7 +468,7 @@ export default function CertificateSettingsPage() {
                         if (ctx) {
                           const img = new Image()
                           img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                          img.src = '/row-certificat.png'
+                          img.src = certificateImageSrc
                         }
                       }
                     }}
@@ -444,7 +500,7 @@ export default function CertificateSettingsPage() {
                           if (ctx) {
                             const img = new Image()
                             img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                            img.src = '/row-certificat.png'
+                            img.src = certificateImageSrc
                           }
                         }
                       }}
@@ -471,7 +527,7 @@ export default function CertificateSettingsPage() {
                         if (ctx) {
                           const img = new Image()
                           img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                          img.src = '/row-certificat.png'
+                          img.src = certificateImageSrc
                         }
                       }
                     }}
@@ -490,6 +546,24 @@ export default function CertificateSettingsPage() {
               </h3>
 
               <div className="space-y-4">
+                {/* Current Template Info */}
+                {certificateImageSrc !== '/row-certificat.png' && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-green-800">✅ قالب مخصص نشط</h4>
+                        <p className="text-sm text-green-600">يتم استخدام قالب شهادة مخصص حالياً</p>
+                      </div>
+                      <button
+                        onClick={resetToDefault}
+                        className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                      >
+                        حذف القالب
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#01645e] transition-colors">
                   <input
                     type="file"
@@ -504,7 +578,7 @@ export default function CertificateSettingsPage() {
                       <Upload className="w-12 h-12 text-gray-400 mx-auto" />
                       <div>
                         <p className="text-[#01645e] font-medium">
-                          اضغط لاختيار صورة الشهادة أو اسحب الملف هنا
+                          {uploadingCertificate ? 'جاري رفع الشهادة...' : 'اضغط لاختيار صورة الشهادة أو اسحب الملف هنا'}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           الملفات المدعومة: JPG, PNG, WebP
@@ -521,6 +595,7 @@ export default function CertificateSettingsPage() {
                   <p>• سيتم استخدام هذا القالب لجميع الشهادات الجديدة</p>
                   <p>• الأبعاد المقترحة: 1920x1080 بكسل أو أكبر</p>
                   <p>• تأكد من وجود مساحة كافية لكتابة الاسم</p>
+                  <p>• سيتم حفظ القالب تلقائياً في إعدادات النظام</p>
                 </div>
               </div>
             </div>
@@ -593,7 +668,7 @@ export default function CertificateSettingsPage() {
                         if (ctx) {
                           const img = new Image()
                           img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                          img.src = '/row-certificat.png'
+                          img.src = certificateImageSrc
                         }
                       }
                     }}

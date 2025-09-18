@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, readFile, mkdir } from 'fs/promises'
 import path from 'path'
 
 export async function POST(request: NextRequest) {
@@ -58,10 +58,44 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes)
     await writeFile(filePath, buffer)
 
+    // Update certificate settings with new template path
+    const publicPath = `/certificates/${fileName}`
+    try {
+      const settingsPath = path.join(process.cwd(), 'certificate-settings.json')
+      let settings = {}
+      
+      try {
+        const settingsData = await readFile(settingsPath, 'utf8')
+        settings = JSON.parse(settingsData)
+      } catch (error) {
+        // File doesn't exist, use default settings
+        settings = {
+          namePositionY: 0.52,
+          namePositionX: 0.50,
+          nameFont: 'bold 48px Arial',
+          nameColor: '#1a472a'
+        }
+      }
+
+      // Update settings with new certificate template
+      const updatedSettings = {
+        ...settings,
+        certificateTemplate: publicPath,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: 'admin'
+      }
+
+      await writeFile(settingsPath, JSON.stringify(updatedSettings, null, 2))
+      console.log('✅ Certificate template path saved to settings:', publicPath)
+    } catch (settingsError) {
+      console.error('❌ Error updating certificate settings:', settingsError)
+      // Don't fail the upload if settings update fails
+    }
+
     return NextResponse.json({
       message: 'تم رفع قالب الشهادة بنجاح',
       fileName: fileName,
-      filePath: `/certificates/${fileName}`
+      filePath: publicPath
     })
 
   } catch (error) {

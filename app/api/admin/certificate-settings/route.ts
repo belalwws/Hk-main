@@ -9,6 +9,7 @@ interface CertificateSettings {
   namePositionX: number  // موضع أفقي (يمين/شمال)
   nameFont: string
   nameColor: string
+  certificateTemplate?: string  // مسار قالب الشهادة المخصص
   lastUpdated: string
   updatedBy: string
 }
@@ -38,7 +39,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { namePositionY, namePositionX, nameFont, nameColor, updatedBy } = body
+    const { namePositionY, namePositionX, nameFont, nameColor, certificateTemplate, updatedBy } = body
 
     // التحقق من صحة البيانات
     if (typeof namePositionY !== 'number' || namePositionY < 0 || namePositionY > 1) {
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
       namePositionX,
       nameFont: nameFont || defaultSettings.nameFont,
       nameColor: nameColor || defaultSettings.nameColor,
+      certificateTemplate: certificateTemplate || undefined,
       lastUpdated: new Date().toISOString(),
       updatedBy: updatedBy || 'admin'
     }
