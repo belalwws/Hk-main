@@ -425,30 +425,39 @@ export async function POST(
       // Create user if doesn't exist
       if (!user) {
         try {
-          user = await prisma.user.create({
-            data: {
-              name: data.name,
-              email: data.email,
-              password_hash: 'form_registration_' + Date.now(), // Temporary password for form registrations
-              phone: data.phone || null,
-              city: data.city || null,
-              nationality: data.nationality || 'سعودي',
-              preferredRole: data.experience || 'مبتدئ'
-            }
+          // Use raw SQL to create user
+          const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          const passwordHash = 'form_registration_' + Date.now()
+          
+          await prisma.$executeRaw`
+            INSERT INTO users (
+              id, name, email, password_hash, phone, city, nationality, preferredRole, createdAt, updatedAt
+            ) VALUES (
+              ${userId}, ${data.name}, ${data.email}, ${passwordHash},
+              ${data.phone || null}, ${data.city || null}, ${data.nationality || 'سعودي'}, 
+              ${data.experience || 'مبتدئ'}, ${new Date()}, ${new Date()}
+            )
+          `
+          
+          // Fetch the created user
+          user = await prisma.user.findUnique({
+            where: { id: userId }
           })
-          console.log('✅ User created:', user.id)
+          
+          if (!user) {
+            throw new Error('فشل في جلب المستخدم المُنشأ')
+          }
+          
+          console.log('✅ User created with ID:', userId)
         } catch (userCreateError) {
           console.error('❌ Failed to create user:', userCreateError)
-          // Try with minimal data
-          user = await prisma.user.create({
-            data: {
-              name: data.name,
-              email: data.email,
-              password_hash: 'form_registration_' + Date.now()
-            }
-          })
-          console.log('✅ User created with minimal data:', user.id)
+          throw new Error('فشل في إنشاء المستخدم')
         }
+      }
+
+      // Ensure user exists before proceeding
+      if (!user || !user.id) {
+        throw new Error('لم يتم العثور على المستخدم')
       }
 
       // Check if already registered for this hackathon
@@ -460,23 +469,25 @@ export async function POST(
       })
 
       if (!existingParticipant) {
-        // Create participant record
-        // @ts-ignore - Using dynamic model access
-        const participant = await prisma.participant.create({
-          data: {
-            userId: user.id,
-            hackathonId: params.id,
-            status: 'pending',
-            additionalInfo: {
-              registrationType: 'form',
-              formData: data,
-              submittedAt: new Date().toISOString(),
-              experience: data.experience,
-              skills: data.skills
-            }
-          }
+        // Create participant record using raw SQL
+        const participantId = `participant_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        const additionalInfo = JSON.stringify({
+          registrationType: 'form',
+          formData: data,
+          submittedAt: new Date().toISOString(),
+          experience: data.experience,
+          skills: data.skills
         })
-        console.log('✅ Participant created successfully')
+        
+        await prisma.$executeRaw`
+          INSERT INTO participants (
+            id, userId, hackathonId, status, teamType, additionalInfo, registeredAt, updatedAt
+          ) VALUES (
+            ${participantId}, ${user.id}, ${params.id}, 'pending', 'individual',
+            ${additionalInfo}::jsonb, ${new Date()}, ${new Date()}
+          )
+        `
+        console.log('✅ Participant created successfully with ID:', participantId)
         savedToDatabase = true
       } else {
         console.log('ℹ️ User already registered for this hackathon')
@@ -490,7 +501,10 @@ export async function POST(
 
     console.log('✅ Registration processed successfully', {
       emailSent: true,
-      savedToDatabase
+      savedToDatabase,
+      hackathonId: params.id,
+      userEmail: data.email,
+      userName: data.name
     })
     
     return NextResponse.json({
