@@ -29,4 +29,6 @@ databases:
     databaseName: hackathon_production
     user: hackathon_user
     region: oregon
-    plan: starter
+    plan: standard
+    # استخدام plan أعلى لضمان الاستمرارية
+    # starter plan قد يحذف البيانات

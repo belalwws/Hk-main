@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "build:render": "npx prisma generate --schema ./schema.prisma && node scripts/safe-db-update.js && npm run build",
+    "build:render": "npx prisma generate --schema ./schema.prisma && node scripts/production-db-setup.js && npm run build",
     "build:safe": "npx prisma generate --schema ./schema.prisma && node scripts/safe-db-update.js && npm run build",
     "build:fix": "node scripts/fix-routing-conflicts.js && npx prisma generate --schema ./schema.prisma && node scripts/fix-render-db.js && node scripts/add-hackathon-forms-table.js && npm run build",
     "setup:forms": "node scripts/add-hackathon-forms-table.js",
@@ -28,6 +28,8 @@
     "deploy:render": "node scripts/render-deploy.js",
     "deploy:db": "node scripts/deploy-db.js",
     "render:setup": "node scripts/render-deploy.js",
+    "db:fix-persistence": "node scripts/fix-database-persistence.js",
+    "db:check-persistence": "node scripts/check-persistence.js",
     "setup:production": "node scripts/production-setup.js",
     "force:migration": "node scripts/force-migration.js",
     "db:push-production": "node scripts/db-push.js",
