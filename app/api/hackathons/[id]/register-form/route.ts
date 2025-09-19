@@ -416,11 +416,19 @@ export async function POST(
     let savedToDatabase = false
     try {
       console.log('💾 Attempting to save registration to database...')
-      
+      console.log('💾 Data to save:', {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        hackathonId: params.id
+      })
+
       // Check if user exists
       let user = await prisma.user.findUnique({
         where: { email: data.email }
       })
+
+      console.log('👤 User lookup result:', user ? `Found user: ${user.id}` : 'User not found')
 
       // Create user if doesn't exist
       if (!user) {
@@ -429,24 +437,22 @@ export async function POST(
           const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
           const passwordHash = 'form_registration_' + Date.now()
           
-          await prisma.$executeRaw`
-            INSERT INTO users (
-              id, name, email, password_hash, phone, city, nationality, preferredRole, createdAt, updatedAt
-            ) VALUES (
-              ${userId}, ${data.name}, ${data.email}, ${passwordHash},
-              ${data.phone || null}, ${data.city || null}, ${data.nationality || 'سعودي'}, 
-              ${data.experience || 'مبتدئ'}, ${new Date()}, ${new Date()}
-            )
-          `
-          
-          // Fetch the created user
-          user = await prisma.user.findUnique({
-            where: { id: userId }
+          // Use Prisma create instead of raw SQL for better error handling
+          user = await prisma.user.create({
+            data: {
+              id: userId,
+              name: data.name,
+              email: data.email,
+              password: passwordHash,
+              phone: data.phone || null,
+              city: data.city || null,
+              nationality: data.nationality || 'سعودي',
+              preferredRole: data.experience || 'مبتدئ',
+              skills: data.skills || null,
+              experience: data.experience || null,
+              role: 'participant'
+            }
           })
-          
-          if (!user) {
-            throw new Error('فشل في جلب المستخدم المُنشأ')
-          }
           
           console.log('✅ User created with ID:', userId)
         } catch (userCreateError) {
@@ -469,25 +475,28 @@ export async function POST(
       })
 
       if (!existingParticipant) {
-        // Create participant record using raw SQL
+        // Create participant record using Prisma
         const participantId = `participant_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        const additionalInfo = JSON.stringify({
+        const additionalInfo = {
           registrationType: 'form',
           formData: data,
           submittedAt: new Date().toISOString(),
           experience: data.experience,
           skills: data.skills
+        }
+
+        const participant = await prisma.participant.create({
+          data: {
+            id: participantId,
+            userId: user.id,
+            hackathonId: params.id,
+            status: 'pending',
+            teamType: 'individual',
+            additionalInfo: additionalInfo
+          }
         })
-        
-        await prisma.$executeRaw`
-          INSERT INTO participants (
-            id, userId, hackathonId, status, teamType, additionalInfo, registeredAt, updatedAt
-          ) VALUES (
-            ${participantId}, ${user.id}, ${params.id}, 'pending', 'individual',
-            ${additionalInfo}::jsonb, ${new Date()}, ${new Date()}
-          )
-        `
-        console.log('✅ Participant created successfully with ID:', participantId)
+
+        console.log('✅ Participant created successfully with ID:', participant.id)
         savedToDatabase = true
       } else {
         console.log('ℹ️ User already registered for this hackathon')
@@ -496,7 +505,14 @@ export async function POST(
 
     } catch (dbError) {
       console.error('❌ Database save failed:', dbError)
+      console.error('❌ Error details:', {
+        message: dbError instanceof Error ? dbError.message : 'Unknown error',
+        stack: dbError instanceof Error ? dbError.stack : 'No stack trace',
+        code: (dbError as any)?.code,
+        meta: (dbError as any)?.meta
+      })
       // Continue anyway - email was sent
+      savedToDatabase = false
     }
 
     console.log('✅ Registration processed successfully', {
