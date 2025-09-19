@@ -158,7 +158,7 @@ export default function CertificateSettingsPage() {
     if (ctx) {
       const img = new Image()
       img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-      img.src = certificateImageSrc
+      img.src = `${certificateImageSrc}?t=${Date.now()}`
     }
   }
 
@@ -186,7 +186,7 @@ export default function CertificateSettingsPage() {
           if (ctx) {
             const img = new Image()
             img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-            img.src = certificateImageSrc
+            img.src = `${certificateImageSrc}?t=${Date.now()}`
           }
         }
       } else {
@@ -434,7 +434,7 @@ export default function CertificateSettingsPage() {
                         if (ctx) {
                           const img = new Image()
                           img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                          img.src = certificateImageSrc
+                          img.src = `${certificateImageSrc}?t=${Date.now()}`
                         }
                       }
                     }}
@@ -468,7 +468,7 @@ export default function CertificateSettingsPage() {
                         if (ctx) {
                           const img = new Image()
                           img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                          img.src = certificateImageSrc
+                          img.src = `${certificateImageSrc}?t=${Date.now()}`
                         }
                       }
                     }}
@@ -500,7 +500,7 @@ export default function CertificateSettingsPage() {
                           if (ctx) {
                             const img = new Image()
                             img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                            img.src = certificateImageSrc
+                            img.src = `${certificateImageSrc}?t=${Date.now()}`
                           }
                         }
                       }}
@@ -527,7 +527,7 @@ export default function CertificateSettingsPage() {
                         if (ctx) {
                           const img = new Image()
                           img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                          img.src = certificateImageSrc
+                          img.src = `${certificateImageSrc}?t=${Date.now()}`
                         }
                       }
                     }}
@@ -668,7 +668,7 @@ export default function CertificateSettingsPage() {
                         if (ctx) {
                           const img = new Image()
                           img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
-                          img.src = certificateImageSrc
+                          img.src = `${certificateImageSrc}?t=${Date.now()}`
                         }
                       }
                     }}

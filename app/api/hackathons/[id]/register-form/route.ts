@@ -202,7 +202,40 @@ export async function GET(
   try {
     const params = await context.params
 
-    // Always return a default form to avoid database issues
+    // Try to get dynamic form from database first
+    let dynamicForm = null
+    try {
+      const hackathonResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/admin/hackathons/${params.id}/registration-form`)
+      if (hackathonResponse.ok) {
+        const hackathonData = await hackathonResponse.json()
+        if (hackathonData.form) {
+          dynamicForm = hackathonData.form
+        }
+      }
+    } catch (dbError) {
+      console.log('Could not fetch dynamic form, using default')
+    }
+
+    // If we have a dynamic form, return it
+    if (dynamicForm) {
+      return NextResponse.json({
+        form: {
+          id: dynamicForm.id,
+          hackathonId: params.id,
+          title: dynamicForm.title || 'نموذج التسجيل في الهاكاثون',
+          description: dynamicForm.description || 'يرجى ملء البيانات المطلوبة للتسجيل في الهاكاثون',
+          isActive: dynamicForm.isActive,
+          fields: dynamicForm.fields || [],
+          settings: dynamicForm.settings || {
+            allowMultipleSubmissions: false,
+            requireApproval: true,
+            sendConfirmationEmail: true
+          }
+        }
+      })
+    }
+
+    // Fallback to default form
     return NextResponse.json({
       form: {
         id: `default_${params.id}`,
@@ -365,8 +398,65 @@ export async function POST(
       }
     }
 
-    // Always return success since email was sent
-    console.log('✅ Registration processed successfully (email sent)')
+    // Try to save registration to database
+    let savedToDatabase = false
+    try {
+      console.log('💾 Attempting to save registration to database...')
+      
+      // Check if user exists
+      let user = await prisma.user.findUnique({
+        where: { email: data.email }
+      })
+
+      // Create user if doesn't exist
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            name: data.name,
+            email: data.email,
+            password_hash: '', // No password for form registrations
+            phone: data.phone || null,
+            city: data.city || null,
+            nationality: data.nationality || 'سعودي',
+            preferredRole: data.experience || 'مبتدئ'
+          }
+        })
+        console.log('✅ User created:', user.id)
+      }
+
+      // Check if already registered for this hackathon
+      const existingParticipant = await prisma.participant.findFirst({
+        where: {
+          userId: user.id,
+          hackathonId: params.id
+        }
+      })
+
+      if (!existingParticipant) {
+        // Create participant record
+        const participant = await prisma.participant.create({
+          data: {
+            userId: user.id,
+            hackathonId: params.id,
+            status: 'pending'
+          }
+        })
+        console.log('✅ Participant created:', participant.id)
+        savedToDatabase = true
+      } else {
+        console.log('ℹ️ User already registered for this hackathon')
+        savedToDatabase = true
+      }
+
+    } catch (dbError) {
+      console.error('❌ Database save failed:', dbError)
+      // Continue anyway - email was sent
+    }
+
+    console.log('✅ Registration processed successfully', {
+      emailSent: true,
+      savedToDatabase
+    })
     
     return NextResponse.json({
       success: true,
@@ -375,7 +465,8 @@ export async function POST(
         id: `participant_${Date.now()}`,
         status: 'pending',
         requiresApproval: true,
-        emailSent: true
+        emailSent: true,
+        savedToDatabase
       }
     })
 
