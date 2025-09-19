@@ -59,8 +59,13 @@ export default function HackathonRegisterPage() {
       router.push('/login')
       return
     }
-    fetchHackathon()
-  }, [user, params.id])
+    
+    // Redirect to dynamic form page
+    router.push(`/hackathons/${params.id}/register-form`)
+    return
+    
+    // fetchHackathon() - Commented out since we're redirecting
+  }, [user, params.id, router])
 
   const fetchHackathon = async () => {
     try {

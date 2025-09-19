@@ -724,7 +724,7 @@ export default function LandingPage() {
                       transition={{ delay: 1.2, duration: 0.8 }}
                       className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4"
                     >
-                      <Link href={pinnedHackathon && pinnedHackathon.status === 'open' ? `/hackathons/${pinnedHackathon.id}/register` : "/register"}>
+                      <Link href={pinnedHackathon && pinnedHackathon.status === 'open' ? `/hackathons/${pinnedHackathon.id}/register-form` : "/register"}>
                         <motion.button
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
@@ -917,7 +917,7 @@ export default function LandingPage() {
 
                     <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
                       {pinnedHackathon && pinnedHackathon.status === 'open' && (
-                        <Link href={`/hackathons/${pinnedHackathon.id}/register`}>
+                        <Link href={`/hackathons/${pinnedHackathon.id}/register-form`}>
                           <motion.button
                             whileHover={{ scale: 1.05, y: -2 }}
                             whileTap={{ scale: 0.95 }}

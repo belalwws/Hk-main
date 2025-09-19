@@ -221,7 +221,7 @@ ${includeHackathonDetails && hackathon ? `
 - موعد انتهاء التسجيل: ${new Date(hackathon.registrationDeadline).toLocaleDateString('ar-SA')}
 
 للتسجيل في الهاكاثون، يرجى زيارة:
-${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hackathon.id}/register
+${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hackathon.id}/register-form
 ` : ''}
 
 مع أطيب التحيات،
@@ -260,7 +260,7 @@ ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hack
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hackathon.id}/register" 
+                <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/hackathons/${hackathon.id}/register-form" 
                    style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                     سجل الآن في الهاكاثون 🚀
                 </a>

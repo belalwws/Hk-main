@@ -128,10 +128,10 @@ export default function HackathonsPage() {
   const handleRegisterClick = (hackathonId: string) => {
     if (!user) {
       // Redirect to login if not authenticated
-      router.push(`/login?redirect=/hackathons/${hackathonId}/register`)
+      router.push(`/login?redirect=/hackathons/${hackathonId}/register-form`)
     } else {
       // Go to registration page
-      router.push(`/hackathons/${hackathonId}/register`)
+      router.push(`/hackathons/${hackathonId}/register-form`)
     }
   }
 
@@ -312,7 +312,7 @@ export default function HackathonsPage() {
                           )
                         })()
                       ) : isRegistrationOpen(hackathon) ? (
-                        <Link href={`/hackathons/${hackathon.id}/register`} className="w-full">
+                        <Link href={`/hackathons/${hackathon.id}/register-form`} className="w-full">
                           <Button className="w-full bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52]">
                             سجل في الهاكاثون
                           </Button>

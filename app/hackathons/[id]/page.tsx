@@ -67,9 +67,9 @@ export default function HackathonDetailsPage() {
 
   const handleRegisterClick = () => {
     if (!user) {
-      router.push(`/login?redirect=/hackathons/${params.id}/register`)
+      router.push(`/login?redirect=/hackathons/${params.id}/register-form`)
     } else {
-      router.push(`/hackathons/${params.id}/register`)
+      router.push(`/hackathons/${params.id}/register-form`)
     }
   }
 
