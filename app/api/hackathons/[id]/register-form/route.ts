@@ -205,15 +205,29 @@ export async function GET(
     // Try to get dynamic form from database first
     let dynamicForm = null
     try {
-      const hackathonResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/admin/hackathons/${params.id}/registration-form`)
-      if (hackathonResponse.ok) {
-        const hackathonData = await hackathonResponse.json()
-        if (hackathonData.form) {
-          dynamicForm = hackathonData.form
+      console.log('🔍 Fetching dynamic form for hackathon:', params.id)
+      
+      // @ts-ignore - Using dynamic model access
+      const existingForm = await prisma.hackathonForm.findFirst({
+        where: { hackathonId: params.id }
+      })
+
+      if (existingForm) {
+        console.log('✅ Found dynamic form:', existingForm.id)
+        dynamicForm = {
+          id: existingForm.id,
+          hackathonId: existingForm.hackathonId,
+          title: existingForm.title,
+          description: existingForm.description,
+          isActive: existingForm.isActive,
+          fields: JSON.parse(existingForm.fields),
+          settings: JSON.parse(existingForm.settings)
         }
+      } else {
+        console.log('ℹ️ No dynamic form found, will use default')
       }
     } catch (dbError) {
-      console.log('Could not fetch dynamic form, using default')
+      console.error('❌ Database error fetching form:', dbError)
     }
 
     // If we have a dynamic form, return it
@@ -410,18 +424,31 @@ export async function POST(
 
       // Create user if doesn't exist
       if (!user) {
-        user = await prisma.user.create({
-          data: {
-            name: data.name,
-            email: data.email,
-            password_hash: '', // No password for form registrations
-            phone: data.phone || null,
-            city: data.city || null,
-            nationality: data.nationality || 'سعودي',
-            preferredRole: data.experience || 'مبتدئ'
-          }
-        })
-        console.log('✅ User created:', user.id)
+        try {
+          user = await prisma.user.create({
+            data: {
+              name: data.name,
+              email: data.email,
+              password_hash: 'form_registration_' + Date.now(), // Temporary password for form registrations
+              phone: data.phone || null,
+              city: data.city || null,
+              nationality: data.nationality || 'سعودي',
+              preferredRole: data.experience || 'مبتدئ'
+            }
+          })
+          console.log('✅ User created:', user.id)
+        } catch (userCreateError) {
+          console.error('❌ Failed to create user:', userCreateError)
+          // Try with minimal data
+          user = await prisma.user.create({
+            data: {
+              name: data.name,
+              email: data.email,
+              password_hash: 'form_registration_' + Date.now()
+            }
+          })
+          console.log('✅ User created with minimal data:', user.id)
+        }
       }
 
       // Check if already registered for this hackathon
@@ -434,14 +461,22 @@ export async function POST(
 
       if (!existingParticipant) {
         // Create participant record
+        // @ts-ignore - Using dynamic model access
         const participant = await prisma.participant.create({
           data: {
             userId: user.id,
             hackathonId: params.id,
-            status: 'pending'
+            status: 'pending',
+            additionalInfo: {
+              registrationType: 'form',
+              formData: data,
+              submittedAt: new Date().toISOString(),
+              experience: data.experience,
+              skills: data.skills
+            }
           }
         })
-        console.log('✅ Participant created:', participant.id)
+        console.log('✅ Participant created successfully')
         savedToDatabase = true
       } else {
         console.log('ℹ️ User already registered for this hackathon')
