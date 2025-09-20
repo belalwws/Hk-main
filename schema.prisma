@@ -66,6 +66,7 @@ model Hackathon {
   evaluationCriteria EvaluationCriterion[]
   registrationForm   HackathonForm?
   landingPage        HackathonLandingPage?
+  formDesign         HackathonFormDesign?
 
   @@map("hackathons")
 }
@@ -388,4 +389,23 @@ model HackathonLandingPage {
   hackathon Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
 
   @@map("hackathon_landing_pages")
+}
+
+// HackathonFormDesign model - Custom form designs for hackathons
+model HackathonFormDesign {
+  id             String   @id @default(cuid())
+  hackathonId    String   @unique
+  isEnabled      Boolean  @default(false)
+  template       String   @default("modern")
+  htmlContent    String?
+  cssContent     String?
+  jsContent      String?
+  settings       Json?    // Form design settings
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  hackathon Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+
+  @@map("hackathon_form_designs")
 }

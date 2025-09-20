@@ -17,7 +17,8 @@
     "create-admin": "node scripts/create-working-admin.js",
     "test-login": "node scripts/test-login.js",
     "cleanup": "node scripts/cleanup-project.js",
-    "prepare-render": "node scripts/prepare-for-render.js"
+    "prepare-render": "node scripts/prepare-for-render.js",
+    "update-production-db": "node scripts/update-production-db.js"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",

@@ -123,12 +123,31 @@ async function prepareForRender() {
   );
   console.log("4. npm run build");
 
+  // 8. Update production database if connected
+  if (
+    process.env.DATABASE_URL &&
+    process.env.DATABASE_URL.includes("postgres")
+  ) {
+    console.log("\n🔄 Updating production database schema...");
+    try {
+      const { updateProductionDatabase } = require("./update-production-db.js");
+      await updateProductionDatabase();
+      console.log("✅ Production database updated");
+    } catch (dbError) {
+      console.log("⚠️ Could not update production database:", dbError.message);
+      console.log(
+        "💡 Run manually after deployment: npm run update-production-db"
+      );
+    }
+  }
+
   console.log("\n🎉 Project preparation completed!");
   console.log("\n📋 Next steps for Render deployment:");
   console.log("1. Push code to GitHub");
   console.log("2. Connect GitHub repo to Render");
   console.log("3. Set environment variables in Render dashboard");
   console.log("4. Deploy!");
+  console.log("5. Run 'npm run update-production-db' if needed");
   console.log("\n🔑 Admin login after deployment:");
   console.log("📧 Email: admin@hackathon.com");
   console.log("🔑 Password: admin123");
