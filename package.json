@@ -5,9 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "dev:db:generate": "npx prisma generate --schema ./schema.dev.prisma",
-    "dev:db:push": "npx prisma db push --schema ./schema.dev.prisma",
-    "dev:db:studio": "npx prisma studio --schema ./schema.dev.prisma",
+
     "dev:setup": "npm run dev:db:generate && npm run dev:db:push",
     "lint": "next lint",
     "start": "next start",
@@ -17,21 +15,11 @@
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build",
     "create-admin": "node create-local-admin.js",
-    "test-fixes": "node test-all-fixes.js",
-    "final-test": "node final-deployment-test.js",
-    "test-login": "node scripts/test-login.js",
-    "cleanup": "node scripts/cleanup-project.js",
-    "prepare-render": "node scripts/prepare-for-render.js",
-    "update-production-db": "node scripts/update-production-db.js",
-    "production-deploy": "node scripts/production-deploy.js",
-    "safe-deploy": "node scripts/safe-production-deploy.js",
-    "dev:editor": "echo 'Advanced Landing Page Editor available at: http://localhost:3000/admin/hackathons/[id]/landing-page-pro' && npm run dev",
     "data:snapshot": "node scripts/data-protection-guard.js snapshot",
     "data:verify": "node scripts/data-protection-guard.js verify",
     "data:restore": "node scripts/data-protection-guard.js restore",
     "pre-deploy": "node scripts/pre-deploy-check.js",
-    "render-deploy": "node scripts/render-safe-deploy.js",
-    "test:data-protection": "node test-data-protection.js"
+    "render-deploy": "node scripts/render-safe-deploy.js"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",

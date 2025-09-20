@@ -1,7 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
-import "./mobile-improvements.css"
 import { AuthProvider } from "@/contexts/auth-context"
 import { SiteHeader } from "@/components/site-header"
 
