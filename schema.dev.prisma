@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+// This is your Prisma schema file for development (SQLite),
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -15,21 +15,21 @@ model Hackathon {
   id                    String   @id @default(cuid())
   title                 String
   description           String?
-  requirements          Json?    // Array of requirements
-  categories            Json?    // Array of categories
+  requirements          String?    // JSON string for SQLite
+  categories            String?    // JSON string for SQLite
   startDate             DateTime
   endDate               DateTime
   registrationDeadline  DateTime
   maxParticipants       Int?
   status                HackathonStatus @default(draft)
-  prizes                Json?    // {first: "", second: "", third: ""}
-  settings              Json?    // Store hackathon-specific settings
+  prizes                String?    // JSON string for SQLite
+  settings              String?    // JSON string for SQLite
   certificateTemplate   String?  // Path to custom certificate template image
   isPinned              Boolean  @default(false)  // للعرض في الصفحة الرئيسية
   evaluationOpen        Boolean  @default(false)  // هل التقييم مفتوح للمحكمين
-  judgeSettings         Json?    // إعدادات المحكم (ما يراه/لا يراه)
-  emailTemplates        Json?    // قوالب الإيميلات المخصصة
-  customFields          Json?    // الحقول المخصصة لنموذج التسجيل
+  judgeSettings         String?    // JSON string for SQLite
+  emailTemplates        String?    // JSON string for SQLite
+  customFields          String?    // JSON string for SQLite
 
   // Additional fields from new database
   location              String?
@@ -138,7 +138,7 @@ model Participant {
   approvedAt          DateTime?
   rejectedAt          DateTime?
   updatedAt           DateTime        @updatedAt
-  additionalInfo      Json?           // معلومات إضافية (نوع التسجيل، الخبرة، إلخ)
+  additionalInfo      String?         // JSON string for SQLite
 
   // Additional fields from new database
   skills              String?
@@ -204,7 +204,7 @@ model Admin {
   id          String   @id @default(cuid())
   userId      String
   hackathonId String?  // null means super admin
-  permissions Json?    // Store admin permissions
+  permissions String?    // JSON string for SQLite
   role        String?  // Admin role
   isActive    Boolean  @default(true)
   lastLogin   DateTime?
@@ -295,7 +295,7 @@ model EvaluationCriterion {
 model ResultsSnapshot {
   id        String   @id @default(cuid())
   name      String?
-  data      Json
+  data      String   // JSON string for SQLite
   createdAt DateTime @default(now())
 
   @@map("results_snapshots")
@@ -306,7 +306,7 @@ model Form {
   id          String     @id @default(cuid())
   title       String
   description String?
-  fields      Json       // Array of form fields with their configurations
+  fields      String     // JSON string for SQLite
   status      FormStatus @default(draft)
   isPublic    Boolean    @default(false)
   createdBy   String     // Admin user ID
@@ -331,7 +331,7 @@ model FormResponse {
   userId     String?  // Optional - for logged in users
   userEmail  String?  // For anonymous responses
   userName   String?  // For anonymous responses
-  responses  Json     // User's responses to form fields
+  responses  String   // JSON string for SQLite
   submittedAt DateTime @default(now())
 
   // Relations
@@ -344,7 +344,7 @@ model FormResponse {
 model GlobalSettings {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     Json
+  value     String   // JSON string for SQLite
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
