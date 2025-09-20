@@ -29,45 +29,8 @@ async function safeDbSetup() {
       console.log('ℹ️ Database might be empty or schema not ready');
     }
     
-    // Only run db push if database is empty or we explicitly allow it
-    if (!hasData || process.env.FORCE_DB_PUSH === 'true') {
-      console.log('🔄 Running database schema update...');
-      
-      try {
-        // Use spawn to run prisma command
-        const { spawn } = require('child_process');
-        
-        const dbPush = spawn('npx', [
-          'prisma', 'db', 'push', 
-          '--accept-data-loss=false',
-          '--schema', './schema.prisma'
-        ], {
-          stdio: 'inherit'
-        });
-        
-        await new Promise((resolve, reject) => {
-          dbPush.on('close', (code) => {
-            if (code === 0) {
-              console.log('✅ Database schema updated successfully');
-              resolve();
-            } else {
-              console.log('⚠️ Database schema update failed, continuing anyway...');
-              resolve(); // Don't fail the build
-            }
-          });
-          
-          dbPush.on('error', (error) => {
-            console.log('⚠️ Database push error:', error.message);
-            resolve(); // Don't fail the build
-          });
-        });
-        
-      } catch (pushError) {
-        console.log('⚠️ Database push failed, continuing:', pushError.message);
-      }
-    } else {
-      console.log('ℹ️ Skipping database push to preserve existing data');
-    }
+    // NEVER run db push in production to preserve data
+    console.log('ℹ️ Skipping database push to preserve existing data in production');
     
     // Ensure admin user exists
     await ensureAdminUser(prisma);
@@ -88,33 +51,60 @@ async function safeDbSetup() {
 
 async function ensureAdminUser(prisma) {
   try {
+    console.log('👤 Ensuring admin user exists...');
     const adminEmail = 'admin@hackathon.com';
     const adminPassword = 'admin123456';
     
-    const existingAdmin = await prisma.user.findUnique({
-      where: { email: adminEmail }
-    });
-    
-    if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+    // Try with raw SQL first
+    try {
+      const existingAdmin = await prisma.$queryRaw`
+        SELECT * FROM users WHERE email = ${adminEmail} LIMIT 1
+      `;
       
-      await prisma.user.create({
-        data: {
-          email: adminEmail,
-          password: hashedPassword,
-          name: 'مدير النظام',
-          role: 'admin',
-          isActive: true,
-          emailVerified: new Date()
-        }
+      if (existingAdmin.length === 0) {
+        const hashedPassword = await bcrypt.hash(adminPassword, 12);
+        const userId = `user_${Date.now()}`;
+        
+        await prisma.$executeRaw`
+          INSERT INTO users (id, email, password, name, role, "isActive", "emailVerified", "createdAt", "updatedAt")
+          VALUES (${userId}, ${adminEmail}, ${hashedPassword}, 'مدير النظام', 'admin', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `;
+        
+        console.log('✅ Admin user created via raw SQL:', adminEmail);
+      } else {
+        console.log('✅ Admin user already exists');
+      }
+    } catch (rawError) {
+      console.log('⚠️ Raw SQL failed, trying Prisma model:', rawError.message);
+      
+      // Fallback to Prisma model
+      const existingAdmin = await prisma.user.findUnique({
+        where: { email: adminEmail }
       });
       
-      console.log('✅ Admin user created:', adminEmail);
-    } else {
-      console.log('✅ Admin user already exists');
+      if (!existingAdmin) {
+        const hashedPassword = await bcrypt.hash(adminPassword, 12);
+        
+        await prisma.user.create({
+          data: {
+            email: adminEmail,
+            password: hashedPassword,
+            name: 'مدير النظام',
+            role: 'admin',
+            isActive: true,
+            emailVerified: new Date()
+          }
+        });
+        
+        console.log('✅ Admin user created via Prisma:', adminEmail);
+      } else {
+        console.log('✅ Admin user already exists');
+      }
     }
+    
+    console.log('🔑 Admin credentials: admin@hackathon.com / admin123456');
   } catch (error) {
-    console.log('⚠️ Could not ensure admin user:', error.message);
+    console.error('❌ Could not ensure admin user:', error.message);
   }
 }
 

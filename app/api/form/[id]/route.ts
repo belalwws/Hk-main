@@ -452,20 +452,24 @@ export async function GET(
       });
     </script>
     `;
-    
     // إضافة الـ script قبل إغلاق body
     fullHtml = fullHtml.replace('</body>', formScript + '</body>')
 
     // إرجاع HTML مع Content-Type صحيح
+    const timestamp = Date.now()
     return new NextResponse(fullHtml, {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0',
         'Pragma': 'no-cache',
         'Expires': '0',
         'Last-Modified': new Date().toUTCString(),
-        'ETag': `"${Date.now()}"`,
+        'ETag': `"form-${resolvedParams.id}-${timestamp}"`,
+        'Vary': 'Accept-Encoding',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-Timestamp': timestamp.toString(),
       },
     })
 

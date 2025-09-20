@@ -183,17 +183,26 @@ export async function getEmailTemplates(hackathonId?: string): Promise<EmailTemp
   try {
     let templates = { ...DEFAULT_TEMPLATES }
 
-    // Get global custom templates
+    // Get global custom templates from email_templates table
     try {
-      const globalSettings = await prisma.globalSettings.findFirst({
-        where: { key: 'email_templates' }
-      })
-      if (globalSettings && globalSettings.value) {
-        const globalTemplates = globalSettings.value as any
-        templates = { ...templates, ...globalTemplates }
+      const { PrismaClient } = await import('@prisma/client')
+      const prismaClient = new PrismaClient()
+      
+      const globalTemplates = await prismaClient.$queryRaw`
+        SELECT * FROM email_templates 
+        WHERE id = 'global_templates'
+        LIMIT 1
+      ` as any[]
+      
+      if (globalTemplates.length > 0) {
+        const customTemplates = JSON.parse(globalTemplates[0].htmlContent || '{}')
+        templates = { ...templates, ...customTemplates }
+        console.log('✅ Loaded custom email templates from database')
       }
-    } catch (error) {
-      console.log('No global templates found, using defaults')
+      
+      await prismaClient.$disconnect()
+    } catch (error: any) {
+      console.log('⚠️ No global templates found, using defaults:', error?.message || 'Unknown error')
     }
 
     // Get hackathon-specific templates if hackathonId provided
@@ -246,7 +255,7 @@ export function replaceTemplateVariables(
   })
 
   // Handle conditional blocks like {{#if condition}}...{{/if}}
-  result = result.replace(/{{#if\s+(\w+)}}(.*?){{\/if}}/gs, (match, condition, content) => {
+  result = result.replace(/{{#if\s+(\w+)}}(.*?){{\/if}}/g, (match, condition, content) => {
     return variables[condition] ? content : ''
   })
 
