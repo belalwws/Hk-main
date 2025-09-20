@@ -5,25 +5,15 @@ const prisma = new PrismaClient()
 
 async function getFormDesign(hackathonId: string) {
   try {
-    // Use Prisma model instead of raw SQL to avoid column name issues
-    const design = await prisma.hackathonFormDesign.findFirst({
-      where: {
-        hackathonId: hackathonId,
-        isEnabled: true
-      }
-    })
-
-    if (!design) {
-      return null
-    }
-
     console.log('🔍 Fetching form design for hackathon:', hackathonId)
     
     // Try using Prisma model first (if available)
     try {
-      // Note: This might fail if the model doesn't exist in the current schema
-      const design = await (prisma as any).hackathonFormDesign?.findUnique({
-        where: { hackathonId: hackathonId }
+      const design = await prisma.hackathonFormDesign.findFirst({
+        where: {
+          hackathonId: hackathonId,
+          isEnabled: true
+        }
       })
       
       if (design) {
@@ -39,27 +29,26 @@ async function getFormDesign(hackathonId: string) {
       console.log('⚠️ Prisma model failed, trying raw SQL:', prismaError?.message || 'Unknown error')
 
       // Fallback to raw SQL
-      const rawDesign = await prisma.$queryRaw`
-        SELECT * FROM hackathon_form_designs
-        WHERE hackathonId = ${hackathonId}
-      ` as any[]
+      try {
+        const rawDesign = await prisma.$queryRaw`
+          SELECT * FROM hackathon_form_designs
+          WHERE "hackathonId" = ${hackathonId} AND "isEnabled" = true
+        ` as any[]
 
-      if (rawDesign.length === 0) {
-        console.log('⚠️ No form design found in database')
-        return null
+        if (rawDesign.length > 0) {
+          console.log('✅ Form design found via raw SQL:', {
+            id: rawDesign[0].id,
+            enabled: rawDesign[0].isEnabled,
+            htmlLength: rawDesign[0].htmlContent?.length || 0
+          })
+          return rawDesign[0]
+        }
+      } catch (sqlError: any) {
+        console.log('⚠️ Raw SQL also failed:', sqlError?.message || 'Unknown error')
       }
-
-      console.log('✅ Form design found via raw SQL:', {
-        id: rawDesign[0].id,
-        enabled: rawDesign[0].isEnabled,
-        htmlLength: rawDesign[0].htmlContent?.length || 0
-      })
-
-      return rawDesign[0]
     }
 
-    // This should never be reached since we return in try/catch blocks above
-    console.log('⚠️ Unexpected code path reached')
+    console.log('⚠️ No form design found in database')
     return null
   } catch (error) {
     console.error('❌ Error fetching form design:', error)
@@ -69,38 +58,86 @@ async function getFormDesign(hackathonId: string) {
 
 async function getRegistrationForm(hackathonId: string) {
   try {
-    // Use Prisma model instead of raw SQL
-    const form = await prisma.hackathonForm.findFirst({
-      where: { hackathonId: hackathonId }
-    })
-
-    if (!form) {
-      return null
-    }
-
-    // Parse fields
-    let fields = []
+    console.log('🔍 Fetching registration form for hackathon:', hackathonId)
+    
+    // Try using Prisma model first
     try {
-      fields = JSON.parse(form.fields || '[]')
-    } catch (e) {
-      fields = []
+      const form = await prisma.hackathonForm.findFirst({
+        where: { hackathonId: hackathonId }
+      })
+
+      if (form) {
+        console.log('✅ Registration form found via Prisma model')
+        
+        // Parse fields
+        let fields = []
+        try {
+          fields = JSON.parse(form.fields || '[]')
+        } catch (e) {
+          fields = []
+        }
+
+        // Parse settings
+        let settings = {}
+        try {
+          settings = JSON.parse(form.settings || '{}')
+        } catch (e) {
+          settings = {}
+        }
+
+        return {
+          ...form,
+          fields,
+          settings
+        }
+      }
+    } catch (prismaError: any) {
+      console.log('⚠️ Prisma model failed for registration form, trying raw SQL:', prismaError?.message || 'Unknown error')
+      
+      // Fallback to raw SQL with PostgreSQL column names
+      try {
+        const rawForm = await prisma.$queryRaw`
+          SELECT * FROM hackathon_forms
+          WHERE "hackathonId" = ${hackathonId}
+          LIMIT 1
+        ` as any[]
+
+        if (rawForm.length > 0) {
+          console.log('✅ Registration form found via raw SQL')
+          const form = rawForm[0]
+          
+          // Parse fields (try both formFields and fields columns)
+          let fields = []
+          try {
+            const fieldsData = form.formFields || form.fields || '[]'
+            fields = JSON.parse(fieldsData)
+          } catch (e) {
+            fields = []
+          }
+
+          // Parse settings
+          let settings = {}
+          try {
+            settings = JSON.parse(form.settings || '{}')
+          } catch (e) {
+            settings = {}
+          }
+
+          return {
+            ...form,
+            fields,
+            settings
+          }
+        }
+      } catch (sqlError: any) {
+        console.log('⚠️ Raw SQL also failed for registration form:', sqlError?.message || 'Unknown error')
+      }
     }
 
-    // Parse settings
-    let settings = {}
-    try {
-      settings = JSON.parse(form.settings || '{}')
-    } catch (e) {
-      settings = {}
-    }
-
-    return {
-      ...form,
-      fields,
-      settings
-    }
+    console.log('⚠️ No registration form found')
+    return null
   } catch (error) {
-    console.error('Error fetching registration form:', error)
+    console.error('❌ Error fetching registration form:', error)
     return null
   }
 }
@@ -126,12 +163,13 @@ export async function GET(
     const resolvedParams = await params
     console.log('🔄 Loading custom form for:', resolvedParams.id)
     
-    const [formDesign, initialRegistrationForm, hackathon] = await Promise.all([
+    const [initialFormDesign, initialRegistrationForm, hackathon] = await Promise.all([
       getFormDesign(resolvedParams.id),
       getRegistrationForm(resolvedParams.id),
       getHackathon(resolvedParams.id)
     ])
 
+    let formDesign = initialFormDesign
     let registrationForm = initialRegistrationForm
 
     console.log('🔍 Form design check:', {
@@ -141,24 +179,76 @@ export async function GET(
       htmlLength: formDesign?.htmlContent?.length || 0
     })
 
-    if (!formDesign || !formDesign.isEnabled) {
-      console.log('⚠️ No custom form design found or not enabled, redirecting to default')
-      // Get the correct base URL from the request
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? (process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://hackathon-platform.onrender.com')
-        : `${request.nextUrl.protocol}//${request.nextUrl.host}`
+    if (!formDesign || !formDesign.isEnabled || !formDesign.htmlContent || formDesign.htmlContent.length < 100) {
+      console.log('⚠️ No custom form design found, using default template')
       
-      return NextResponse.redirect(new URL(`/hackathons/${resolvedParams.id}/register-form`, baseUrl))
-    }
-
-    if (!formDesign.htmlContent || formDesign.htmlContent.length < 100) {
-      console.log('⚠️ Form design has no HTML content, redirecting to default')
-      // Get the correct base URL from the request
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? (process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://hackathon-platform.onrender.com')
-        : `${request.nextUrl.protocol}//${request.nextUrl.host}`
+      // Create a simple default form template
+      const defaultTemplate = `
+      <!DOCTYPE html>
+      <html lang="ar" dir="rtl">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>تسجيل - ${hackathon?.title || 'الهاكاثون'}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+          <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                  font-family: 'Cairo', Arial, sans-serif; 
+                  background: linear-gradient(135deg, #01645e 0%, #667eea 100%);
+                  min-height: 100vh; direction: rtl; padding: 2rem 1rem;
+              }
+              .container { 
+                  max-width: 600px; margin: 0 auto; background: white; 
+                  border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden;
+              }
+              .header { 
+                  background: linear-gradient(135deg, #01645e 0%, #667eea 100%);
+                  color: white; padding: 3rem 2rem; text-align: center;
+              }
+              .header h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+              .header p { font-size: 1.2rem; opacity: 0.9; }
+              .form-container { padding: 3rem 2rem; }
+              .form-group { margin-bottom: 2rem; }
+              .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; }
+              .form-input { 
+                  width: 100%; padding: 1rem; border: 2px solid #e1e5e9; 
+                  border-radius: 10px; font-size: 1rem; transition: all 0.3s ease;
+              }
+              .form-input:focus { border-color: #01645e; outline: none; }
+              .submit-btn { 
+                  background: linear-gradient(135deg, #01645e 0%, #667eea 100%);
+                  color: white; padding: 1rem 3rem; border: none; border-radius: 50px;
+                  font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+              }
+              .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="header">
+                  <h1>${hackathon?.title || 'الهاكاثون'}</h1>
+                  <p>نموذج التسجيل</p>
+              </div>
+              <div class="form-container">
+                  <!-- سيتم إدراج محتوى الفورم هنا -->
+              </div>
+          </div>
+      </body>
+      </html>
+      `
       
-      return NextResponse.redirect(new URL(`/hackathons/${resolvedParams.id}/register-form`, baseUrl))
+      // Use the default template as form design
+      formDesign = {
+        id: 'default',
+        hackathonId: resolvedParams.id,
+        isEnabled: true,
+        template: 'default',
+        htmlContent: defaultTemplate,
+        cssContent: '',
+        jsContent: '',
+        settings: {}
+      }
     }
 
     if (!registrationForm) {
@@ -219,22 +309,35 @@ export async function GET(
               title: defaultFormData.title,
               description: defaultFormData.description,
               isActive: defaultFormData.isActive,
-              formFields: defaultFormData.fields
+              fields: defaultFormData.fields,
+              settings: defaultFormData.settings
             }
           })
           console.log('✅ Default form created successfully with Prisma model')
-        } catch (prismaError) {
-          console.log('⚠️ Prisma model failed, trying raw SQL with correct column names...')
+        } catch (prismaError: any) {
+          console.log('⚠️ Prisma model failed, trying raw SQL with correct column names...', prismaError?.message || 'Unknown error')
 
           // Fallback to raw SQL with correct PostgreSQL column names
-          await prisma.$executeRaw`
-            INSERT INTO hackathon_forms
-            (id, "hackathonId", title, description, "isActive", "formFields")
-            VALUES (${newId}, ${resolvedParams.id}, ${defaultFormData.title},
-                    ${defaultFormData.description}, ${defaultFormData.isActive},
-                    ${defaultFormData.fields})
-          `
-          console.log('✅ Default form created successfully with raw SQL')
+          try {
+            await prisma.$executeRaw`
+              INSERT INTO hackathon_forms
+              (id, "hackathonId", title, description, "isActive", "formFields", settings)
+              VALUES (${newId}, ${resolvedParams.id}, ${defaultFormData.title},
+                      ${defaultFormData.description}, ${defaultFormData.isActive},
+                      ${defaultFormData.fields}, ${defaultFormData.settings})
+            `
+            console.log('✅ Default form created successfully with raw SQL')
+          } catch (sqlError: any) {
+            console.log('⚠️ Raw SQL also failed, trying minimal insert...', sqlError?.message || 'Unknown error')
+            
+            // Final fallback - minimal insert
+            await prisma.$executeRaw`
+              INSERT INTO hackathon_forms
+              (id, "hackathonId", "formFields")
+              VALUES (${newId}, ${resolvedParams.id}, ${defaultFormData.fields})
+            `
+            console.log('✅ Default form created successfully with minimal SQL')
+          }
         }
         
         console.log('✅ Default registration form created:', newId)
