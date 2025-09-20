@@ -5,12 +5,36 @@ const prisma = new PrismaClient()
 
 async function getFormDesign(hackathonId: string) {
   try {
+    console.log('🔍 Fetching form design for hackathon:', hackathonId)
+    
+    // Try using Prisma model first (if available)
+    try {
+      // Note: This might fail if the model doesn't exist in the current schema
+      const design = await (prisma as any).hackathonFormDesign?.findUnique({
+        where: { hackathonId: hackathonId }
+      })
+      
+      if (design) {
+        console.log('✅ Form design found via Prisma model:', {
+          id: design.id,
+          enabled: design.isEnabled,
+          template: design.template,
+          htmlLength: design.htmlContent?.length || 0
+        })
+        return design
+      }
+    } catch (prismaError: any) {
+      console.log('⚠️ Prisma model failed, trying raw SQL:', prismaError?.message || 'Unknown error')
+    }
+
+    // Fallback to raw SQL
     const design = await prisma.$queryRaw`
-      SELECT * FROM hackathon_form_designs 
-      WHERE hackathonId = ${hackathonId} AND isEnabled = true
+      SELECT * FROM hackathon_form_designs
+      WHERE hackathonId = ${hackathonId}
     ` as any[]
 
     if (design.length === 0) {
+      console.log('⚠️ No form design found in database')
       return null
     }
 
@@ -24,12 +48,19 @@ async function getFormDesign(hackathonId: string) {
       settings = {}
     }
 
+    console.log('✅ Form design found via raw SQL:', {
+      id: formDesign.id,
+      enabled: formDesign.isEnabled,
+      template: formDesign.template,
+      htmlLength: formDesign.htmlContent?.length || 0
+    })
+
     return {
       ...formDesign,
       settings
     }
   } catch (error) {
-    console.error('Error fetching form design:', error)
+    console.error('❌ Error fetching form design:', error)
     return null
   }
 }
@@ -158,12 +189,22 @@ export async function GET(
 
     if (!formDesign || !formDesign.isEnabled) {
       console.log('⚠️ No custom form design found or not enabled, redirecting to default')
-      return NextResponse.redirect(new URL(`/hackathons/${resolvedParams.id}/register-form`, request.url))
+      // Get the correct base URL from the request
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? (process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://hackathon-platform.onrender.com')
+        : `${request.nextUrl.protocol}//${request.nextUrl.host}`
+      
+      return NextResponse.redirect(new URL(`/hackathons/${resolvedParams.id}/register-form`, baseUrl))
     }
 
     if (!formDesign.htmlContent || formDesign.htmlContent.length < 100) {
       console.log('⚠️ Form design has no HTML content, redirecting to default')
-      return NextResponse.redirect(new URL(`/hackathons/${resolvedParams.id}/register-form`, request.url))
+      // Get the correct base URL from the request
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? (process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://hackathon-platform.onrender.com')
+        : `${request.nextUrl.protocol}//${request.nextUrl.host}`
+      
+      return NextResponse.redirect(new URL(`/hackathons/${resolvedParams.id}/register-form`, baseUrl))
     }
 
     if (!registrationForm) {
