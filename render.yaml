@@ -4,15 +4,17 @@ services:
     name: hackathon-platform
     env: node
     region: oregon
-    plan: starter
-    buildCommand: npm ci && npm run build
-    installCommand: npm ci
+    plan: free
+    buildCommand: npm ci --only=production && npm run build
+    installCommand: npm ci --only=production
     startCommand: npm start
     healthCheckPath: /
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: 1
       - key: DATABASE_PROVIDER
         value: postgresql
       - key: DATABASE_URL
@@ -33,7 +35,6 @@ databases:
     databaseName: hackathon_production
     user: hackathon_user
     region: oregon
-    plan: standard
-    # استخدام standard plan لضمان استمرارية البيانات
-    # starter plan يحذف البيانات بعد 90 يوم
-    # standard plan يحتفظ بالبيانات بشكل دائم
+    plan: free
+    # استخدام free plan مؤقتاً لتوفير التكلفة
+    # يمكن الترقية لاحقاً عند الحاجة
