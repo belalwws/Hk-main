@@ -25,6 +25,8 @@ services:
         value: https://hackathon-platform.onrender.com
       - key: NEXTAUTH_SECRET
         generateValue: true
+      - key: APP_URL
+        value: https://hackathon-platform.onrender.com
 
 databases:
   - name: hackathon-db

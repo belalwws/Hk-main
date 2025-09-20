@@ -32,40 +32,16 @@ async function setupProductionDatabase() {
     await prisma.$connect();
     console.log('✅ Database connection successful');
     
-    // Create hackathon_form_designs table if it doesn't exist (PostgreSQL compatible)
-    if (process.env.DATABASE_PROVIDER === 'postgresql') {
-      await prisma.$executeRaw`
-        CREATE TABLE IF NOT EXISTS hackathon_form_designs (
-          id TEXT PRIMARY KEY,
-          "hackathonId" TEXT NOT NULL,
-          "isEnabled" BOOLEAN DEFAULT false,
-          template TEXT DEFAULT 'modern',
-          "htmlContent" TEXT,
-          "cssContent" TEXT,
-          "jsContent" TEXT,
-          settings TEXT,
-          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `;
-      console.log('✅ hackathon_form_designs table ensured (PostgreSQL)');
-    } else {
-      await prisma.$executeRaw`
-        CREATE TABLE IF NOT EXISTS hackathon_form_designs (
-          id TEXT PRIMARY KEY,
-          hackathonId TEXT NOT NULL,
-          isEnabled BOOLEAN DEFAULT false,
-          template TEXT DEFAULT 'modern',
-          htmlContent TEXT,
-          cssContent TEXT,
-          jsContent TEXT,
-          settings TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `;
-      console.log('✅ hackathon_form_designs table ensured (SQLite)');
+    // Test Prisma client functionality
+    try {
+      const hackathonCount = await prisma.hackathon.count();
+      console.log(`✅ Database connection verified - ${hackathonCount} hackathons found`);
+    } catch (error) {
+      console.log('⚠️ Database connection test failed:', error.message);
     }
+
+    // The schema should be automatically created by Prisma migrations
+    console.log('✅ Database schema should be handled by Prisma migrations');
     
     await prisma.$disconnect();
     console.log('✅ Production database setup completed successfully');
