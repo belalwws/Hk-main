@@ -25,7 +25,14 @@ import {
   Smartphone,
   Tablet,
   BookOpen,
-  Zap
+  Zap,
+  Image,
+  File,
+  Folder,
+  X,
+  Check,
+  AlertCircle,
+  ImageIcon
 } from 'lucide-react'
 import { toast } from 'sonner'
 import CodeSnippetsPanel from '@/components/admin/CodeSnippetsPanel'
@@ -34,9 +41,12 @@ import TemplateGallery from '@/components/admin/TemplateGallery'
 interface FileItem {
   id: string
   name: string
-  type: 'html' | 'css' | 'js' | 'json'
+  type: 'html' | 'css' | 'js' | 'json' | 'image'
   content: string
   isMain?: boolean
+  url?: string // للصور
+  size?: number // حجم الملف
+  mimeType?: string // نوع الملف
 }
 
 interface LandingPageData {
@@ -76,6 +86,9 @@ export default function LandingPageEditor({ params }: { params: Promise<{ id: st
   const [showPreview, setShowPreview] = useState(false)
   const [showSnippets, setShowSnippets] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const [showImageGallery, setShowImageGallery] = useState(false)
 
   useEffect(() => {
     fetchHackathon()
@@ -228,11 +241,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!fileName) return
 
     const extension = fileName.split('.').pop()?.toLowerCase()
-    let fileType: 'html' | 'css' | 'js' | 'json' = 'html'
+    let fileType: 'html' | 'css' | 'js' | 'json' | 'image' = 'html'
 
     if (extension === 'css') fileType = 'css'
     else if (extension === 'js') fileType = 'js'
     else if (extension === 'json') fileType = 'json'
+    else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(extension || '')) fileType = 'image'
 
     const newFile: FileItem = {
       id: `file-${Date.now()}`,
@@ -248,6 +262,131 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setActiveFile(newFile.id)
     toast.success(`تم إنشاء الملف ${fileName}`)
+  }
+
+  const handleFileUpload = async (files: FileList) => {
+    setUploading(true)
+    const uploadedFiles: FileItem[] = []
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+
+      try {
+        // تحويل الملف إلى base64
+        const base64 = await fileToBase64(file)
+        const extension = file.name.split('.').pop()?.toLowerCase()
+
+        let fileType: 'html' | 'css' | 'js' | 'json' | 'image' = 'html'
+
+        if (extension === 'css') fileType = 'css'
+        else if (extension === 'js') fileType = 'js'
+        else if (extension === 'json') fileType = 'json'
+        else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(extension || '')) {
+          fileType = 'image'
+        }
+
+        const newFile: FileItem = {
+          id: `file-${Date.now()}-${i}`,
+          name: file.name,
+          type: fileType,
+          content: fileType === 'image' ? base64 : await fileToText(file),
+          url: fileType === 'image' ? base64 : undefined,
+          size: file.size,
+          mimeType: file.type
+        }
+
+        uploadedFiles.push(newFile)
+
+      } catch (error) {
+        console.error('Error uploading file:', error)
+        toast.error(`فشل في رفع الملف ${file.name}`)
+      }
+    }
+
+    if (uploadedFiles.length > 0) {
+      setLandingPage(prev => ({
+        ...prev,
+        files: [...prev.files, ...uploadedFiles]
+      }))
+
+      // تفعيل أول ملف مرفوع
+      setActiveFile(uploadedFiles[0].id)
+      toast.success(`تم رفع ${uploadedFiles.length} ملف بنجاح`)
+    }
+
+    setUploading(false)
+  }
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = error => reject(error)
+    })
+  }
+
+  const fileToText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsText(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = error => reject(error)
+    })
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      handleFileUpload(files)
+    }
+  }
+
+  const insertImageIntoCode = (imageFile: FileItem) => {
+    if (!imageFile.url) return
+
+    const activeFileData = landingPage.files.find(f => f.id === activeFile)
+    if (!activeFileData) return
+
+    let imageCode = ''
+
+    if (activeFileData.type === 'html') {
+      imageCode = `<img src="${imageFile.url}" alt="${imageFile.name}" class="responsive-image" />`
+    } else if (activeFileData.type === 'css') {
+      imageCode = `
+.bg-image {
+  background-image: url('${imageFile.url}');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}`
+    } else if (activeFileData.type === 'js') {
+      imageCode = `
+// إدراج صورة ديناميكياً
+const img = document.createElement('img');
+img.src = '${imageFile.url}';
+img.alt = '${imageFile.name}';
+img.className = 'responsive-image';
+document.body.appendChild(img);`
+    }
+
+    const currentContent = activeFileData.content
+    const newContent = currentContent + '\n\n' + imageCode
+    updateFileContent(activeFile, newContent)
+    toast.success('تم إدراج الصورة في الكود')
   }
 
   const deleteFile = (fileId: string) => {
@@ -437,20 +576,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <div className="flex h-[calc(100vh-80px)]">
         {/* File Explorer */}
-        <div className="w-64 bg-gray-900 text-white p-4 flex flex-col">
+        <div className="w-80 bg-gray-900 text-white p-4 flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">الملفات</h3>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={addNewFile}
-              className="text-white hover:bg-gray-700"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
+            <h3 className="font-semibold">مدير الملفات</h3>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={addNewFile}
+                className="text-white hover:bg-gray-700"
+                title="إنشاء ملف جديد"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => document.getElementById('file-upload')?.click()}
+                className="text-white hover:bg-gray-700"
+                title="رفع ملفات"
+                disabled={uploading}
+              >
+                {uploading ? <div className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full" /> : <Upload className="w-4 h-4" />}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowImageGallery(!showImageGallery)}
+                className="text-white hover:bg-gray-700"
+                title="معرض الصور"
+              >
+                <ImageIcon className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
-          <div className="space-y-1">
+          {/* Hidden file input */}
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            accept="image/*,.html,.css,.js,.json"
+            onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+            className="hidden"
+          />
+
+          {/* Drag & Drop Zone */}
+          <div
+            className={`border-2 border-dashed rounded-lg p-4 mb-4 text-center transition-colors ${
+              dragOver
+                ? 'border-blue-400 bg-blue-900/20'
+                : 'border-gray-600 hover:border-gray-500'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+            <p className="text-xs text-gray-400">
+              اسحب الملفات هنا أو انقر لرفعها
+            </p>
+          </div>
+
+          <div className="space-y-1 flex-1 overflow-y-auto">
             {landingPage.files.map(file => (
               <div
                 key={file.id}
@@ -459,13 +647,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 }`}
                 onClick={() => setActiveFile(file.id)}
               >
-                <div className="flex items-center gap-2">
-                  {file.type === 'html' && <FileText className="w-4 h-4 text-orange-400" />}
-                  {file.type === 'css' && <Palette className="w-4 h-4 text-blue-400" />}
-                  {file.type === 'js' && <Code className="w-4 h-4 text-yellow-400" />}
-                  {file.type === 'json' && <Settings className="w-4 h-4 text-green-400" />}
-                  <span className="text-sm">{file.name}</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  {file.type === 'html' && <FileText className="w-4 h-4 text-orange-400 flex-shrink-0" />}
+                  {file.type === 'css' && <Palette className="w-4 h-4 text-blue-400 flex-shrink-0" />}
+                  {file.type === 'js' && <Code className="w-4 h-4 text-yellow-400 flex-shrink-0" />}
+                  {file.type === 'json' && <Settings className="w-4 h-4 text-green-400 flex-shrink-0" />}
+                  {file.type === 'image' && <Image className="w-4 h-4 text-purple-400 flex-shrink-0" />}
+
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm truncate block">{file.name}</span>
+                    {file.size && (
+                      <span className="text-xs text-gray-400">
+                        {(file.size / 1024).toFixed(1)} KB
+                      </span>
+                    )}
+                  </div>
+
                   {file.isMain && <Badge variant="secondary" className="text-xs">رئيسي</Badge>}
+
+                  {file.type === 'image' && file.url && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        insertImageIntoCode(file)
+                      }}
+                      className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/20"
+                      title="إدراج في الكود"
+                    >
+                      <Code className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
 
                 {!file.isMain && (
@@ -476,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       e.stopPropagation()
                       deleteFile(file.id)
                     }}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-shrink-0"
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>
@@ -484,6 +697,33 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
             ))}
           </div>
+
+          {/* Image Gallery */}
+          {showImageGallery && (
+            <div className="mt-4 border-t border-gray-700 pt-4">
+              <h4 className="text-sm font-medium mb-2">معرض الصور</h4>
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                {landingPage.files
+                  .filter(file => file.type === 'image' && file.url)
+                  .map(imageFile => (
+                    <div
+                      key={imageFile.id}
+                      className="relative group cursor-pointer"
+                      onClick={() => insertImageIntoCode(imageFile)}
+                    >
+                      <img
+                        src={imageFile.url}
+                        alt={imageFile.name}
+                        className="w-full h-16 object-cover rounded border border-gray-600 hover:border-blue-400 transition-colors"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
+                        <Code className="w-4 h-4 text-white" />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {/* Code Snippets Panel */}
           {showSnippets && (
@@ -510,31 +750,115 @@ document.addEventListener('DOMContentLoaded', function() {
                   {activeFileData.type === 'css' && <Palette className="w-4 h-4 text-blue-500" />}
                   {activeFileData.type === 'js' && <Code className="w-4 h-4 text-yellow-500" />}
                   {activeFileData.type === 'json' && <Settings className="w-4 h-4 text-green-500" />}
+                  {activeFileData.type === 'image' && <Image className="w-4 h-4 text-purple-500" />}
                   <span className="font-medium">{activeFileData.name}</span>
+                  {activeFileData.size && (
+                    <Badge variant="outline" className="text-xs">
+                      {(activeFileData.size / 1024).toFixed(1)} KB
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {activeFileData.type === 'image' && activeFileData.url && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => insertImageIntoCode(activeFileData)}
+                      title="إدراج في الكود"
+                    >
+                      <Code className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      navigator.clipboard.writeText(activeFileData.content)
+                      const content = activeFileData.type === 'image' ? activeFileData.url || '' : activeFileData.content
+                      navigator.clipboard.writeText(content)
                       toast.success('تم نسخ المحتوى')
                     }}
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
+                  {activeFileData.url && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const link = document.createElement('a')
+                        link.href = activeFileData.url!
+                        link.download = activeFileData.name
+                        link.click()
+                      }}
+                      title="تحميل الملف"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
 
               <div className="flex-1">
-                <textarea
-                  value={activeFileData.content}
-                  onChange={(e) => updateFileContent(activeFileData.id, e.target.value)}
-                  className="w-full h-full p-4 font-mono text-sm border-none outline-none resize-none bg-gray-50"
-                  placeholder={`اكتب كود ${activeFileData.type.toUpperCase()} هنا...`}
-                  style={{ fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace' }}
-                />
+                {activeFileData.type === 'image' && activeFileData.url ? (
+                  // عارض الصور
+                  <div className="h-full flex flex-col items-center justify-center bg-gray-50 p-8">
+                    <div className="max-w-full max-h-full overflow-auto">
+                      <img
+                        src={activeFileData.url}
+                        alt={activeFileData.name}
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                      />
+                    </div>
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-gray-600 mb-2">{activeFileData.name}</p>
+                      <div className="flex gap-4 text-xs text-gray-500">
+                        <span>الحجم: {activeFileData.size ? (activeFileData.size / 1024).toFixed(1) + ' KB' : 'غير معروف'}</span>
+                        <span>النوع: {activeFileData.mimeType || 'غير معروف'}</span>
+                      </div>
+                      <div className="mt-4 flex gap-2 justify-center">
+                        <Button
+                          size="sm"
+                          onClick={() => insertImageIntoCode(activeFileData)}
+                        >
+                          <Code className="w-4 h-4 mr-2" />
+                          إدراج في الكود
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(activeFileData.url || '')
+                            toast.success('تم نسخ رابط الصورة')
+                          }}
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          نسخ الرابط
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // محرر النصوص
+                  <div className="flex-1 relative">
+                    <textarea
+                      value={activeFileData.content}
+                      onChange={(e) => updateFileContent(activeFileData.id, e.target.value)}
+                      className="w-full h-full p-4 font-mono text-sm border-none outline-none resize-none bg-gray-50"
+                      placeholder={`اكتب كود ${activeFileData.type.toUpperCase()} هنا...`}
+                      style={{ fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace' }}
+                    />
+
+                    {/* خط أرقام الأسطر */}
+                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gray-100 border-r border-gray-200 flex flex-col text-xs text-gray-400 pt-4">
+                      {activeFileData.content.split('\n').map((_, index) => (
+                        <div key={index} className="h-5 flex items-center justify-end pr-2">
+                          {index + 1}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

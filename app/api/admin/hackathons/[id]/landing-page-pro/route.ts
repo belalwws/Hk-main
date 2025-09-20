@@ -119,7 +119,8 @@ export async function POST(
     console.log('📝 Data received:', {
       filesCount: data.files?.length || 0,
       isEnabled: data.isEnabled,
-      settings: data.settings
+      settings: data.settings,
+      imageFiles: data.files?.filter(f => f.type === 'image').length || 0
     })
 
     // التحقق من وجود الهاكاثون
@@ -131,13 +132,34 @@ export async function POST(
       return NextResponse.json({ error: 'الهاكاثون غير موجود' }, { status: 404 })
     }
 
+    // معالجة الصور وحفظها
+    const processedFiles = await Promise.all(
+      (data.files || []).map(async (file: any) => {
+        if (file.type === 'image' && file.content && file.content.startsWith('data:')) {
+          console.log(`🖼️ Processing image: ${file.name} (${((file.size || 0) / 1024).toFixed(1)} KB)`)
+
+          // حفظ الصورة كـ base64 في قاعدة البيانات
+          // في بيئة الإنتاج، يفضل رفعها إلى خدمة تخزين سحابية مثل Cloudinary أو AWS S3
+          return {
+            ...file,
+            url: file.content, // استخدام base64 مباشرة
+            savedAt: new Date().toISOString(),
+            processed: true
+          }
+        }
+        return file
+      })
+    )
+
+    console.log(`✅ Processed ${processedFiles.filter(f => f.type === 'image').length} images`)
+
     // Store files as JSON in htmlContent field
-    const filesJson = JSON.stringify(data.files || [])
+    const filesJson = JSON.stringify(processedFiles)
     
     // Extract main HTML file for backward compatibility
-    const mainHtmlFile = data.files?.find(f => f.isMain)
-    const mainCssFile = data.files?.find(f => f.type === 'css')
-    const mainJsFile = data.files?.find(f => f.type === 'js')
+    const mainHtmlFile = processedFiles?.find(f => f.isMain)
+    const mainCssFile = processedFiles?.find(f => f.type === 'css')
+    const mainJsFile = processedFiles?.find(f => f.type === 'js')
 
     // حفظ أو تحديث Landing Page
     const landingPage = await prisma.hackathonLandingPage.upsert({
@@ -166,20 +188,28 @@ export async function POST(
       }
     })
 
+    const imageCount = processedFiles.filter(f => f.type === 'image').length
+
     console.log('✅ Pro landing page saved successfully:', {
       id: landingPage.id,
-      filesCount: data.files?.length || 0
+      filesCount: processedFiles.length,
+      imageCount: imageCount
     })
 
     return NextResponse.json({
       success: true,
-      message: 'تم حفظ الصفحة بنجاح',
+      message: `تم حفظ ${processedFiles.length} ملف بنجاح${imageCount > 0 ? ` (${imageCount} صورة)` : ''}`,
       landingPage: {
         id: landingPage.id,
         hackathonId: landingPage.hackathonId,
         isEnabled: landingPage.isEnabled,
-        files: data.files,
+        files: processedFiles,
         settings: data.settings
+      },
+      stats: {
+        totalFiles: processedFiles.length,
+        imageFiles: imageCount,
+        codeFiles: processedFiles.filter(f => f.type !== 'image').length
       }
     })
 
