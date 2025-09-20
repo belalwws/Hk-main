@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, readFile } from 'fs/promises'
-import { join } from 'path'
+import { PrismaClient } from '@prisma/client'
 
-const SETTINGS_FILE = join(process.cwd(), 'certificate-settings.json')
+const prisma = new PrismaClient()
 
 interface CertificateSettings {
   namePositionY: number  // موضع عمودي (أعلى/أسفل)
@@ -26,11 +25,30 @@ const defaultSettings: CertificateSettings = {
 // GET - جلب الإعدادات الحالية
 export async function GET() {
   try {
-    const data = await readFile(SETTINGS_FILE, 'utf8')
-    const settings = JSON.parse(data)
-    return NextResponse.json(settings)
+    console.log('🔍 Fetching certificate settings...')
+    
+    // Try to get settings from database
+    const settings = await prisma.$queryRaw`
+      SELECT * FROM certificate_settings 
+      WHERE id = 'global'
+      LIMIT 1
+    ` as any[]
+    
+    if (settings.length > 0) {
+      const settingsData = JSON.parse(settings[0].settings || '{}')
+      console.log('✅ Certificate settings loaded from database')
+      return NextResponse.json({
+        ...defaultSettings,
+        ...settingsData,
+        lastUpdated: settings[0].updatedAt?.toISOString() || new Date().toISOString()
+      })
+    }
+    
+    console.log('⚠️ No certificate settings found, returning defaults')
+    return NextResponse.json(defaultSettings)
   } catch (error) {
-    // إذا لم يوجد الملف، أرجع الإعدادات الافتراضية
+    console.error('❌ Error fetching certificate settings:', error)
+    // Return defaults if database fails
     return NextResponse.json(defaultSettings)
   }
 }
@@ -66,8 +84,32 @@ export async function POST(request: NextRequest) {
       updatedBy: updatedBy || 'admin'
     }
 
-    // حفظ الإعدادات في ملف
-    await writeFile(SETTINGS_FILE, JSON.stringify(newSettings, null, 2))
+    // حفظ الإعدادات في قاعدة البيانات
+    try {
+      // Create table if it doesn't exist
+      await prisma.$executeRaw`
+        CREATE TABLE IF NOT EXISTS certificate_settings (
+          id TEXT PRIMARY KEY,
+          settings JSONB NOT NULL,
+          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      
+      // Save settings
+      await prisma.$executeRaw`
+        INSERT INTO certificate_settings (id, settings, "updatedAt")
+        VALUES ('global', ${JSON.stringify(newSettings)}, CURRENT_TIMESTAMP)
+        ON CONFLICT (id) DO UPDATE SET
+        settings = ${JSON.stringify(newSettings)},
+        "updatedAt" = CURRENT_TIMESTAMP
+      `
+      
+      console.log('✅ Certificate settings saved successfully')
+    } catch (dbError: any) {
+      console.error('❌ Database save failed:', dbError?.message)
+      throw new Error('Failed to save certificate settings')
+    }
 
     return NextResponse.json({
       success: true,
