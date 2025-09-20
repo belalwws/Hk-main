@@ -104,11 +104,17 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      // Try to find in file-based storage
+      // Try to find in database as fallback
       try {
-        const { getAllParticipants } = await import('@/lib/participants-storage')
-        const participants = getAllParticipants()
-        const fileUser = participants.find((p: any) => p.id === payload.userId || p.email === payload.email)
+        const dbUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { id: payload.userId },
+              { email: payload.email }
+            ]
+          }
+        })
+        const fileUser = dbUser
 
         if (fileUser) {
           console.log('✅ [VERIFY-SESSION] File-based user found:', fileUser.email)

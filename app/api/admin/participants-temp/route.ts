@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllParticipants, updateParticipantStatus } from '@/lib/participants-storage'
+import { prisma } from '@/lib/prisma'
 
-// GET /api/admin/participants-temp - Get all participants from temporary storage
+// GET /api/admin/participants-temp - Get all participants from database
 export async function GET(request: NextRequest) {
   try {
-    const participants = getAllParticipants()
+    const participants = await prisma.user.findMany({
+      where: {
+        role: 'participant'
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        city: true,
+        nationality: true,
+        preferredRole: true,
+        isActive: true,
+        createdAt: true
+      }
+    })
     
     // Transform data for frontend
     const transformedParticipants = participants.map(participant => ({

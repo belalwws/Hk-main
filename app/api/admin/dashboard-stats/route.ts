@@ -1,27 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllParticipants } from '@/lib/participants-storage'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/admin/dashboard-stats - Get dashboard statistics
 export async function GET(request: NextRequest) {
   try {
-    const participants = getAllParticipants()
-    
+    // Get participants from database
+    const participants = await prisma.participant.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
+        createdAt: true,
+        preferredRole: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
     // Calculate statistics
     const totalParticipants = participants.length
     const pendingParticipants = participants.filter(p => p.status === 'pending').length
     const approvedParticipants = participants.filter(p => p.status === 'approved').length
     const rejectedParticipants = participants.filter(p => p.status === 'rejected').length
-    
+
     // Get recent participants (last 5)
     const recentParticipants = participants
-      .sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime())
       .slice(0, 5)
       .map(participant => ({
         id: participant.id,
         name: participant.name,
         email: participant.email,
         status: participant.status,
-        registeredAt: participant.registeredAt,
+        registeredAt: participant.createdAt,
         preferredRole: participant.preferredRole
       }))
 

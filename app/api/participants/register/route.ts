@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { saveParticipant } from '@/lib/participants-storage'
+import { prisma } from '@/lib/prisma'
 
 // Validation schema for participant registration
 const registerSchema = z.object({
@@ -77,10 +77,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'فشل تشفير كلمة المرور' }, { status: 500 })
       }
 
-      const participant = saveParticipant({
+      // Create user in database
+      const user = await prisma.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password: passwordHash,
+          phone: data.phone,
+          city: data.city,
+          nationality: data.nationality,
+          preferredRole: data.preferredRole,
+          role: 'participant',
+          isActive: false // Will be activated by admin
+        }
+      })
+
+      const participant = {
+        id: user.id,
         name: data.name,
         email: data.email,
-        passwordHash,
         phone: data.phone,
         city: data.city,
         nationality: data.nationality,
@@ -89,8 +104,9 @@ export async function POST(request: NextRequest) {
         teamPreference: data.teamPreference,
         experience: data.experience,
         motivation: data.motivation,
-        skills: data.skills
-      })
+        skills: data.skills,
+        status: 'pending'
+      }
 
       console.log('New Participant Registration:', participant)
 

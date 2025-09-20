@@ -3,7 +3,7 @@ import { generateToken } from "@/lib/auth"
 import { comparePassword } from "@/lib/password"
 import { validateRequest, loginSchema } from "@/lib/validation"
 import { rateLimit } from "@/lib/rate-limit"
-import { getAllParticipants } from "@/lib/participants-storage"
+import { prisma } from "@/lib/prisma"
 
 export async function POST(request: NextRequest) {
   const rateLimitResult = rateLimit(request, 5, 300000) // 5 attempts per 5 minutes

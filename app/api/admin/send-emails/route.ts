@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { sendMail } from '@/lib/mailer'
-import { getAllParticipants } from '@/lib/participants-storage'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
