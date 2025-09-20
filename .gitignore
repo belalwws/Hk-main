@@ -59,3 +59,10 @@ coverage/
 # OS
 .DS_Store
 Thumbs.db
+
+# Data protection (keep snapshots and reports but not sensitive backups)
+/data/backups/*
+!/data/backups/.gitkeep
+# Keep snapshots and reports for debugging
+# /data/snapshots/*
+# /data/reports/*

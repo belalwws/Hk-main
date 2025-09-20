@@ -11,7 +11,7 @@
     "dev:setup": "npm run dev:db:generate && npm run dev:db:push",
     "lint": "next lint",
     "start": "next start",
-    "postinstall": "node scripts/simple-safe-deploy.js",
+    "postinstall": "node scripts/render-safe-deploy.js",
     "simple-safe-deploy": "node scripts/simple-safe-deploy.js",
     "ultra-safe-deploy": "node scripts/ultra-safe-deploy.js",
     "type-check": "tsc --noEmit",
@@ -25,7 +25,13 @@
     "update-production-db": "node scripts/update-production-db.js",
     "production-deploy": "node scripts/production-deploy.js",
     "safe-deploy": "node scripts/safe-production-deploy.js",
-    "dev:editor": "echo 'Advanced Landing Page Editor available at: http://localhost:3000/admin/hackathons/[id]/landing-page-pro' && npm run dev"
+    "dev:editor": "echo 'Advanced Landing Page Editor available at: http://localhost:3000/admin/hackathons/[id]/landing-page-pro' && npm run dev",
+    "data:snapshot": "node scripts/data-protection-guard.js snapshot",
+    "data:verify": "node scripts/data-protection-guard.js verify",
+    "data:restore": "node scripts/data-protection-guard.js restore",
+    "pre-deploy": "node scripts/pre-deploy-check.js",
+    "render-deploy": "node scripts/render-safe-deploy.js",
+    "test:data-protection": "node test-data-protection.js"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
