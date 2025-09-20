@@ -5,28 +5,21 @@ const prisma = new PrismaClient()
 
 async function getFormDesign(hackathonId: string) {
   try {
-    const design = await prisma.$queryRaw`
-      SELECT * FROM hackathon_form_designs 
-      WHERE hackathonId = ${hackathonId} AND isEnabled = true
-    ` as any[]
+    // Use Prisma model instead of raw SQL to avoid column name issues
+    const design = await prisma.hackathonFormDesign.findFirst({
+      where: {
+        hackathonId: hackathonId,
+        isEnabled: true
+      }
+    })
 
-    if (design.length === 0) {
+    if (!design) {
       return null
     }
 
-    const formDesign = design[0]
-    
-    // Parse settings
-    let settings = {}
-    try {
-      settings = JSON.parse(formDesign.settings || '{}')
-    } catch (e) {
-      settings = {}
-    }
-
     return {
-      ...formDesign,
-      settings
+      ...design,
+      settings: design.settings || {}
     }
   } catch (error) {
     console.error('Error fetching form design:', error)
@@ -36,37 +29,19 @@ async function getFormDesign(hackathonId: string) {
 
 async function getRegistrationForm(hackathonId: string) {
   try {
-    // First try to ensure the table exists
-    await ensureHackathonFormsTable()
-    
-    // Use raw SQL to check if table exists and get form
-    let form = []
-    try {
-      form = await prisma.$queryRaw`
-        SELECT id, hackathonId, title, description, isActive, formFields as fields FROM hackathon_forms
-        WHERE hackathonId = ${hackathonId}
-        LIMIT 1
-      ` as any[]
-    } catch (selectError) {
-      // Try basic select without isActive filter
-      console.log('⚠️ Trying basic select...')
-      form = await prisma.$queryRaw`
-        SELECT id, hackathonId, formFields as fields FROM hackathon_forms
-        WHERE hackathonId = ${hackathonId}
-        LIMIT 1
-      ` as any[]
-    }
+    // Use Prisma model instead of raw SQL
+    const form = await prisma.hackathonForm.findFirst({
+      where: { hackathonId: hackathonId }
+    })
 
-    if (form.length === 0) {
+    if (!form) {
       return null
     }
 
-    const formData = form[0]
-    
     // Parse fields
     let fields = []
     try {
-      fields = JSON.parse(formData.fields || '[]')
+      fields = JSON.parse(form.fields || '[]')
     } catch (e) {
       fields = []
     }
@@ -74,13 +49,13 @@ async function getRegistrationForm(hackathonId: string) {
     // Parse settings
     let settings = {}
     try {
-      settings = JSON.parse(formData.settings || '{}')
+      settings = JSON.parse(form.settings || '{}')
     } catch (e) {
       settings = {}
     }
 
     return {
-      ...formData,
+      ...form,
       fields,
       settings
     }
@@ -90,37 +65,7 @@ async function getRegistrationForm(hackathonId: string) {
   }
 }
 
-// Function to ensure hackathon_forms table exists with correct structure
-async function ensureHackathonFormsTable() {
-  try {
-    // First, try to add missing columns if they don't exist
-    try {
-      await prisma.$executeRaw`ALTER TABLE hackathon_forms ADD COLUMN title TEXT DEFAULT 'نموذج التسجيل'`
-      console.log('✅ Added title column')
-    } catch (e) {
-      // Column might already exist
-    }
-    
-    try {
-      await prisma.$executeRaw`ALTER TABLE hackathon_forms ADD COLUMN description TEXT DEFAULT ''`
-      console.log('✅ Added description column')
-    } catch (e) {
-      // Column might already exist
-    }
-    
-    try {
-      await prisma.$executeRaw`ALTER TABLE hackathon_forms ADD COLUMN isActive BOOLEAN DEFAULT 1`
-      console.log('✅ Added isActive column')
-    } catch (e) {
-      // Column might already exist
-    }
-    
-    console.log('✅ hackathon_forms table structure updated')
-  } catch (error) {
-    console.log('ℹ️ Error updating table structure:', error)
-  }
-}
-
+// Helper function to get hackathon data
 async function getHackathon(hackathonId: string) {
   try {
     const hackathon = await prisma.hackathon.findUnique({

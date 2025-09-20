@@ -11,14 +11,15 @@
     "dev:setup": "npm run dev:db:generate && npm run dev:db:push",
     "lint": "next lint",
     "start": "next start",
-    "postinstall": "npx prisma generate --schema ./schema.prisma",
+    "postinstall": "node scripts/production-deploy.js",
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build",
     "create-admin": "node scripts/create-working-admin.js",
     "test-login": "node scripts/test-login.js",
     "cleanup": "node scripts/cleanup-project.js",
     "prepare-render": "node scripts/prepare-for-render.js",
-    "update-production-db": "node scripts/update-production-db.js"
+    "update-production-db": "node scripts/update-production-db.js",
+    "production-deploy": "node scripts/production-deploy.js"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
