@@ -19,7 +19,8 @@
     "cleanup": "node scripts/cleanup-project.js",
     "prepare-render": "node scripts/prepare-for-render.js",
     "update-production-db": "node scripts/update-production-db.js",
-    "production-deploy": "node scripts/production-deploy.js"
+    "production-deploy": "node scripts/production-deploy.js",
+    "dev:editor": "echo 'Advanced Landing Page Editor available at: http://localhost:3000/admin/hackathons/[id]/landing-page-pro' && npm run dev"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
