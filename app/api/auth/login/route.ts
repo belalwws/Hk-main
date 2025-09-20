@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isValidPassword = user
-      ? await comparePassword(password, user.password_hash)
+      ? await comparePassword(password, user.password_hash || user.password || '')
       : await comparePassword(password, fileParticipant!.passwordHash)
     if (!isValidPassword) {
       return NextResponse.json({ error: "بيانات الدخول غير صحيحة" }, { status: 401 })
