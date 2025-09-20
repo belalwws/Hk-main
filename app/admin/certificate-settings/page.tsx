@@ -31,6 +31,8 @@ export default function CertificateSettingsPage() {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [uploadingCertificate, setUploadingCertificate] = useState(false)
   const [certificateImageSrc, setCertificateImageSrc] = useState('/row-certificat.png')
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [previewError, setPreviewError] = useState('')
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -68,26 +70,58 @@ export default function CertificateSettingsPage() {
 
   const loadCertificateImage = () => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) {
+      console.error('Canvas not found')
+      setPreviewError('لم يتم العثور على منطقة المعاينة')
+      return
+    }
 
     const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (!ctx) {
+      console.error('Canvas context not available')
+      setPreviewError('خطأ في تهيئة منطقة المعاينة')
+      return
+    }
+
+    console.log('🖼️ Loading certificate image:', certificateImageSrc)
+    setImageLoaded(false)
+    setPreviewError('')
 
     const img = new Image()
     img.onload = () => {
-      // Set canvas size to match image (scaled down for editing)
-      const scale = 0.6
-      canvas.width = img.width * scale
-      canvas.height = img.height * scale
+      try {
+        console.log('✅ Certificate image loaded successfully')
+        console.log('Image dimensions:', img.width, 'x', img.height)
 
-      drawCertificate(ctx, canvas, img, scale)
-      setImageLoaded(true)
+        // Set canvas size to match image (scaled down for editing)
+        const scale = 0.6
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
+
+        drawCertificate(ctx, canvas, img, scale)
+        setImageLoaded(true)
+        setPreviewError('')
+      } catch (error) {
+        console.error('Error processing loaded image:', error)
+        setPreviewError('خطأ في معالجة الصورة')
+      }
     }
-    img.onerror = () => {
-      console.error('Failed to load certificate image:', certificateImageSrc)
+
+    img.onerror = (error) => {
+      console.error('❌ Failed to load certificate image:', certificateImageSrc, error)
+      setImageLoaded(false)
+      setPreviewError('فشل في تحميل صورة الشهادة. تأكد من وجود الملف.')
+
+      // Try fallback to default certificate
+      if (certificateImageSrc !== '/row-certificat.png') {
+        console.log('🔄 Trying fallback to default certificate')
+        setCertificateImageSrc('/row-certificat.png')
+      }
     }
-    // إضافة timestamp لتجنب التخزين المؤقت
-    img.src = `${certificateImageSrc}?t=${Date.now()}`
+
+    // Add CORS and cache-busting
+    img.crossOrigin = 'anonymous'
+    img.src = `${certificateImageSrc}?t=${Date.now()}&cache=false`
   }
 
   const drawCertificate = (
@@ -96,68 +130,115 @@ export default function CertificateSettingsPage() {
     img: HTMLImageElement,
     scale: number
   ) => {
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    try {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    // Draw certificate image
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      // Draw certificate image
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-    // Calculate name position
-    const nameX = canvas.width * settings.namePositionX
-    const nameY = canvas.height * settings.namePositionY
+      // Calculate name position
+      const nameX = canvas.width * settings.namePositionX
+      const nameY = canvas.height * settings.namePositionY
 
-    // Draw name
-    ctx.textAlign = 'center'
-    ctx.fillStyle = settings.nameColor
-    ctx.font = settings.nameFont.replace(/(\d+)px/, (match, size) => `${parseInt(size) * scale}px`)
-    ctx.fillText(previewName, nameX, nameY)
+      // Draw name with better text rendering
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = settings.nameColor
 
-    // Draw position indicators (crosshair)
-    ctx.strokeStyle = '#ff0000'
-    ctx.lineWidth = 2
-    ctx.setLineDash([5, 5])
+      // Scale font size properly
+      const fontSize = parseInt(settings.nameFont.match(/(\d+)px/)?.[1] || '48') * scale
+      const fontFamily = settings.nameFont.replace(/bold\s+\d+px\s+/, '') || 'Arial'
+      ctx.font = `bold ${fontSize}px ${fontFamily}`
 
-    // Horizontal line
-    ctx.beginPath()
-    ctx.moveTo(nameX - 100, nameY)
-    ctx.lineTo(nameX + 100, nameY)
-    ctx.stroke()
+      // Add text shadow for better visibility
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
+      ctx.shadowBlur = 2
+      ctx.shadowOffsetX = 1
+      ctx.shadowOffsetY = 1
 
-    // Vertical line
-    ctx.beginPath()
-    ctx.moveTo(nameX, nameY - 30)
-    ctx.lineTo(nameX, nameY + 30)
-    ctx.stroke()
+      ctx.fillText(previewName, nameX, nameY)
 
-    ctx.setLineDash([])
+      // Reset shadow
+      ctx.shadowColor = 'transparent'
+      ctx.shadowBlur = 0
+      ctx.shadowOffsetX = 0
+      ctx.shadowOffsetY = 0
+
+      // Draw position indicators (crosshair) - more visible
+      ctx.strokeStyle = '#ff4444'
+      ctx.lineWidth = 2
+      ctx.setLineDash([8, 4])
+
+      // Horizontal line
+      ctx.beginPath()
+      ctx.moveTo(Math.max(0, nameX - 120), nameY)
+      ctx.lineTo(Math.min(canvas.width, nameX + 120), nameY)
+      ctx.stroke()
+
+      // Vertical line
+      ctx.beginPath()
+      ctx.moveTo(nameX, Math.max(0, nameY - 40))
+      ctx.lineTo(nameX, Math.min(canvas.height, nameY + 40))
+      ctx.stroke()
+
+      // Draw center point
+      ctx.setLineDash([])
+      ctx.fillStyle = '#ff4444'
+      ctx.beginPath()
+      ctx.arc(nameX, nameY, 4, 0, 2 * Math.PI)
+      ctx.fill()
+
+      setPreviewError('')
+    } catch (error) {
+      console.error('Error drawing certificate:', error)
+      setPreviewError('خطأ في رسم الشهادة')
+    }
   }
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
-    if (!canvas || !imageLoaded) return
+    if (!canvas || !imageLoaded) {
+      console.log('Canvas click ignored - canvas not ready')
+      return
+    }
 
     const rect = canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
 
+    console.log('Canvas clicked at:', x, y, 'Canvas size:', canvas.width, canvas.height)
+
+    // Calculate relative position (0-1)
     const newPositionX = x / canvas.width
     const newPositionY = y / canvas.height
 
-    // Limit positions between 0.1 and 0.9
-    const clampedPositionX = Math.max(0.1, Math.min(0.9, newPositionX))
-    const clampedPositionY = Math.max(0.2, Math.min(0.8, newPositionY))
+    console.log('Relative position:', newPositionX, newPositionY)
 
+    // Limit positions between safe boundaries
+    const clampedPositionX = Math.max(0.05, Math.min(0.95, newPositionX))
+    const clampedPositionY = Math.max(0.15, Math.min(0.85, newPositionY))
+
+    console.log('Clamped position:', clampedPositionX, clampedPositionY)
+
+    // Update settings immediately
     setSettings(prev => ({
       ...prev,
       namePositionX: clampedPositionX,
       namePositionY: clampedPositionY
     }))
 
-    // Redraw with new position
+    // Redraw with new position immediately
     const ctx = canvas.getContext('2d')
     if (ctx) {
       const img = new Image()
-      img.onload = () => drawCertificate(ctx, canvas, img, 0.6)
+      img.onload = () => {
+        console.log('Redrawing certificate with new position')
+        drawCertificate(ctx, canvas, img, 0.6)
+      }
+      img.onerror = () => {
+        console.error('Failed to reload image for redraw')
+      }
       img.src = `${certificateImageSrc}?t=${Date.now()}`
     }
   }
@@ -254,6 +335,8 @@ export default function CertificateSettingsPage() {
     const file = event.target.files?.[0]
     if (!file) return
 
+    console.log('📤 Starting certificate upload:', file.name, file.size, file.type)
+
     // التحقق من حجم الملف (الحد الأقصى 4 ميجابايت)
     const maxSize = 4 * 1024 * 1024 // 4MB
     if (file.size > maxSize) {
@@ -271,7 +354,10 @@ export default function CertificateSettingsPage() {
     }
 
     setUploadingCertificate(true)
+    setPreviewError('')
+
     try {
+      console.log('🔄 Creating form data and sending request...')
       const formData = new FormData()
       formData.append('certificateImage', file)
 
@@ -280,14 +366,22 @@ export default function CertificateSettingsPage() {
         body: formData
       })
 
+      console.log('📡 Upload response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Upload successful:', data)
+
         // إضافة timestamp لتجنب التخزين المؤقت
         const newImageSrc = `${data.filePath}?t=${Date.now()}`
+        console.log('🖼️ New image source:', newImageSrc)
+
+        // Update image source immediately
         setCertificateImageSrc(newImageSrc)
-        
+
         // Save the new certificate template path to settings
         try {
+          console.log('💾 Saving certificate template to settings...')
           const settingsResponse = await fetch('/api/admin/certificate-settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -297,38 +391,34 @@ export default function CertificateSettingsPage() {
               updatedBy: user?.name || 'admin'
             })
           })
-          
+
           if (settingsResponse.ok) {
             console.log('✅ Certificate template path saved to settings')
+          } else {
+            console.log('⚠️ Failed to save settings, but upload was successful')
           }
         } catch (settingsError) {
           console.error('❌ Error saving certificate template to settings:', settingsError)
         }
-        
+
         alert('✅ تم رفع قالب الشهادة بنجاح!')
 
-        // إعادة رسم الشهادة بالقالب الجديد
-        const canvas = canvasRef.current
-        if (canvas) {
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            const img = new Image()
-            img.onload = () => {
-              drawCertificate(ctx, canvas, img, 0.6)
-              setImageLoaded(true)
-            }
-            img.onerror = () => {
-              console.error('Failed to load new certificate image')
-            }
-            img.src = newImageSrc
-          }
-        }
+        // Force reload the image with new source
+        setTimeout(() => {
+          console.log('🔄 Reloading certificate image...')
+          loadCertificateImage()
+        }, 500)
 
         // Reload settings to get the updated certificate template
-        loadSettings()
+        setTimeout(() => {
+          loadSettings()
+        }, 1000)
+
       } else {
-        const error = await response.json()
-        alert(`❌ خطأ في رفع قالب الشهادة: ${error.error}`)
+        const errorData = await response.json()
+        console.error('❌ Upload failed:', errorData)
+        alert(`❌ خطأ في رفع قالب الشهادة: ${errorData.error}`)
+        setPreviewError(`خطأ في الرفع: ${errorData.error}`)
       }
     } catch (error) {
       console.error('Error uploading certificate template:', error)
@@ -393,12 +483,32 @@ export default function CertificateSettingsPage() {
                   style={{ maxWidth: '100%', height: 'auto' }}
                 />
               </div>
-              
-              {!imageLoaded && (
+
+              {/* Loading State */}
+              {!imageLoaded && !previewError && (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#01645e] mx-auto mb-4"></div>
                     <p className="text-gray-600">جاري تحميل الشهادة...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error State */}
+              {previewError && (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center">
+                    <div className="text-red-500 text-6xl mb-4">⚠️</div>
+                    <p className="text-red-600 font-medium">{previewError}</p>
+                    <button
+                      onClick={() => {
+                        setPreviewError('')
+                        loadCertificateImage()
+                      }}
+                      className="mt-4 px-4 py-2 bg-[#01645e] text-white rounded-lg hover:bg-[#01645e]/90 transition-colors"
+                    >
+                      إعادة المحاولة
+                    </button>
                   </div>
                 </div>
               )}
