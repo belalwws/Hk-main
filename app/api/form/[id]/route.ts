@@ -9,7 +9,7 @@ async function getFormDesign(hackathonId: string) {
     
     // Try using Prisma model first (if available)
     try {
-      const design = await prisma.hackathonFormDesign.findFirst({
+      const design = await (prisma as any).hackathonFormDesign?.findFirst({
         where: {
           hackathonId: hackathonId,
           isEnabled: true
@@ -63,7 +63,8 @@ async function getRegistrationForm(hackathonId: string) {
     // Try using Prisma model first
     try {
       const form = await prisma.hackathonForm.findFirst({
-        where: { hackathonId: hackathonId }
+        where: { hackathonId: hackathonId },
+        orderBy: { updatedAt: 'desc' }
       })
 
       if (form) {
@@ -98,7 +99,8 @@ async function getRegistrationForm(hackathonId: string) {
       try {
         const rawForm = await prisma.$queryRaw`
           SELECT * FROM hackathon_forms
-          WHERE "hackathonId" = ${hackathonId}
+          WHERE hackathonId = ${hackathonId}
+          ORDER BY "updatedAt" DESC
           LIMIT 1
         ` as any[]
 
@@ -112,6 +114,7 @@ async function getRegistrationForm(hackathonId: string) {
             const fieldsData = form.formFields || form.fields || '[]'
             fields = JSON.parse(fieldsData)
           } catch (e) {
+            console.log('⚠️ Error parsing fields:', e)
             fields = []
           }
 
@@ -120,8 +123,16 @@ async function getRegistrationForm(hackathonId: string) {
           try {
             settings = JSON.parse(form.settings || '{}')
           } catch (e) {
+            console.log('⚠️ Error parsing settings:', e)
             settings = {}
           }
+
+          console.log('📋 Form data loaded:', {
+            id: form.id,
+            title: form.title,
+            fieldsCount: fields.length,
+            lastUpdated: form.updatedAt
+          })
 
           return {
             ...form,
@@ -162,6 +173,7 @@ export async function GET(
   try {
     const resolvedParams = await params
     console.log('🔄 Loading custom form for:', resolvedParams.id)
+    console.log('🕐 Request timestamp:', new Date().toISOString())
     
     const [initialFormDesign, initialRegistrationForm, hackathon] = await Promise.all([
       getFormDesign(resolvedParams.id),
@@ -449,9 +461,11 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
         'Pragma': 'no-cache',
         'Expires': '0',
+        'Last-Modified': new Date().toUTCString(),
+        'ETag': `"${Date.now()}"`,
       },
     })
 

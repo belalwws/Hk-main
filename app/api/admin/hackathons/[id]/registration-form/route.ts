@@ -161,9 +161,17 @@ export async function POST(
               description = ${description || ''},
               isActive = ${isActive ?? true},
               formFields = ${fieldsJson},
+              settings = ${settingsJson},
               updatedAt = CURRENT_TIMESTAMP
           WHERE id = ${existingForm[0].id}
         `
+        
+        console.log('✅ Form updated successfully:', {
+          id: existingForm[0].id,
+          title,
+          fieldsLength: fieldsJson.length,
+          settingsLength: settingsJson.length
+        })
         
         savedForm = {
           id: existingForm[0].id,
@@ -180,10 +188,17 @@ export async function POST(
         
         await prisma.$executeRaw`
           INSERT INTO hackathon_forms
-          (id, hackathonId, title, description, isActive, formFields)
+          (id, hackathonId, title, description, isActive, formFields, settings)
           VALUES (${newId}, ${params.id}, ${title}, ${description || ''},
-                  ${isActive ?? true}, ${fieldsJson})
+                  ${isActive ?? true}, ${fieldsJson}, ${settingsJson})
         `
+        
+        console.log('✅ Form created successfully:', {
+          id: newId,
+          title,
+          fieldsLength: fieldsJson.length,
+          settingsLength: settingsJson.length
+        })
         
         savedForm = {
           id: newId,
