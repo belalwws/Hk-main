@@ -37,40 +37,30 @@ async function getFormDesign(hackathonId: string) {
       }
     } catch (prismaError: any) {
       console.log('⚠️ Prisma model failed, trying raw SQL:', prismaError?.message || 'Unknown error')
+
+      // Fallback to raw SQL
+      const rawDesign = await prisma.$queryRaw`
+        SELECT * FROM hackathon_form_designs
+        WHERE hackathonId = ${hackathonId}
+      ` as any[]
+
+      if (rawDesign.length === 0) {
+        console.log('⚠️ No form design found in database')
+        return null
+      }
+
+      console.log('✅ Form design found via raw SQL:', {
+        id: rawDesign[0].id,
+        enabled: rawDesign[0].isEnabled,
+        htmlLength: rawDesign[0].htmlContent?.length || 0
+      })
+
+      return rawDesign[0]
     }
 
-    // Fallback to raw SQL
-    const design = await prisma.$queryRaw`
-      SELECT * FROM hackathon_form_designs
-      WHERE hackathonId = ${hackathonId}
-    ` as any[]
-
-    if (design.length === 0) {
-      console.log('⚠️ No form design found in database')
-      return null
-    }
-
-    const formDesign = design[0]
-    
-    // Parse settings
-    let settings = {}
-    try {
-      settings = JSON.parse(formDesign.settings || '{}')
-    } catch (e) {
-      settings = {}
-    }
-
-    console.log('✅ Form design found via raw SQL:', {
-      id: formDesign.id,
-      enabled: formDesign.isEnabled,
-      template: formDesign.template,
-      htmlLength: formDesign.htmlContent?.length || 0
-    })
-
-    return {
-      ...design,
-      settings: design.settings || {}
-    }
+    // This should never be reached since we return in try/catch blocks above
+    console.log('⚠️ Unexpected code path reached')
+    return null
   } catch (error) {
     console.error('❌ Error fetching form design:', error)
     return null
