@@ -1,14 +1,10 @@
 {
-  "version": 2,
   "framework": "nextjs",
-  "env": {
-    "NODE_ENV": "production",
-    "NEXT_TELEMETRY_DISABLED": "1"
-  },
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
     }
-  },
-  "regions": ["cle1"]
+  }
 }
