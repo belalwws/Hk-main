@@ -210,23 +210,31 @@ export async function GET(
       try {
         const newId = `form_${Date.now()}`
         
-        // Try to insert with all columns, fallback to basic columns if needed
+        // Use Prisma model instead of raw SQL
         try {
+          await prisma.hackathonForm.create({
+            data: {
+              id: newId,
+              hackathonId: resolvedParams.id,
+              title: defaultFormData.title,
+              description: defaultFormData.description,
+              isActive: defaultFormData.isActive,
+              formFields: defaultFormData.fields
+            }
+          })
+          console.log('✅ Default form created successfully with Prisma model')
+        } catch (prismaError) {
+          console.log('⚠️ Prisma model failed, trying raw SQL with correct column names...')
+
+          // Fallback to raw SQL with correct PostgreSQL column names
           await prisma.$executeRaw`
             INSERT INTO hackathon_forms
-            (id, hackathonId, title, description, isActive, formFields)
+            (id, "hackathonId", title, description, "isActive", "formFields")
             VALUES (${newId}, ${resolvedParams.id}, ${defaultFormData.title},
                     ${defaultFormData.description}, ${defaultFormData.isActive},
                     ${defaultFormData.fields})
           `
-        } catch (insertError) {
-          // Fallback to basic columns only
-          console.log('⚠️ Trying basic insert...')
-          await prisma.$executeRaw`
-            INSERT INTO hackathon_forms
-            (id, hackathonId, formFields)
-            VALUES (${newId}, ${resolvedParams.id}, ${defaultFormData.fields})
-          `
+          console.log('✅ Default form created successfully with raw SQL')
         }
         
         console.log('✅ Default registration form created:', newId)
