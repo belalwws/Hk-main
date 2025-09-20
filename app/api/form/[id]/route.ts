@@ -149,8 +149,20 @@ export async function GET(
 
     let registrationForm = initialRegistrationForm
 
+    console.log('🔍 Form design check:', {
+      exists: !!formDesign,
+      enabled: formDesign?.isEnabled,
+      hasHtml: !!formDesign?.htmlContent,
+      htmlLength: formDesign?.htmlContent?.length || 0
+    })
+
     if (!formDesign || !formDesign.isEnabled) {
-      console.log('⚠️ No custom form design found, redirecting to default')
+      console.log('⚠️ No custom form design found or not enabled, redirecting to default')
+      return NextResponse.redirect(new URL(`/hackathons/${resolvedParams.id}/register-form`, request.url))
+    }
+
+    if (!formDesign.htmlContent || formDesign.htmlContent.length < 100) {
+      console.log('⚠️ Form design has no HTML content, redirecting to default')
       return NextResponse.redirect(new URL(`/hackathons/${resolvedParams.id}/register-form`, request.url))
     }
 

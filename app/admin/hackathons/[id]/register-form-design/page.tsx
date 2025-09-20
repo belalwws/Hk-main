@@ -71,11 +71,23 @@ export default function RegisterFormDesignPage({ params }: { params: Promise<{ i
 
   // Generate modern template when hackathon data is loaded and no existing design
   useEffect(() => {
-    if (hackathon && !design.htmlContent && design.template === 'modern') {
+    if (hackathon && (!design.htmlContent || design.htmlContent.length < 100) && design.template === 'modern') {
       console.log('🎨 Auto-generating modern template...')
       generateModernTemplate()
     }
   }, [hackathon, design.htmlContent])
+
+  // Auto-save when design changes and has content
+  useEffect(() => {
+    if (design.htmlContent && design.htmlContent.length > 100 && design.isEnabled) {
+      console.log('💾 Auto-saving design changes...')
+      const timeoutId = setTimeout(() => {
+        handleSave()
+      }, 2000) // Auto-save after 2 seconds of no changes
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [design.htmlContent, design.settings, design.isEnabled])
 
   const fetchHackathon = async () => {
     try {
