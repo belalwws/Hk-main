@@ -32,6 +32,12 @@ async function safeDbSetup() {
     // NEVER run db push in production to preserve data
     console.log('ℹ️ Skipping database push to preserve existing data in production');
     
+    // Log current data status for monitoring
+    if (hasData) {
+      console.log('🔒 PRODUCTION DATA DETECTED - All destructive operations are disabled');
+      console.log('📊 Current data will be preserved during deployment');
+    }
+    
     // Ensure admin user exists
     await ensureAdminUser(prisma);
     
@@ -150,7 +156,7 @@ async function ensureRequiredTables(prisma) {
         sql: `
           CREATE TABLE IF NOT EXISTS certificate_settings (
             id TEXT PRIMARY KEY,
-            settings JSONB NOT NULL,
+            settings TEXT NOT NULL,
             "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           )
@@ -169,6 +175,20 @@ async function ensureRequiredTables(prisma) {
             settings TEXT DEFAULT '{}',
             "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `
+      },
+      {
+        name: 'landing_page_images',
+        sql: `
+          CREATE TABLE IF NOT EXISTS landing_page_images (
+            id TEXT PRIMARY KEY,
+            "hackathonId" TEXT NOT NULL,
+            "fileName" TEXT NOT NULL,
+            "fileType" TEXT NOT NULL,
+            "fileSize" INTEGER NOT NULL,
+            "base64Data" TEXT NOT NULL,
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           )
         `
       }

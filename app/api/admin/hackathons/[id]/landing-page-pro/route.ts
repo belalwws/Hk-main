@@ -6,9 +6,13 @@ const prisma = new PrismaClient()
 interface FileItem {
   id: string
   name: string
-  type: 'html' | 'css' | 'js' | 'json'
+  type: 'html' | 'css' | 'js' | 'json' | 'image'
   content: string
   isMain?: boolean
+  url?: string
+  size?: number
+  savedAt?: string
+  processed?: boolean
 }
 
 interface LandingPageProData {
@@ -135,16 +139,26 @@ export async function POST(
     // معالجة الصور وحفظها
     const processedFiles = await Promise.all(
       (data.files || []).map(async (file: any) => {
-        if (file.type === 'image' && file.content && file.content.startsWith('data:')) {
+        if (file.type === 'image') {
           console.log(`🖼️ Processing image: ${file.name} (${((file.size || 0) / 1024).toFixed(1)} KB)`)
 
-          // حفظ الصورة كـ base64 في قاعدة البيانات
-          // في بيئة الإنتاج، يفضل رفعها إلى خدمة تخزين سحابية مثل Cloudinary أو AWS S3
-          return {
-            ...file,
-            url: file.content, // استخدام base64 مباشرة
-            savedAt: new Date().toISOString(),
-            processed: true
+          // التحقق من أن المحتوى صالح
+          if (file.content && (file.content.startsWith('data:image/') || file.content.startsWith('http'))) {
+            return {
+              ...file,
+              url: file.content, // استخدام base64 أو URL مباشرة
+              savedAt: new Date().toISOString(),
+              processed: true
+            }
+          } else if (file.url) {
+            // إذا كان هناك URL موجود مسبقاً
+            return {
+              ...file,
+              processed: true
+            }
+          } else {
+            console.warn(`⚠️ Invalid image content for: ${file.name}`)
+            return file
           }
         }
         return file

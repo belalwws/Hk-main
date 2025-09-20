@@ -86,11 +86,11 @@ export async function POST(request: NextRequest) {
 
     // حفظ الإعدادات في قاعدة البيانات
     try {
-      // Create table if it doesn't exist
+      // Create table if it doesn't exist (using TEXT instead of JSONB for better compatibility)
       await prisma.$executeRaw`
         CREATE TABLE IF NOT EXISTS certificate_settings (
           id TEXT PRIMARY KEY,
-          settings JSONB NOT NULL,
+          settings TEXT NOT NULL,
           "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -108,7 +108,25 @@ export async function POST(request: NextRequest) {
       console.log('✅ Certificate settings saved successfully')
     } catch (dbError: any) {
       console.error('❌ Database save failed:', dbError?.message)
-      throw new Error('Failed to save certificate settings')
+      
+      // Fallback: try alternative approach
+      try {
+        console.log('🔄 Trying alternative database approach...')
+        
+        // Delete existing record first
+        await prisma.$executeRaw`DELETE FROM certificate_settings WHERE id = 'global'`
+        
+        // Insert new record
+        await prisma.$executeRaw`
+          INSERT INTO certificate_settings (id, settings, "createdAt", "updatedAt")
+          VALUES ('global', ${JSON.stringify(newSettings)}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `
+        
+        console.log('✅ Certificate settings saved with alternative method')
+      } catch (fallbackError: any) {
+        console.error('❌ Fallback also failed:', fallbackError?.message)
+        throw new Error('Failed to save certificate settings: ' + fallbackError?.message)
+      }
     }
 
     return NextResponse.json({

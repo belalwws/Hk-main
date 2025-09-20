@@ -25,7 +25,8 @@ import {
   Smartphone,
   Tablet,
   BookOpen,
-  Zap
+  Zap,
+  Image
 } from 'lucide-react'
 import { toast } from 'sonner'
 import CodeSnippetsPanel from '@/components/admin/CodeSnippetsPanel'
@@ -34,9 +35,13 @@ import TemplateGallery from '@/components/admin/TemplateGallery'
 interface FileItem {
   id: string
   name: string
-  type: 'html' | 'css' | 'js' | 'json'
+  type: 'html' | 'css' | 'js' | 'json' | 'image'
   content: string
   isMain?: boolean
+  url?: string
+  size?: number
+  savedAt?: string
+  processed?: boolean
 }
 
 interface LandingPageData {
@@ -275,6 +280,64 @@ document.addEventListener('DOMContentLoaded', function() {
     toast.success(`تم إنشاء الملف ${fileName}`)
   }
 
+  const uploadImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // التحقق من نوع الملف
+    if (!file.type.startsWith('image/')) {
+      toast.error('يجب أن يكون الملف صورة')
+      return
+    }
+
+    // التحقق من حجم الملف (5MB max)
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      toast.error('حجم الملف كبير جداً (الحد الأقصى 5MB)')
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch(`/api/admin/hackathons/${resolvedParams.id}/landing-page-pro/upload-image`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        const imageFile: FileItem = {
+          id: result.image.id,
+          name: result.image.name,
+          type: 'image',
+          content: result.image.dataUrl,
+          url: result.image.url,
+          size: result.image.size,
+          savedAt: result.image.uploadedAt,
+          processed: true
+        }
+
+        setLandingPage(prev => ({
+          ...prev,
+          files: [...prev.files, imageFile]
+        }))
+
+        setActiveFile(imageFile.id)
+        toast.success('تم رفع الصورة بنجاح!')
+      } else {
+        throw new Error('فشل في رفع الصورة')
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      toast.error('حدث خطأ أثناء رفع الصورة')
+    }
+
+    // Reset input
+    event.target.value = ''
+  }
+
   const deleteFile = (fileId: string) => {
     const file = landingPage.files.find(f => f.id === fileId)
     if (file?.isMain) {
@@ -466,14 +529,36 @@ document.addEventListener('DOMContentLoaded', function() {
         <div className="w-64 bg-gray-900 text-white p-4 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold">الملفات</h3>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={addNewFile}
-              className="text-white hover:bg-gray-700"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={addNewFile}
+                className="text-white hover:bg-gray-700"
+                title="إضافة ملف جديد"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+              <label className="cursor-pointer">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-white hover:bg-gray-700"
+                  title="رفع صورة"
+                  asChild
+                >
+                  <span>
+                    <Upload className="w-4 h-4" />
+                  </span>
+                </Button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={uploadImage}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
           
           <div className="space-y-1">
@@ -490,8 +575,14 @@ document.addEventListener('DOMContentLoaded', function() {
                   {file.type === 'css' && <Palette className="w-4 h-4 text-blue-400" />}
                   {file.type === 'js' && <Code className="w-4 h-4 text-yellow-400" />}
                   {file.type === 'json' && <Settings className="w-4 h-4 text-green-400" />}
+                  {file.type === 'image' && <Image className="w-4 h-4 text-purple-400" />}
                   <span className="text-sm">{file.name}</span>
                   {file.isMain && <Badge variant="secondary" className="text-xs">رئيسي</Badge>}
+                  {file.type === 'image' && file.size && (
+                    <Badge variant="outline" className="text-xs">
+                      {(file.size / 1024).toFixed(1)}KB
+                    </Badge>
+                  )}
                 </div>
                 
                 {!file.isMain && (
@@ -536,16 +627,38 @@ document.addEventListener('DOMContentLoaded', function() {
                   {activeFileData.type === 'css' && <Palette className="w-4 h-4 text-blue-500" />}
                   {activeFileData.type === 'js' && <Code className="w-4 h-4 text-yellow-500" />}
                   {activeFileData.type === 'json' && <Settings className="w-4 h-4 text-green-500" />}
+                  {activeFileData.type === 'image' && <Image className="w-4 h-4 text-purple-500" />}
                   <span className="font-medium">{activeFileData.name}</span>
+                  {activeFileData.type === 'image' && activeFileData.size && (
+                    <Badge variant="outline" className="text-xs">
+                      {(activeFileData.size / 1024).toFixed(1)}KB
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  {activeFileData.type === 'image' && activeFileData.url && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        navigator.clipboard.writeText(activeFileData.url || '')
+                        toast.success('تم نسخ رابط الصورة')
+                      }}
+                      title="نسخ رابط الصورة"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      navigator.clipboard.writeText(activeFileData.content)
-                      toast.success('تم نسخ المحتوى')
+                      const contentToCopy = activeFileData.type === 'image' 
+                        ? activeFileData.url || activeFileData.content
+                        : activeFileData.content
+                      navigator.clipboard.writeText(contentToCopy)
+                      toast.success(activeFileData.type === 'image' ? 'تم نسخ رابط الصورة' : 'تم نسخ المحتوى')
                     }}
                   >
                     <Copy className="w-4 h-4" />
@@ -554,13 +667,53 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
               
               <div className="flex-1">
-                <textarea
-                  value={activeFileData.content}
-                  onChange={(e) => updateFileContent(activeFileData.id, e.target.value)}
-                  className="w-full h-full p-4 font-mono text-sm border-none outline-none resize-none bg-gray-50"
-                  placeholder={`اكتب كود ${activeFileData.type.toUpperCase()} هنا...`}
-                  style={{ fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace' }}
-                />
+                {activeFileData.type === 'image' ? (
+                  <div className="w-full h-full p-4 bg-gray-50 flex flex-col">
+                    <div className="flex-1 flex items-center justify-center">
+                      <img
+                        src={activeFileData.content}
+                        alt={activeFileData.name}
+                        className="max-w-full max-h-full object-contain border rounded-lg shadow-sm"
+                      />
+                    </div>
+                    <div className="mt-4 p-4 bg-white rounded-lg border">
+                      <h4 className="font-medium mb-2">معلومات الصورة:</h4>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <div>الاسم: {activeFileData.name}</div>
+                        {activeFileData.size && <div>الحجم: {(activeFileData.size / 1024).toFixed(1)} KB</div>}
+                        {activeFileData.savedAt && <div>تاريخ الرفع: {new Date(activeFileData.savedAt).toLocaleString('ar')}</div>}
+                      </div>
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium mb-1">رابط الصورة للاستخدام في الكود:</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={activeFileData.url || activeFileData.content}
+                            readOnly
+                            className="flex-1 px-3 py-1 border rounded text-sm bg-gray-50"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(activeFileData.url || activeFileData.content)
+                              toast.success('تم نسخ الرابط')
+                            }}
+                          >
+                            نسخ
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <textarea
+                    value={activeFileData.content}
+                    onChange={(e) => updateFileContent(activeFileData.id, e.target.value)}
+                    className="w-full h-full p-4 font-mono text-sm border-none outline-none resize-none bg-gray-50"
+                    placeholder={`اكتب كود ${activeFileData.type.toUpperCase()} هنا...`}
+                    style={{ fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace' }}
+                  />
+                )}
               </div>
             </>
           )}
