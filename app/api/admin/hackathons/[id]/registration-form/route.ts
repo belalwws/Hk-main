@@ -2,6 +2,37 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+// Function to ensure hackathon_forms table exists with correct structure
+async function ensureHackathonFormsTable() {
+  try {
+    // First, try to add missing columns if they don't exist
+    try {
+      await prisma.$executeRaw`ALTER TABLE hackathon_forms ADD COLUMN title TEXT DEFAULT 'نموذج التسجيل'`
+      console.log('✅ Added title column')
+    } catch (e) {
+      // Column might already exist
+    }
+    
+    try {
+      await prisma.$executeRaw`ALTER TABLE hackathon_forms ADD COLUMN description TEXT DEFAULT ''`
+      console.log('✅ Added description column')
+    } catch (e) {
+      // Column might already exist
+    }
+    
+    try {
+      await prisma.$executeRaw`ALTER TABLE hackathon_forms ADD COLUMN isActive BOOLEAN DEFAULT 1`
+      console.log('✅ Added isActive column')
+    } catch (e) {
+      // Column might already exist
+    }
+    
+    console.log('✅ hackathon_forms table structure updated')
+  } catch (error) {
+    console.log('ℹ️ Error updating table structure:', error)
+  }
+}
+
 // GET /api/admin/hackathons/[id]/registration-form - Get hackathon registration form
 export async function GET(
   request: NextRequest,
@@ -18,21 +49,27 @@ export async function GET(
     }
 
     try {
-      // Try to get existing form from database
-      const existingForm = await prisma.hackathonForm.findFirst({
-        where: { hackathonId: params.id }
-      })
+      // Ensure table exists first
+      await ensureHackathonFormsTable()
+      
+      // Try to get existing form from database using raw SQL
+      const existingForm = await prisma.$queryRaw`
+        SELECT * FROM hackathon_forms 
+        WHERE hackathonId = ${params.id}
+        LIMIT 1
+      ` as any[]
 
-      if (existingForm) {
+      if (existingForm.length > 0) {
+        const form = existingForm[0]
         return NextResponse.json({
           form: {
-            id: existingForm.id,
-            hackathonId: existingForm.hackathonId,
-            title: existingForm.title,
-            description: existingForm.description,
-            isActive: existingForm.isActive,
-            fields: JSON.parse(existingForm.fields),
-            settings: JSON.parse(existingForm.settings)
+            id: form.id,
+            hackathonId: form.hackathonId,
+            title: form.title,
+            description: form.description,
+            isActive: Boolean(form.isActive),
+            fields: JSON.parse(form.formFields || '[]'),
+            settings: JSON.parse(form.settings || '{}')
           }
         })
       }
@@ -98,36 +135,65 @@ export async function POST(
         return NextResponse.json({ error: 'الهاكاثون غير موجود' }, { status: 404 })
       }
 
-      // Check if form already exists
-      const existingForm = await prisma.hackathonForm.findFirst({
-        where: { hackathonId: params.id }
+      // Ensure table exists
+      await ensureHackathonFormsTable()
+      
+      // Check if form already exists using raw SQL
+      const existingForm = await prisma.$queryRaw`
+        SELECT * FROM hackathon_forms 
+        WHERE hackathonId = ${params.id}
+        LIMIT 1
+      ` as any[]
+
+      const fieldsJson = JSON.stringify(fields)
+      const settingsJson = JSON.stringify(settings || {
+        allowMultipleSubmissions: false,
+        requireApproval: true,
+        sendConfirmationEmail: true
       })
 
-      const formData = {
-        hackathonId: params.id,
-        title,
-        description: description || '',
-        isActive: isActive ?? true,
-        fields: JSON.stringify(fields),
-        settings: JSON.stringify(settings || {
-          allowMultipleSubmissions: false,
-          requireApproval: true,
-          sendConfirmationEmail: true
-        })
-      }
-
       let savedForm
-      if (existingForm) {
+      if (existingForm.length > 0) {
         // Update existing form
-        savedForm = await prisma.hackathonForm.update({
-          where: { id: existingForm.id },
-          data: formData
-        })
+        await prisma.$executeRaw`
+          UPDATE hackathon_forms
+          SET title = ${title},
+              description = ${description || ''},
+              isActive = ${isActive ?? true},
+              formFields = ${fieldsJson},
+              updatedAt = CURRENT_TIMESTAMP
+          WHERE id = ${existingForm[0].id}
+        `
+        
+        savedForm = {
+          id: existingForm[0].id,
+          hackathonId: params.id,
+          title,
+          description: description || '',
+          isActive: isActive ?? true,
+          fields: fieldsJson,
+          settings: settingsJson
+        }
       } else {
         // Create new form
-        savedForm = await prisma.hackathonForm.create({
-          data: formData
-        })
+        const newId = `form_${Date.now()}`
+        
+        await prisma.$executeRaw`
+          INSERT INTO hackathon_forms
+          (id, hackathonId, title, description, isActive, formFields)
+          VALUES (${newId}, ${params.id}, ${title}, ${description || ''},
+                  ${isActive ?? true}, ${fieldsJson})
+        `
+        
+        savedForm = {
+          id: newId,
+          hackathonId: params.id,
+          title,
+          description: description || '',
+          isActive: isActive ?? true,
+          fields: fieldsJson,
+          settings: settingsJson
+        }
       }
 
       return NextResponse.json({

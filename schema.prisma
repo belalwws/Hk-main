@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -30,6 +30,29 @@ model Hackathon {
   judgeSettings         Json?    // إعدادات المحكم (ما يراه/لا يراه)
   emailTemplates        Json?    // قوالب الإيميلات المخصصة
   customFields          Json?    // الحقول المخصصة لنموذج التسجيل
+
+  // Additional fields from new database
+  location              String?
+  venue                 String?
+  contactEmail          String?
+  contactPhone          String?
+  website               String?
+  socialMedia           String?
+  sponsors              String?
+  partners              String?
+  mentors               String?
+  schedule              String?
+  rules                 String?
+  resources             String?
+  faq                   String?
+  registrationCount     Int      @default(0)
+  maxTeams              Int      @default(0)
+  currentPhase          String?
+  isPublished           Boolean  @default(false)
+  featuredImage         String?
+  bannerImage           String?
+  logoImage             String?
+
   createdBy             String   // Admin user ID who created this hackathon
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -42,6 +65,7 @@ model Hackathon {
   admins             Admin[]
   evaluationCriteria EvaluationCriterion[]
   registrationForm   HackathonForm?
+  landingPage        HackathonLandingPage?
 
   @@map("hackathons")
 }
@@ -67,6 +91,18 @@ model User {
   preferredRole String?  // Preferred team role
   role          UserRole @default(participant)
   isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  profilePicture String?
+  bio           String?
+  github        String?
+  linkedin      String?
+  portfolio     String?
+  university    String?
+  major         String?
+  graduationYear String?
+  workExperience String?
+  lastLogin     DateTime?
+  loginCount    Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -103,6 +139,27 @@ model Participant {
   rejectedAt          DateTime?
   updatedAt           DateTime        @updatedAt
   additionalInfo      Json?           // معلومات إضافية (نوع التسجيل، الخبرة، إلخ)
+
+  // Additional fields from new database
+  skills              String?
+  experience          String?
+  motivation          String?
+  availability        String?
+  previousParticipation String?
+  emergencyContact    String?
+  dietaryRestrictions String?
+  tshirtSize          String?
+  github              String?
+  linkedin            String?
+  portfolio           String?
+  university          String?
+  major               String?
+  graduationYear      String?
+  workExperience      String?
+  preferredRole       String?
+  teamPreference      String?
+  additionalNotes     String?
+  createdAt           DateTime        @default(now())
 
   // Relations
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -148,7 +205,12 @@ model Admin {
   userId      String
   hackathonId String?  // null means super admin
   permissions Json?    // Store admin permissions
+  role        String?  // Admin role
+  isActive    Boolean  @default(true)
+  lastLogin   DateTime?
   assignedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -162,11 +224,24 @@ model Team {
   id          String   @id @default(cuid())
   name        String
   hackathonId String
-  teamNumber  Int
+  teamNumber  Int?
   leaderId    String?  // Team leader participant ID
+  members     String?  // JSON string of team members
   ideaFile    String?  // Path to uploaded PowerPoint file
   ideaTitle   String?
   ideaDescription String?
+  projectName String?
+  projectDescription String?
+  projectUrl  String?
+  status      String?
+  submissionUrl String?
+  presentationUrl String?
+  demoUrl     String?
+  githubUrl   String?
+  finalScore  Float?
+  rank        Int?
+  isQualified Boolean  @default(false)
+  notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -292,4 +367,25 @@ model HackathonForm {
   hackathon    Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
 
   @@map("hackathon_forms")
+}
+
+// HackathonLandingPage model - Custom landing pages for hackathons
+model HackathonLandingPage {
+  id             String   @id @default(cuid())
+  hackathonId    String   @unique
+  isEnabled      Boolean  @default(false)
+  customDomain   String?  // Optional custom domain
+  htmlContent    String
+  cssContent     String
+  jsContent      String
+  seoTitle       String?
+  seoDescription String?
+  template       String?  // Template name used
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  hackathon Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+
+  @@map("hackathon_landing_pages")
 }

@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
 
-// Lazy import prisma to avoid build-time errors
-let prisma: any = null
-async function getPrisma() {
-  if (!prisma) {
-    try {
-      const { prisma: prismaClient } = await import('@/lib/prisma')
-      prisma = prismaClient
-    } catch (error) {
-      console.error('Failed to import prisma:', error)
-      return null
-    }
-  }
-  return prisma
-}
+const prisma = new PrismaClient()
 
 // GET /api/hackathons/[id] - Get hackathon details
 export async function GET(
@@ -21,42 +9,50 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const prismaClient = await getPrisma()
-    if (!prismaClient) {
-      return NextResponse.json({ error: 'قاعدة البيانات غير متاحة' }, { status: 500 })
-    }
-
     const resolvedParams = await params
-    const hackathon = await prismaClient.hackathon.findUnique({
-      where: { id: resolvedParams.id },
-      include: {
-        _count: {
-          select: { participants: true }
-        }
-      }
+    console.log('🔍 Fetching hackathon:', resolvedParams.id)
+
+    const hackathon = await prisma.hackathon.findUnique({
+      where: { id: resolvedParams.id }
     })
 
+    // Get participant count separately to avoid relation issues
+    let participantCount = 0
+    try {
+      const participants = await prisma.participant.count({
+        where: { hackathonId: resolvedParams.id }
+      })
+      participantCount = participants
+    } catch (error) {
+      console.log('⚠️ Could not count participants:', error.message)
+    }
+
+    console.log('📊 Hackathon found:', hackathon ? 'Yes' : 'No')
+
     if (!hackathon) {
+      console.log('❌ Hackathon not found:', resolvedParams.id)
       return NextResponse.json({ error: 'الهاكاثون غير موجود' }, { status: 404 })
     }
 
-    // Format the response
+    // Format the response with safe date handling
     const response = {
       id: hackathon.id,
       title: hackathon.title,
       description: hackathon.description,
-      startDate: hackathon.startDate.toISOString(),
-      endDate: hackathon.endDate.toISOString(),
-      registrationDeadline: hackathon.registrationDeadline.toISOString(),
+      startDate: hackathon.startDate ? hackathon.startDate.toISOString() : null,
+      endDate: hackathon.endDate ? hackathon.endDate.toISOString() : null,
+      registrationDeadline: hackathon.registrationDeadline ? hackathon.registrationDeadline.toISOString() : null,
       maxParticipants: hackathon.maxParticipants,
       status: hackathon.status,
       prizes: hackathon.prizes,
       requirements: hackathon.requirements,
       categories: hackathon.categories,
-      participantCount: hackathon._count.participants,
-      createdAt: hackathon.createdAt.toISOString()
+      location: hackathon.location,
+      participantCount: participantCount,
+      createdAt: hackathon.createdAt ? hackathon.createdAt.toISOString() : null
     }
 
+    console.log('✅ Hackathon data prepared successfully')
     return NextResponse.json({ hackathon: response })
 
   } catch (error) {

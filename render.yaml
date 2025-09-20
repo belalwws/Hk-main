@@ -30,5 +30,6 @@ databases:
     user: hackathon_user
     region: oregon
     plan: standard
-    # استخدام plan أعلى لضمان الاستمرارية
-    # starter plan قد يحذف البيانات
+    # استخدام standard plan لضمان استمرارية البيانات
+    # starter plan يحذف البيانات بعد 90 يوم
+    # standard plan يحتفظ بالبيانات بشكل دائم

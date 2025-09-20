@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -816,15 +816,29 @@ export default function HackathonManagementPage() {
             <h1 className="text-4xl font-bold text-[#01645e]">{hackathon.title}</h1>
             <p className="text-[#8b7632] text-lg">{hackathon.description}</p>
           </div>
-          <Badge className={`${
-            hackathon.status === 'open' ? 'bg-green-500' :
-            hackathon.status === 'closed' ? 'bg-red-500' :
-            hackathon.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
-          } text-white`}>
-            {hackathon.status === 'open' ? 'مفتوح' :
-             hackathon.status === 'closed' ? 'مغلق' :
-             hackathon.status === 'completed' ? 'مكتمل' : 'مسودة'}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Link href={`/admin/hackathons/${hackathon.id}/register-form-design`}>
+              <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white">
+                <FormInput className="w-4 h-4 ml-2" />
+                تصميم الفورم
+              </Button>
+            </Link>
+            <Link href={`/admin/hackathons/${hackathon.id}/landing-page`}>
+              <Button variant="outline" size="sm" className="border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white">
+                <Palette className="w-4 h-4 ml-2" />
+                Landing Page
+              </Button>
+            </Link>
+            <Badge className={`${
+              hackathon.status === 'open' ? 'bg-green-500' :
+              hackathon.status === 'closed' ? 'bg-red-500' :
+              hackathon.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
+            } text-white`}>
+              {hackathon.status === 'open' ? 'مفتوح' :
+               hackathon.status === 'closed' ? 'مغلق' :
+               hackathon.status === 'completed' ? 'مكتمل' : 'مسودة'}
+            </Badge>
+          </div>
         </motion.div>
 
         {/* Statistics Cards */}
@@ -1458,6 +1472,18 @@ export default function HackathonManagementPage() {
                               <Button variant="outline" className="border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
                                 <FileText className="w-4 h-4 ml-2" />
                                 النماذج المرسلة
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/hackathons/${hackathon.id}/landing-page`}>
+                              <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white">
+                                <Palette className="w-4 h-4 ml-2" />
+                                Landing Page مخصصة
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/hackathons/${hackathon.id}/register-form-design`}>
+                              <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white">
+                                <FormInput className="w-4 h-4 ml-2" />
+                                تصميم فورم التسجيل
                               </Button>
                             </Link>
                             <Link href={`/admin/hackathons/${hackathon.id}/custom-fields`}>

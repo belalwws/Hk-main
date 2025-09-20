@@ -56,7 +56,7 @@ export default function HackathonRegisterFormPage() {
   const params = useParams()
   const router = useRouter()
   const hackathonId = params.id as string
-  
+
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [hackathon, setHackathon] = useState<any>(null)
@@ -64,11 +64,29 @@ export default function HackathonRegisterFormPage() {
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
+  const [hasCustomDesign, setHasCustomDesign] = useState(false)
 
   useEffect(() => {
+    checkCustomDesign()
     fetchHackathon()
     fetchForm()
   }, [hackathonId])
+
+  const checkCustomDesign = async () => {
+    try {
+      const response = await fetch(`/api/admin/hackathons/${hackathonId}/register-form-design`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.design && data.design.isEnabled && data.design.htmlContent) {
+          console.log('✅ Custom form design found, redirecting...')
+          window.location.href = `/api/form/${hackathonId}`
+          return
+        }
+      }
+    } catch (error) {
+      console.log('ℹ️ No custom design found, using default form')
+    }
+  }
 
   const fetchHackathon = async () => {
     try {
