@@ -1,159 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
-
-import { prisma } from '@/lib/prisma'
+import { findUserById } from '@/lib/simple-db'
 
 // GET /api/user/profile - Get current user profile
 export async function GET(request: NextRequest) {
+  console.log('🔍 [USER-PROFILE] Profile request received')
+  
   try {
-    const cookieStore = await cookies()
-    const authToken = cookieStore.get('auth-token')?.value
-    if (!authToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Get token from cookie
+    const token = request.cookies.get('auth-token')?.value
+    
+    if (!token) {
+      console.log('❌ [USER-PROFILE] No token found')
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
-    const payload = await verifyToken(authToken)
+    console.log('🔍 [USER-PROFILE] Token found, verifying...')
+    
+    // Verify token
+    const payload = verifyToken(token)
     if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      console.log('❌ [VERIFY-SESSION] Token verification failed')
+      return NextResponse.json({ error: 'رمز المصادقة غير صالح' }, { status: 401 })
     }
 
-    console.log('🔍 Fetching user profile for:', payload.userId)
+    console.log('✅ [USER-PROFILE] Token verified for user:', payload.email)
 
-    // Find user by verified token's userId with participations and team details
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        city: true,
-        nationality: true,
-        skills: true,
-        experience: true,
-        preferredRole: true,
-        role: true,
-        createdAt: true,
-        participations: {
-          include: {
-            hackathon: {
-              select: {
-                id: true,
-                title: true,
-                description: true,
-                startDate: true,
-                endDate: true,
-                status: true,
-              },
-            },
-            team: {
-              include: {
-                participants: {
-                  include: {
-                    user: {
-                      select: {
-                        id: true,
-                        name: true,
-                        preferredRole: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          orderBy: { registeredAt: 'desc' },
-        },
-      },
-    })
+    // Get user from database
+    const user = await findUserById(payload.userId)
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      console.log('❌ [USER-PROFILE] User not found in database')
+      return NextResponse.json({ error: 'المستخدم غير موجود' }, { status: 404 })
     }
 
-    // Format dates in participations
-    const formattedUser = {
-      ...user,
-      createdAt: user.createdAt.toISOString(),
-      participations: user.participations.map((participation: any) => ({
-        ...participation,
-        registeredAt: participation.registeredAt.toISOString(),
-        approvedAt: participation.approvedAt ? participation.approvedAt.toISOString() : null,
-        rejectedAt: participation.rejectedAt ? participation.rejectedAt.toISOString() : null,
-        hackathon: {
-          ...participation.hackathon,
-          startDate: participation.hackathon.startDate.toISOString(),
-          endDate: participation.hackathon.endDate.toISOString(),
-        },
-      })),
+    console.log('✅ [USER-PROFILE] User found:', user.email)
+
+    // Check if user is active
+    if (!user.isActive) {
+      console.log('❌ [USER-PROFILE] User account is inactive')
+      return NextResponse.json({ error: 'تم تعطيل حسابك من قبل الإدارة' }, { status: 403 })
     }
 
-    return NextResponse.json({ user: formattedUser })
-  } catch (error) {
-    console.error('Error fetching user profile:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
-// PUT /api/user/profile - Update user profile
-export async function PUT(request: NextRequest) {
-  try {
-    const cookieStore = await cookies()
-    const authToken = cookieStore.get('auth-token')?.value
-    if (!authToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const payload = await verifyToken(authToken)
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const { name, phone, city, nationality, skills, experience, preferredRole } = body
-
-    console.log('🔄 Updating user profile for:', payload.userId)
-
-    // Update user profile
-    const updatedUser = await prisma.user.update({
-      where: { id: payload.userId },
-      data: {
-        name: name || undefined,
-        phone: phone ?? null,
-        city: city ?? null,
-        nationality: nationality ?? null,
-        skills: skills ?? null,
-        experience: experience ?? null,
-        preferredRole: preferredRole ?? null,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        city: true,
-        nationality: true,
-        skills: true,
-        experience: true,
-        preferredRole: true,
-        role: true,
-        createdAt: true,
-      },
-    })
-
+    // Return user profile with basic data
     return NextResponse.json({
-      message: 'Profile updated',
       user: {
-        ...updatedUser,
-        createdAt: updatedUser.createdAt.toISOString(),
-      },
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        phone: user.phone,
+        city: user.city,
+        nationality: user.nationality,
+        skills: user.skills,
+        experience: user.experience,
+        preferredRole: user.preferredRole,
+        createdAt: user.createdAt,
+        // Basic empty arrays for now
+        participations: [],
+        teams: [],
+        judgeAssignments: []
+      }
     })
+
   } catch (error) {
-    console.error('Error updating user profile:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('❌ [USER-PROFILE] Error:', error)
+    return NextResponse.json({ error: 'خطأ في جلب الملف الشخصي' }, { status: 500 })
   }
 }
 
 export const dynamic = 'force-dynamic'
-
