@@ -1,22 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import nodemailer from 'nodemailer'
 import jwt from 'jsonwebtoken'
-
-// Lazy import prisma to avoid build-time errors
-let prisma: any = null
-async function getPrisma() {
-  if (!prisma) {
-    try {
-      const { prisma: prismaClient } = await import('@/lib/prisma')
-      prisma = prismaClient
-    } catch (error) {
-      console.error('Failed to import prisma:', error)
-      return null
-    }
-  }
-  return prisma
-}
+import { createUser, findUserByEmail, testConnection } from '@/lib/simple-db'
 
 // POST /api/auth/register - Register new user
 export async function POST(request: NextRequest) {
@@ -47,16 +32,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'الاسم والإيميل وكلمة المرور مطلوبة' }, { status: 400 })
     }
 
-    const prismaClient = await getPrisma()
-    if (!prismaClient) {
-      return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
+    // Test database connection
+    const isConnected = await testConnection()
+    if (!isConnected) {
+      return NextResponse.json({ error: 'تعذر الاتصال بقاعدة البيانات' }, { status: 500 })
     }
 
     // Check if user already exists
     console.log('🔍 Checking if email exists:', email)
-    const existingUser = await prismaClient.user.findUnique({
-      where: { email }
-    })
+    const existingUser = await findUserByEmail(email)
 
     console.log('📊 Existing user result:', existingUser ? 'Found' : 'Not found')
 
@@ -71,19 +55,15 @@ export async function POST(request: NextRequest) {
 
     // Create user
     console.log('👤 Creating new user...')
-    const user = await prismaClient.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        phone: phone || null,
-        city: city || null,
-        nationality: nationality || null,
-        skills: skills || null,
-        experience: experience || null,
-        preferredRole: preferredRole || null,
-        role: 'participant' as any
-      }
+    const user = await createUser({
+      name,
+      email,
+      password: hashedPassword,
+      phone: phone || null,
+      city: city || null,
+      nationality: nationality || null,
+      role: 'participant',
+      isActive: true
     })
 
     console.log('✅ New user created successfully:', user.email, 'ID:', user.id)

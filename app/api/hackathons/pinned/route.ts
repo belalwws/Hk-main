@@ -1,29 +1,19 @@
 import { NextResponse } from 'next/server'
-
-import { prisma } from '@/lib/prisma'
+import { getPinnedHackathon } from '@/lib/simple-db'
 
 // GET /api/hackathons/pinned - Get pinned hackathon for homepage
 export async function GET() {
   try {
-    const pinnedHackathon = await prisma.hackathon.findFirst({
-      where: { isPinned: true },
-      include: {
-        _count: {
-          select: {
-            participants: true
-          }
-        }
-      }
-    })
+    const pinnedHackathon = await getPinnedHackathon()
 
     if (!pinnedHackathon) {
       return NextResponse.json({ hackathon: null })
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       hackathon: {
         ...pinnedHackathon,
-        participantCount: pinnedHackathon._count.participants
+        participantCount: 0 // Will be calculated later
       }
     })
 

@@ -3,7 +3,7 @@ import { generateToken } from "@/lib/auth"
 import { comparePassword } from "@/lib/password"
 import { validateRequest, loginSchema } from "@/lib/validation"
 import { rateLimit } from "@/lib/rate-limit"
-import { prisma } from "@/lib/prisma"
+import { findUserByEmail } from "@/lib/simple-db"
 
 export async function POST(request: NextRequest) {
   const rateLimitResult = rateLimit(request, 5, 300000) // 5 attempts per 5 minutes
@@ -48,24 +48,8 @@ export async function POST(request: NextRequest) {
       return response
     }
 
-    // Find user by email (DB first) using lazy prisma import
-    let user: any = null
-    try {
-      const { prisma } = await import("@/lib/prisma")
-      user = await prisma.user.findUnique({
-        where: { email },
-        include: {
-          adminActions: { include: { hackathon: true } },
-          judgeAssignments: { include: { hackathon: true } },
-          participations: { include: { hackathon: true } }
-        }
-      })
-    } catch (_) {
-      user = null
-    }
-
-    // No fallback needed - only use database
-    let fileParticipant: any = null
+    // Find user by email
+    const user = await findUserByEmail(email)
 
     if (!user) {
       return NextResponse.json({ error: "بيانات الدخول غير صحيحة" }, { status: 401 })
