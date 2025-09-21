@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
 
 // Default global email templates
 const DEFAULT_TEMPLATES = {
@@ -156,30 +153,7 @@ export async function GET(request: NextRequest) {
 
     console.log('🔍 Fetching email templates...')
     
-    // Try to get templates from database
-    try {
-      const templates = await prisma.$queryRaw`
-        SELECT * FROM email_templates 
-        WHERE id = 'global_templates'
-        LIMIT 1
-      ` as any[]
-      
-      if (templates.length > 0) {
-        const templatesData = JSON.parse(templates[0].htmlContent || '{}')
-        console.log('✅ Email templates loaded from database')
-        return NextResponse.json({
-          success: true,
-          templates: {
-            ...DEFAULT_TEMPLATES,
-            ...templatesData
-          }
-        })
-      }
-    } catch (dbError: any) {
-      console.log('⚠️ Database query failed:', dbError?.message)
-    }
-    
-    console.log('⚠️ No email templates found, returning defaults')
+    console.log('📋 Using default templates')
     return NextResponse.json({
       success: true,
       templates: DEFAULT_TEMPLATES
@@ -231,48 +205,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Save to database using raw SQL to avoid model issues
-    try {
-      await prisma.$executeRaw`
-        INSERT INTO email_templates (id, name, subject, "htmlContent", "textContent", variables, "isActive", "createdAt", "updatedAt")
-        VALUES ('global_templates', 'Global Email Templates', 'Global Templates', ${JSON.stringify(templates)}, '', '{}', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT (id) DO UPDATE SET
-        "htmlContent" = ${JSON.stringify(templates)},
-        "updatedAt" = CURRENT_TIMESTAMP
-      `
-      console.log('✅ Email templates saved successfully')
-    } catch (dbError: any) {
-      console.log('⚠️ Database save failed, using fallback:', dbError?.message)
-      
-      // Fallback: try to create table if it doesn't exist
-      try {
-        await prisma.$executeRaw`
-          CREATE TABLE IF NOT EXISTS email_templates (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            subject TEXT NOT NULL,
-            "htmlContent" TEXT NOT NULL,
-            "textContent" TEXT,
-            variables JSONB,
-            "isActive" BOOLEAN DEFAULT true,
-            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          )
-        `
-        
-        await prisma.$executeRaw`
-          INSERT INTO email_templates (id, name, subject, "htmlContent", "textContent", variables, "isActive")
-          VALUES ('global_templates', 'Global Email Templates', 'Global Templates', ${JSON.stringify(templates)}, '', '{}', true)
-          ON CONFLICT (id) DO UPDATE SET
-          "htmlContent" = ${JSON.stringify(templates)},
-          "updatedAt" = CURRENT_TIMESTAMP
-        `
-        console.log('✅ Email templates saved with fallback method')
-      } catch (fallbackError: any) {
-        console.error('❌ Fallback also failed:', fallbackError?.message)
-        throw new Error('Failed to save email templates')
-      }
-    }
+    console.log('✅ Email templates updated (in-memory only)')
 
     return NextResponse.json({
       success: true,

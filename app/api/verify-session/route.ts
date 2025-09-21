@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('🔍 [VERIFY-SESSION] Token found, verifying...')
-    
+
     // Verify token
     const payload = verifyToken(token)
     if (!payload) {
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Get user from database
     const user = await findUserById(payload.userId)
-    
+
     if (!user) {
       console.log('❌ [VERIFY-SESSION] User not found in database')
       return NextResponse.json({ error: 'المستخدم غير موجود' }, { status: 404 })
@@ -56,7 +56,11 @@ export async function GET(request: NextRequest) {
         skills: user.skills,
         experience: user.experience,
         preferredRole: user.preferredRole,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        // Basic empty arrays for now
+        participations: [],
+        teams: [],
+        judgeAssignments: []
       }
     })
 

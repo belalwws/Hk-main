@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('🔍 [USER-PROFILE] Token found, verifying...')
-    
+
     // Verify token
     const payload = verifyToken(token)
     if (!payload) {
-      console.log('❌ [VERIFY-SESSION] Token verification failed')
+      console.log('❌ [USER-PROFILE] Invalid token')
       return NextResponse.json({ error: 'رمز المصادقة غير صالح' }, { status: 401 })
     }
 
