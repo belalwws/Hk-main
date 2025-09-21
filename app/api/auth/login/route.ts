@@ -64,25 +64,14 @@ export async function POST(request: NextRequest) {
       user = null
     }
 
-    // Fallback to file-based participant store if no DB user found
-    let fileParticipant: ReturnType<typeof getAllParticipants>[number] | null = null
-    if (!user) {
-      try {
-        const participants = getAllParticipants()
-        const found = participants.find((p: any) => p.email.toLowerCase() === email.toLowerCase())
-        if (found) {
-          fileParticipant = found
-        }
-      } catch (_) {}
-    }
+    // No fallback needed - only use database
+    let fileParticipant: any = null
 
-    if (!user && !fileParticipant) {
+    if (!user) {
       return NextResponse.json({ error: "بيانات الدخول غير صحيحة" }, { status: 401 })
     }
 
-    const isValidPassword = user
-      ? await comparePassword(password, user.password_hash || user.password || '')
-      : await comparePassword(password, fileParticipant!.passwordHash)
+    const isValidPassword = await comparePassword(password, user.password || '')
     if (!isValidPassword) {
       return NextResponse.json({ error: "بيانات الدخول غير صحيحة" }, { status: 401 })
     }

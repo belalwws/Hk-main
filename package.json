@@ -15,6 +15,7 @@
     "data:verify": "node scripts/data-protection-guard.js verify",
     "data:restore": "node scripts/data-protection-guard.js restore",
     "pre-deploy": "node scripts/pre-deploy-check.js",
+    "db:setup": "node scripts/setup-database.js",
     "render-deploy": "node scripts/render-safe-deploy.js"
   },
   "dependencies": {
