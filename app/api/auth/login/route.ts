@@ -64,52 +64,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "تم تعطيل حسابك من قبل الإدارة" }, { status: 403 })
     }
 
-    // Determine user role and permissions
-    let role = (user ? user.role.toLowerCase() : 'participant')
-    let permissions = {}
-    let activeHackathons = []
-
-    if (user && user.role === 'admin') {
-      // Check if super admin or hackathon admin
-      const isSuperAdmin = user.adminActions.some((admin: any) => admin.hackathonId === null)
-      permissions = {
-        isSuperAdmin,
-        canManageHackathons: isSuperAdmin,
-        canManageUsers: isSuperAdmin,
-        hackathonIds: user.adminActions.map((admin: any) => admin.hackathonId).filter(Boolean)
-      }
-    } else if (user && user.role === 'judge') {
-      activeHackathons = user.judgeAssignments
-        .filter((judge: any) => judge.isActive && judge.hackathon.isActive)
-        .map((judge: any) => ({
-          id: judge.hackathon.id,
-          title: judge.hackathon.title
-        }))
-    } else if (user && user.role === 'participant') {
-      activeHackathons = user.participations
-        .filter((participation: any) => participation.status === 'approved' && participation.hackathon.isActive)
-        .map((participation: any) => ({
-          id: participation.hackathon.id,
-          title: participation.hackathon.title
-        }))
-    }
-
+    // Create JWT token
     const token = await generateToken({
-      userId: user ? user.id : fileParticipant!.id,
-      email: user ? user.email : fileParticipant!.email,
-      role: role as "admin" | "judge" | "participant",
-      name: user ? user.name : fileParticipant!.name,
+      userId: user.id,
+      email: user.email,
+      role: user.role as "admin" | "judge" | "participant",
+      name: user.name,
     })
 
     const response = NextResponse.json({
       token,
       user: {
-        id: user ? user.id : fileParticipant!.id,
-        name: user ? user.name : fileParticipant!.name,
-        email: user ? user.email : fileParticipant!.email,
-        role: role,
-        permissions,
-        activeHackathons
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        permissions: {},
+        activeHackathons: []
       },
     })
     
