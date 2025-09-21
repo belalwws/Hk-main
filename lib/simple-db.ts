@@ -1,16 +1,28 @@
-// Simple database operations using direct SQL queries
-import { Pool } from 'pg'
+// Simple database operations using Supabase REST API
+const SUPABASE_URL = 'https://yjsikwfrmufeuftfyyrl.supabase.co'
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlqc2lrd2ZybXVmZXVmdGZ5eXJsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODQwMDk2NywiZXhwIjoyMDczOTc2OTY3fQ.dwf6pUy1laCCfC7vgK1yBdtgBbmZVk3asy0eROXgeB4'
 
-let pool: Pool | null = null
+async function supabaseQuery(table: string, method: 'GET' | 'POST' | 'PATCH' = 'GET', data?: any, filters?: string) {
+  const url = `${SUPABASE_URL}/rest/v1/${table}${filters ? `?${filters}` : ''}`
 
-function getPool() {
-  if (!pool) {
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-    })
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'apikey': SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: data ? JSON.stringify(data) : undefined
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('Supabase query failed:', response.status, errorText)
+    throw new Error(`Supabase query failed: ${response.statusText}`)
   }
-  return pool
+
+  return response.json()
 }
 
 export interface User {
@@ -39,63 +51,69 @@ export interface Hackathon {
 }
 
 export async function createUser(userData: Omit<User, 'id' | 'createdAt'>): Promise<User> {
-  const client = getPool()
   const id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  
-  const query = `
-    INSERT INTO users (id, name, email, password, phone, city, nationality, role, "isActive", "createdAt", "updatedAt")
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-    RETURNING *
-  `
-  
-  const values = [
+
+  const newUser = {
     id,
-    userData.name,
-    userData.email,
-    userData.password,
-    userData.phone || null,
-    userData.city || null,
-    userData.nationality || null,
-    userData.role,
-    userData.isActive
-  ]
-  
-  const result = await client.query(query, values)
-  return result.rows[0]
+    name: userData.name,
+    email: userData.email,
+    password: userData.password,
+    phone: userData.phone || null,
+    city: userData.city || null,
+    nationality: userData.nationality || null,
+    role: userData.role,
+    isActive: userData.isActive,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+
+  const result = await supabaseQuery('users', 'POST', newUser)
+  return result[0]
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
-  const client = getPool()
-  const query = 'SELECT * FROM users WHERE email = $1'
-  const result = await client.query(query, [email])
-  return result.rows[0] || null
+  try {
+    const result = await supabaseQuery('users', 'GET', null, `email=eq.${email}`)
+    return result[0] || null
+  } catch (error) {
+    console.error('Error finding user by email:', error)
+    return null
+  }
 }
 
 export async function findUserById(id: string): Promise<User | null> {
-  const client = getPool()
-  const query = 'SELECT * FROM users WHERE id = $1'
-  const result = await client.query(query, [id])
-  return result.rows[0] || null
+  try {
+    const result = await supabaseQuery('users', 'GET', null, `id=eq.${id}`)
+    return result[0] || null
+  } catch (error) {
+    console.error('Error finding user by id:', error)
+    return null
+  }
 }
 
 export async function getPinnedHackathon(): Promise<Hackathon | null> {
-  const client = getPool()
-  const query = 'SELECT * FROM hackathons WHERE "isPinned" = true LIMIT 1'
-  const result = await client.query(query)
-  return result.rows[0] || null
+  try {
+    const result = await supabaseQuery('hackathons', 'GET', null, 'isPinned=eq.true&limit=1')
+    return result[0] || null
+  } catch (error) {
+    console.error('Error getting pinned hackathon:', error)
+    return null
+  }
 }
 
 export async function getAllHackathons(): Promise<Hackathon[]> {
-  const client = getPool()
-  const query = 'SELECT * FROM hackathons ORDER BY "createdAt" DESC'
-  const result = await client.query(query)
-  return result.rows
+  try {
+    const result = await supabaseQuery('hackathons', 'GET', null, 'order=createdAt.desc')
+    return result
+  } catch (error) {
+    console.error('Error getting all hackathons:', error)
+    return []
+  }
 }
 
 export async function testConnection(): Promise<boolean> {
   try {
-    const client = getPool()
-    await client.query('SELECT 1')
+    await supabaseQuery('users', 'GET', null, 'limit=1')
     return true
   } catch (error) {
     console.error('Database connection test failed:', error)

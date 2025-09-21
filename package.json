@@ -76,7 +76,6 @@
     "next": "^15.5.2",
     "next-themes": "latest",
     "nodemailer": "^7.0.6",
-    "pg": "^8.11.3",
     "pdf-lib": "^1.17.1",
     "prisma": "latest",
     "puppeteer": "^24.19.0",
