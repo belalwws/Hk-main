@@ -39,7 +39,7 @@ export async function GET(
         teamNumber: team.teamNumber,
         projectName: team.ideaTitle,
         createdAt: team.createdAt,
-        participants: team.participants.map(participant => ({
+        members: team.participants.map(participant => ({
           id: participant.id,
           registeredAt: participant.registeredAt,
           user: {
