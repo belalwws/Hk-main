@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: gmailUser,
