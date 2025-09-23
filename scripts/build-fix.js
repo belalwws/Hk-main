@@ -10,6 +10,13 @@ const path = require('path')
 
 console.log('🔧 Running build fixes...')
 
+// Fix 0: Remove package-lock.json to force regeneration
+const packageLockPath = path.join(__dirname, '..', 'package-lock.json')
+if (fs.existsSync(packageLockPath)) {
+  fs.unlinkSync(packageLockPath)
+  console.log('✅ Removed old package-lock.json')
+}
+
 // Fix 1: Ensure all required directories exist
 const requiredDirs = [
   'node_modules',
