@@ -5,7 +5,7 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: node scripts/fix-package-lock.js && npm install --legacy-peer-deps && node scripts/fix-nodemailer-build.js && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
+    buildCommand: node scripts/emergency-fix.js && npm install --no-package-lock && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
     installCommand: npm install
     startCommand: npm start
     healthCheckPath: /
