@@ -5,8 +5,8 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: npm ci && npm run build
-    installCommand: npm ci
+    buildCommand: npm install && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
+    installCommand: npm install
     startCommand: npm start
     healthCheckPath: /
     autoDeploy: true

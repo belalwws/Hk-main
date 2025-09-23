@@ -11,7 +11,7 @@
     "dev:setup": "npm run dev:db:generate && npm run dev:db:push",
     "lint": "next lint",
     "start": "next start",
-    "postinstall": "node scripts/render-safe-deploy.js",
+    "postinstall": "node -e \"if (process.env.NODE_ENV === 'production' || process.env.RENDER === 'true') { require('./scripts/render-safe-deploy.js') }\"",
     "type-check": "tsc --noEmit",
     "test:build": "npm run type-check && npm run lint && npm run build",
     "create-admin": "node scripts/create-admin.js",
