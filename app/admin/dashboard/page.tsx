@@ -2,7 +2,19 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Users, Calendar, Settings, Plus, BarChart3, Mail, Star, ArrowRight } from 'lucide-react'
+import { 
+  Calendar, 
+  Users, 
+  Trophy, 
+  Star, 
+  Plus, 
+  ArrowRight, 
+  ArrowLeft,
+  Mail, 
+  Settings, 
+  BarChart3,
+  FileText
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -260,23 +272,38 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/results">
-            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
-              <CardContent className="p-6 text-center">
-                <Trophy className="w-12 h-12 text-[#3ab666] mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="text-lg font-bold text-[#01645e] mb-2">النتائج والتقييم</h3>
-                <p className="text-[#8b7632] text-sm">عرض نتائج التقييم والترتيب</p>
+          <Link href="/admin/hackathons">
+            <Card className="bg-white/90 backdrop-blur-lg border border-[#01645e]/20 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#c3e956] to-[#3ab666] rounded-full blur-lg opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                    <div className="relative bg-gradient-to-r from-[#01645e] to-[#3ab666] p-4 rounded-full">
+                      <Calendar className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                  <ArrowLeft className="w-5 h-5 text-[#8b7632] group-hover:translate-x-1 transition-transform" />
+                </div>
+                <h3 className="text-xl font-bold text-[#01645e] mb-2">إدارة الهاكاثونات</h3>
+                <p className="text-[#8b7632]">إنشاء وإدارة الهاكاثونات والفعاليات</p>
               </CardContent>
             </Card>
           </Link>
 
-
-          <Link href="/admin/reports">
-            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
-              <CardContent className="p-6 text-center">
-                <BarChart3 className="w-12 h-12 text-[#8b7632] mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="text-lg font-bold text-[#01645e] mb-2">التقارير والإحصائيات</h3>
-                <p className="text-[#8b7632] text-sm">تقارير مفصلة وإحصائيات</p>
+          <Link href="/admin/forms-overview">
+            <Card className="bg-white/90 backdrop-blur-lg border border-[#01645e]/20 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#c3e956] to-[#3ab666] rounded-full blur-lg opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                    <div className="relative bg-gradient-to-r from-[#01645e] to-[#3ab666] p-4 rounded-full">
+                      <FileText className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                  <ArrowLeft className="w-5 h-5 text-[#8b7632] group-hover:translate-x-1 transition-transform" />
+                </div>
+                <h3 className="text-xl font-bold text-[#01645e] mb-2">إدارة النماذج الموحدة</h3>
+                <p className="text-[#8b7632]">إدارة نماذج التسجيل والطلبات لجميع الهاكاثونات</p>
               </CardContent>
             </Card>
           </Link>
