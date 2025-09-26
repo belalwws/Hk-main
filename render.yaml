@@ -5,8 +5,8 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: node scripts/emergency-fix.js && npm install --legacy-peer-deps && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
-    installCommand: npm install
+    buildCommand: rm -rf package-lock.json node_modules && npm install --legacy-peer-deps --no-package-lock && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
+    installCommand: echo "Skipping install - handled in buildCommand"
     startCommand: npm start
     healthCheckPath: /
     autoDeploy: true

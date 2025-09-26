@@ -5,13 +5,14 @@ The render.yaml changes are not being picked up by the deployment. The build is 
 
 ## IMMEDIATE SOLUTION
 
-### Option 1: Manual Render Dashboard Fix
+### Option 1: Manual Render Dashboard Fix (RECOMMENDED)
 1. Go to Render Dashboard
 2. Navigate to your service settings
 3. Change the build command to:
 ```bash
-rm -rf node_modules package-lock.json && npm install --force && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
+rm -rf node_modules package-lock.json && npm install --legacy-peer-deps --no-package-lock && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
 ```
+4. Change Install Command to: `echo "Skipping install"`
 
 ### Option 2: Use Emergency Render Config
 1. Rename current `render.yaml` to `render-old.yaml`
@@ -24,8 +25,23 @@ Add this to the beginning of your current build command in Render Dashboard:
 rm -rf node_modules package-lock.json && 
 ```
 
+## 🛡️ Data Protection Guarantee
+All solutions use `scripts/safe-db-setup.js` which:
+- ✅ Checks for existing data before any operation
+- ✅ Never uses `db push` in production
+- ✅ Preserves all existing data
+- ✅ Only creates admin user if none exists
+
+## 🔍 Success Indicators
+Look for these messages in the build log:
+- ✅ "Dependencies installed successfully"
+- ✅ "✔ Generated Prisma Client"
+- ✅ "Safe database setup completed"
+- ✅ "✓ Compiled successfully"
+
 ## Why This Happens
 - Git commits are not syncing the render.yaml changes
+- Render is still using cached build configuration
 - Render is using cached configuration
 - package-lock.json conflicts with updated package.json
 
