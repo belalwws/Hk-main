@@ -1,12 +1,13 @@
-# Render Configuration for Hackathon Platform
+# Emergency Render Configuration - Use this if main render.yaml fails
 services:
   - type: web
     name: hackathon-platform
     env: node
     region: oregon
     plan: starter
-    buildCommand: node scripts/emergency-fix.js && npm install --legacy-peer-deps && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
-    installCommand: npm install
+    # EMERGENCY BUILD COMMAND - bypasses package-lock.json issues
+    buildCommand: rm -rf node_modules package-lock.json && npm install --force && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
+    installCommand: npm install --force
     startCommand: npm start
     healthCheckPath: /
     autoDeploy: true
@@ -34,6 +35,3 @@ databases:
     user: hackathon_user
     region: oregon
     plan: standard
-    # استخدام standard plan لضمان استمرارية البيانات
-    # starter plan يحذف البيانات بعد 90 يوم
-    # standard plan يحتفظ بالبيانات بشكل دائم

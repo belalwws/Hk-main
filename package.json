@@ -60,6 +60,7 @@
     "@react-three/fiber": "latest",
     "@types/bcryptjs": "^2.4.6",
     "@types/nodemailer": "^6.4.19",
+    "@aws-sdk/client-ses": "^3.894.0",
     "bcryptjs": "latest",
     "canvas": "^3.2.0",
     "class-variance-authority": "^0.7.1",
