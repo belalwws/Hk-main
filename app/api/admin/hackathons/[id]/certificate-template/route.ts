@@ -56,7 +56,7 @@ export async function POST(
     const buffer = Buffer.from(bytes)
     await writeFile(filePath, buffer)
 
-    // Update hackathon in database with full path
+    // Update hackathon in database with public path (will be served by API)
     const publicPath = `/certificates/${fileName}`
     await prisma.hackathon.update({
       where: { id: hackathonId },

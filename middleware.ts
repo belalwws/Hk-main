@@ -15,13 +15,21 @@ const protectedRoutes: { prefix: string; roles: ("admin" | "judge")[] }[] = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Handle certificate files - redirect to API
+  if (pathname.startsWith("/certificates/")) {
+    const filename = pathname.replace("/certificates/", "")
+    if (filename && filename.match(/^[a-zA-Z0-9\-_.]+\.(png|jpg|jpeg|webp)$/)) {
+      const apiUrl = new URL(`/api/certificates/${filename}`, request.url)
+      return NextResponse.rewrite(apiUrl)
+    }
+  }
+
   // Skip Next.js internals, static assets, and public routes
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
     pathname.startsWith("/assets") ||
     pathname.startsWith("/static") ||
-    pathname.startsWith("/certificates") ||
     pathname.startsWith("/uploads") ||
     pathname === "/" ||
     pathname === "/login" ||
@@ -108,5 +116,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*"],
+  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*", "/certificates/:path*"],
 }
