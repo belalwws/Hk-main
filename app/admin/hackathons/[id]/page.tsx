@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import TeamsDisplay from '@/components/admin/TeamsDisplay'
+import ParticipantsImport from '@/components/admin/ParticipantsImport'
 import { AlertModal, ConfirmModal } from '@/components/ui/modal'
 import { useModal } from '@/hooks/use-modal'
 import { ExcelExporter } from '@/lib/excel-export'
@@ -887,6 +888,15 @@ export default function HackathonManagementPage() {
             </TabsList>
 
             <TabsContent value="participants" className="space-y-6">
+              {/* Participants Import */}
+              <ParticipantsImport
+                hackathonId={hackathon.id}
+                onImportComplete={() => {
+                  fetchParticipants()
+                  fetchStats()
+                }}
+              />
+
               <Card>
                 <CardHeader>
                   <div className="flex justify-between items-center">

@@ -56,18 +56,21 @@ export async function POST(
     const buffer = Buffer.from(bytes)
     await writeFile(filePath, buffer)
 
-    // Update hackathon in database
+    // Update hackathon in database with full path
+    const publicPath = `/certificates/${fileName}`
     await prisma.hackathon.update({
       where: { id: hackathonId },
       data: {
-        certificateTemplate: fileName
+        certificateTemplate: publicPath
       }
     })
+
+    console.log('✅ Certificate template saved:', publicPath)
 
     return NextResponse.json({
       message: 'تم رفع قالب الشهادة بنجاح',
       fileName: fileName,
-      filePath: `/certificates/${fileName}`
+      filePath: publicPath
     })
 
   } catch (error) {
@@ -95,7 +98,7 @@ export async function GET(
 
     return NextResponse.json({
       certificateTemplate: hackathon.certificateTemplate,
-      templatePath: hackathon.certificateTemplate ? `/certificates/${hackathon.certificateTemplate}` : null,
+      templatePath: hackathon.certificateTemplate || '/row-certificat.png',
       hackathonTitle: hackathon.title
     })
 

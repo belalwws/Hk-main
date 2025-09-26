@@ -22,12 +22,18 @@ export async function GET(
     }
 
     // Try to get existing certificate settings for this hackathon
-    let settings = await prisma.$queryRaw`
-      SELECT * FROM certificate_settings 
-      WHERE hackathon_id = ${hackathonId}
-      ORDER BY created_at DESC 
-      LIMIT 1
-    ` as any[]
+    let settings = []
+    try {
+      settings = await prisma.$queryRaw`
+        SELECT * FROM certificate_settings
+        WHERE id = ${hackathonId}
+        ORDER BY "createdAt" DESC
+        LIMIT 1
+      ` as any[]
+    } catch (dbError) {
+      console.log('Certificate settings table might not exist, using defaults')
+      settings = []
+    }
 
     if (settings.length === 0) {
       // Return default settings if none exist
@@ -50,8 +56,8 @@ export async function GET(
     }
 
     try {
-      if (setting.settings_data) {
-        const parsed = JSON.parse(setting.settings_data)
+      if (setting.settings) {
+        const parsed = typeof setting.settings === 'string' ? JSON.parse(setting.settings) : setting.settings
         parsedSettings = { ...parsedSettings, ...parsed }
       }
     } catch (parseError) {
@@ -110,16 +116,33 @@ export async function POST(
       updatedBy: updatedBy || 'admin'
     }
 
-    // Save settings to database
-    await prisma.$executeRaw`
-      INSERT INTO certificate_settings (hackathon_id, settings_data, updated_by, created_at, updated_at)
-      VALUES (${hackathonId}, ${JSON.stringify(settingsData)}, ${updatedBy || 'admin'}, NOW(), NOW())
-      ON CONFLICT (hackathon_id) 
-      DO UPDATE SET 
-        settings_data = ${JSON.stringify(settingsData)},
-        updated_by = ${updatedBy || 'admin'},
-        updated_at = NOW()
-    `
+    // Save settings to database using Prisma model
+    try {
+      await prisma.globalSettings.upsert({
+        where: { key: `certificate_settings_${hackathonId}` },
+        update: {
+          value: settingsData,
+          updatedAt: new Date()
+        },
+        create: {
+          key: `certificate_settings_${hackathonId}`,
+          value: settingsData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      })
+    } catch (upsertError) {
+      console.error('Error upserting certificate settings:', upsertError)
+      // Fallback to raw SQL if needed
+      await prisma.$executeRaw`
+        INSERT INTO certificate_settings (id, settings, "createdAt", "updatedAt")
+        VALUES (${hackathonId}, ${JSON.stringify(settingsData)}, NOW(), NOW())
+        ON CONFLICT (id)
+        DO UPDATE SET
+          settings = ${JSON.stringify(settingsData)},
+          "updatedAt" = NOW()
+      `
+    }
 
     console.log('✅ Certificate settings saved for hackathon:', hackathonId)
 
