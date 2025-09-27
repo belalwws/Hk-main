@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Certificate Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Certificate Upload</h1>
+    
+    <form id="uploadForm">
+        <div class="form-group">
+            <label for="hackathonId">Hackathon ID:</label>
+            <input type="text" id="hackathonId" value="cmfsf2n4y0000ax1v2gb2andu" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="certificateFile">Certificate Template (Image):</label>
+            <input type="file" id="certificateFile" accept="image/*" required>
+        </div>
+        
+        <div class="form-group">
+            <button type="button" onclick="testHackathonExists()">Test Hackathon Exists</button>
+            <button type="button" onclick="createTestImage()">Create Test Image</button>
+            <button type="button" onclick="testSimpleUpload()">Test Simple Upload (No Auth)</button>
+            <button type="button" onclick="testCloudinaryUpload()">Test Cloudinary Upload</button>
+            <button type="button" onclick="testDebugEndpoint()">Test Debug Endpoint</button>
+            <button type="button" onclick="testMainEndpoint()">Test Main Endpoint</button>
+        </div>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+        }
+
+        async function testHackathonExists() {
+            const hackathonId = document.getElementById('hackathonId').value;
+
+            showResult('Testing if hackathon exists...', 'loading');
+
+            try {
+                const response = await fetch(`https://hackathon-platform-601l.onrender.com/api/test-hackathon/${hackathonId}`, {
+                    method: 'GET'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(`✅ Hackathon test successful!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    showResult(`❌ Hackathon test failed (${response.status}):<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Hackathon test error: ${error.message}`, 'error');
+            }
+        }
+
+        function createTestImage() {
+            // Create a small test image using canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 100;
+            canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+
+            // Draw a simple test pattern
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(0, 0, 50, 50);
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(50, 0, 50, 50);
+            ctx.fillStyle = '#0000ff';
+            ctx.fillRect(0, 50, 50, 50);
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(50, 50, 50, 50);
+
+            // Convert to blob and create file
+            canvas.toBlob((blob) => {
+                const file = new File([blob], 'test-image.png', { type: 'image/png' });
+
+                // Create a new file input with the test file
+                const fileInput = document.getElementById('certificateFile');
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+
+                showResult('✅ Test image created and selected (100x100 PNG)', 'success');
+            }, 'image/png');
+        }
+
+        async function testSimpleUpload() {
+            const fileInput = document.getElementById('certificateFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showResult('Please select a file first', 'error');
+                return;
+            }
+
+            showResult('Testing simple upload (no auth)...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(`https://hackathon-platform-601l.onrender.com/api/test-upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(`✅ Simple upload test successful!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    showResult(`❌ Simple upload test failed (${response.status}):<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Simple upload test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCloudinaryUpload() {
+            const fileInput = document.getElementById('certificateFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showResult('Please select a file first', 'error');
+                return;
+            }
+
+            showResult('Testing Cloudinary upload...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(`https://hackathon-platform-601l.onrender.com/api/test-cloudinary-upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(`✅ Cloudinary upload test successful!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    showResult(`❌ Cloudinary upload test failed (${response.status}):<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Cloudinary upload test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDebugEndpoint() {
+            const hackathonId = document.getElementById('hackathonId').value;
+            const fileInput = document.getElementById('certificateFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showResult('Please select a file first', 'error');
+                return;
+            }
+            
+            showResult('Testing debug endpoint...', 'loading');
+            
+            try {
+                const formData = new FormData();
+                formData.append('certificateTemplate', file);
+                
+                const response = await fetch(`https://hackathon-platform-601l.onrender.com/api/admin/hackathons/${hackathonId}/certificate-template-debug`, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Debug test successful!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    showResult(`❌ Debug test failed (${response.status}):<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Debug test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMainEndpoint() {
+            const hackathonId = document.getElementById('hackathonId').value;
+            const fileInput = document.getElementById('certificateFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showResult('Please select a file first', 'error');
+                return;
+            }
+            
+            showResult('Testing main endpoint...', 'loading');
+            
+            try {
+                const formData = new FormData();
+                formData.append('certificateTemplate', file);
+                
+                const response = await fetch(`https://hackathon-platform-601l.onrender.com/api/admin/hackathons/${hackathonId}/certificate-template`, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Main test successful!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    showResult(`❌ Main test failed (${response.status}):<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Main test error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

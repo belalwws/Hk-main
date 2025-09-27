@@ -8,7 +8,16 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log('🚀 Certificate template upload started')
+    console.log('📋 Request details:', {
+      method: request.method,
+      url: request.url,
+      contentType: request.headers.get('content-type'),
+      userAgent: request.headers.get('user-agent')
+    })
+
     const { id: hackathonId } = await params
+    console.log('🆔 Hackathon ID:', hackathonId)
 
     // Verify admin authentication
     console.log('🔐 Checking authentication...')
@@ -87,6 +96,7 @@ export async function POST(
 
     let uploadResult: any
     try {
+      console.log('🔄 Starting upload process...')
       uploadResult = await uploadFile(buffer, fileName, file.type, 'certificates')
       console.log('📊 Upload result:', {
         success: uploadResult.success,
@@ -95,7 +105,28 @@ export async function POST(
       })
     } catch (error) {
       console.error('❌ Upload function threw error:', error)
-      throw new Error('فشل في استدعاء دالة الرفع: ' + (error instanceof Error ? error.message : 'خطأ غير معروف'))
+      console.error('❌ Upload error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        type: typeof error,
+        constructor: error?.constructor?.name
+      })
+
+      // Try to provide more specific error information
+      let errorMessage = 'فشل في استدعاء دالة الرفع'
+      if (error instanceof Error) {
+        if (error.message.includes('Cloudinary')) {
+          errorMessage = 'فشل في رفع الملف إلى Cloudinary'
+        } else if (error.message.includes('Buffer')) {
+          errorMessage = 'فشل في معالجة الملف'
+        } else if (error.message.includes('network') || error.message.includes('timeout')) {
+          errorMessage = 'فشل في الاتصال بخدمة التخزين'
+        } else {
+          errorMessage = `فشل في رفع الملف: ${error.message}`
+        }
+      }
+
+      throw new Error(errorMessage)
     }
 
     if (!uploadResult.success) {
@@ -114,6 +145,21 @@ export async function POST(
     })
 
     try {
+      console.log('💾 Updating database with certificate template URL...')
+
+      // First check if hackathon exists
+      const existingHackathon = await prisma.hackathon.findUnique({
+        where: { id: hackathonId },
+        select: { id: true, title: true }
+      })
+
+      if (!existingHackathon) {
+        throw new Error(`Hackathon with ID ${hackathonId} not found`)
+      }
+
+      console.log('✅ Hackathon found:', existingHackathon.title)
+
+      // Update the hackathon
       await prisma.hackathon.update({
         where: { id: hackathonId },
         data: {
@@ -123,7 +169,25 @@ export async function POST(
       console.log('✅ Certificate template saved to database successfully')
     } catch (error) {
       console.error('❌ Database save failed:', error)
-      throw new Error('فشل في حفظ البيانات: ' + (error instanceof Error ? error.message : 'خطأ غير معروف'))
+      console.error('❌ Database error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        hackathonId: hackathonId,
+        uploadUrl: uploadResult.url
+      })
+
+      let errorMessage = 'فشل في حفظ البيانات'
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          errorMessage = 'الهاكاثون غير موجود'
+        } else if (error.message.includes('connection')) {
+          errorMessage = 'فشل في الاتصال بقاعدة البيانات'
+        } else {
+          errorMessage = `فشل في حفظ البيانات: ${error.message}`
+        }
+      }
+
+      throw new Error(errorMessage)
     }
 
     return NextResponse.json({
@@ -138,12 +202,24 @@ export async function POST(
     console.error('❌ Error details:', {
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
+      type: typeof error,
+      constructor: error.constructor?.name
+    })
+
+    // Log additional context
+    console.error('❌ Request context:', {
+      method: request.method,
+      url: request.url,
+      headers: Object.fromEntries(request.headers.entries()),
+      hasFormData: request.headers.get('content-type')?.includes('multipart/form-data')
     })
 
     return NextResponse.json({
       error: 'خطأ في رفع قالب الشهادة: ' + (error.message || 'خطأ غير معروف'),
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      errorType: error.constructor?.name,
+      timestamp: new Date().toISOString()
     }, { status: 500 })
   }
 }
