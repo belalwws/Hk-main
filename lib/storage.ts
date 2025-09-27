@@ -63,6 +63,23 @@ export async function uploadToCloudinary(
 ): Promise<UploadResult> {
   try {
     console.log('☁️ Uploading to Cloudinary:', filename)
+    console.log('🔧 Cloudinary config:', {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? '✅' : '❌',
+      api_key: process.env.CLOUDINARY_API_KEY ? '✅' : '❌',
+      api_secret: process.env.CLOUDINARY_API_SECRET ? '✅' : '❌'
+    })
+
+    // Ensure Cloudinary is configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      throw new Error('Cloudinary credentials not configured')
+    }
+
+    // Re-configure Cloudinary to ensure it's set up
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    })
 
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
@@ -73,11 +90,20 @@ export async function uploadToCloudinary(
           overwrite: true,
         },
         (error, result) => {
-          if (error) reject(error)
-          else resolve(result)
+          if (error) {
+            console.error('❌ Cloudinary stream error:', error)
+            reject(error)
+          } else {
+            console.log('✅ Cloudinary stream success:', result?.secure_url)
+            resolve(result)
+          }
         }
       ).end(file)
     }) as any
+
+    if (!result || !result.secure_url) {
+      throw new Error('Cloudinary upload returned no result')
+    }
 
     console.log('✅ Cloudinary upload successful:', result.secure_url)
 

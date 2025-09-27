@@ -74,9 +74,18 @@ export async function POST(
       storage: uploadResult.url?.startsWith('https://') ? 'S3' : 'Local'
     })
 
-  } catch (error) {
-    console.error('Error uploading certificate template:', error)
-    return NextResponse.json({ error: 'خطأ في رفع قالب الشهادة' }, { status: 500 })
+  } catch (error: any) {
+    console.error('❌ Error uploading certificate template:', error)
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+
+    return NextResponse.json({
+      error: 'خطأ في رفع قالب الشهادة: ' + (error.message || 'خطأ غير معروف'),
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 })
   }
 }
 
