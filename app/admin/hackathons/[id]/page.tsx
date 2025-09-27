@@ -892,8 +892,7 @@ export default function HackathonManagementPage() {
               <ParticipantsImport
                 hackathonId={hackathon.id}
                 onImportComplete={() => {
-                  fetchParticipants()
-                  fetchStats()
+                  fetchHackathon() // Refresh hackathon data which includes participants
                 }}
               />
 
