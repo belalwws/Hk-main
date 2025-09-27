@@ -46,9 +46,24 @@ export async function saveToLocal(
     }
   } catch (error) {
     console.error('❌ Local save failed:', error)
+    console.error('❌ Local save error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack',
+      type: typeof error,
+      constructor: error?.constructor?.name,
+      filePath
+    })
+
+    let errorMessage = 'Local file save failed'
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (typeof error === 'string') {
+      errorMessage = error
+    }
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: errorMessage
     }
   }
 }
@@ -114,9 +129,25 @@ export async function uploadToCloudinary(
     }
   } catch (error) {
     console.error('❌ Cloudinary upload failed:', error)
+    console.error('❌ Cloudinary error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack',
+      type: typeof error,
+      constructor: error?.constructor?.name
+    })
+
+    let errorMessage = 'Cloudinary upload failed'
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (typeof error === 'string') {
+      errorMessage = error
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String(error.message)
+    }
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: errorMessage
     }
   }
 }
@@ -130,18 +161,39 @@ export async function uploadFile(
   contentType: string,
   folder: string = 'certificates'
 ): Promise<UploadResult> {
-  const key = `${folder}/${filename}`
+  try {
+    console.log('🚀 uploadFile called with:', {
+      filename,
+      contentType,
+      folder,
+      bufferSize: file.length,
+      hasCloudinaryConfig: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY)
+    })
 
-  // Try Cloudinary first (recommended)
-  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
-    console.log('☁️ Using Cloudinary storage')
-    return await uploadToCloudinary(file, filename, folder)
+    const key = `${folder}/${filename}`
+
+    // Try Cloudinary first (recommended)
+    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+      console.log('☁️ Using Cloudinary storage')
+      const result = await uploadToCloudinary(file, filename, folder)
+      console.log('☁️ Cloudinary result:', result)
+      return result
+    }
+
+    // Fallback to local storage
+    console.log('💾 Using local storage (development only - files will be lost on Render)')
+    const localPath = `${process.cwd()}/public/${key}`
+    const result = await saveToLocal(file, localPath)
+    console.log('💾 Local storage result:', result)
+    return result
+
+  } catch (error) {
+    console.error('❌ uploadFile error:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown upload error'
+    }
   }
-
-  // Fallback to local storage
-  console.log('💾 Using local storage (development only - files will be lost on Render)')
-  const localPath = `${process.cwd()}/public/${key}`
-  return await saveToLocal(file, localPath)
 }
 
 /**

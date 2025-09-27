@@ -70,6 +70,7 @@
         </div>
         
         <div class="form-group">
+            <button type="button" onclick="quickFixTest()" style="background-color: #28a745; font-weight: bold;">🚀 QUICK FIX TEST</button>
             <button type="button" onclick="testHackathonExists()">Test Hackathon Exists</button>
             <button type="button" onclick="createTestImage()">Create Test Image</button>
             <button type="button" onclick="testSimpleUpload()">Test Simple Upload (No Auth)</button>
@@ -86,6 +87,38 @@
             const resultDiv = document.getElementById('result');
             resultDiv.className = `result ${type}`;
             resultDiv.innerHTML = message;
+        }
+
+        async function quickFixTest() {
+            const fileInput = document.getElementById('certificateFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showResult('Please select a file first', 'error');
+                return;
+            }
+
+            showResult('🚀 Running QUICK FIX test...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(`https://hackathon-platform-601l.onrender.com/api/quick-fix-upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(`✅ QUICK FIX successful!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    showResult(`❌ QUICK FIX failed (${response.status}):<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ QUICK FIX error: ${error.message}`, 'error');
+            }
         }
 
         async function testHackathonExists() {

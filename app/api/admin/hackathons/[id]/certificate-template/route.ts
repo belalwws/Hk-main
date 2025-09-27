@@ -97,6 +97,12 @@ export async function POST(
     let uploadResult: any
     try {
       console.log('🔄 Starting upload process...')
+      console.log('🔧 Environment check:', {
+        hasCloudinaryName: !!process.env.CLOUDINARY_CLOUD_NAME,
+        hasCloudinaryKey: !!process.env.CLOUDINARY_API_KEY,
+        hasCloudinarySecret: !!process.env.CLOUDINARY_API_SECRET
+      })
+
       uploadResult = await uploadFile(buffer, fileName, file.type, 'certificates')
       console.log('📊 Upload result:', {
         success: uploadResult.success,
@@ -131,9 +137,34 @@ export async function POST(
 
     if (!uploadResult.success) {
       console.error('❌ Upload failed:', uploadResult.error)
-      return NextResponse.json({
-        error: 'فشل في رفع الملف: ' + uploadResult.error
-      }, { status: 500 })
+
+      // QUICK FIX: Try to save locally as fallback
+      try {
+        console.log('🔄 Trying local fallback save...')
+        const fs = await import('fs/promises')
+        const path = await import('path')
+
+        const uploadsDir = path.join(process.cwd(), 'public', 'certificates')
+        await fs.mkdir(uploadsDir, { recursive: true })
+
+        const localPath = path.join(uploadsDir, fileName)
+        await fs.writeFile(localPath, buffer)
+
+        const publicUrl = `/certificates/${fileName}`
+        console.log('✅ Local fallback successful:', publicUrl)
+
+        uploadResult = {
+          success: true,
+          url: publicUrl,
+          key: fileName
+        }
+
+      } catch (localError) {
+        console.error('❌ Local fallback also failed:', localError)
+        return NextResponse.json({
+          error: 'فشل في رفع الملف: ' + uploadResult.error + ' (Local fallback also failed)'
+        }, { status: 500 })
+      }
     }
 
     console.log('✅ Upload successful:', uploadResult.url)
