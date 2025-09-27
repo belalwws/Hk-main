@@ -21,12 +21,23 @@ export async function POST(
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
+    console.log('📥 Processing form data...')
     const formData = await request.formData()
+    console.log('📋 Form data keys:', Array.from(formData.keys()))
+
     const file = formData.get('certificateTemplate') as File
 
     if (!file) {
+      console.log('❌ No file provided in form data')
       return NextResponse.json({ error: 'ملف الشهادة مطلوب' }, { status: 400 })
     }
+
+    console.log('📁 File received:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    })
 
     // Validate file type (images only)
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -42,11 +53,38 @@ export async function POST(
     const fileName = `hackathon-${hackathonId}-${timestamp}.${fileExtension}`
 
     // Upload file using smart storage
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    console.log('🔄 Converting file to buffer...')
+    let bytes: ArrayBuffer
+    let buffer: Buffer
 
-    console.log('📤 Uploading certificate:', fileName, 'Size:', buffer.length)
-    const uploadResult = await uploadFile(buffer, fileName, file.type, 'certificates')
+    try {
+      bytes = await file.arrayBuffer()
+      buffer = Buffer.from(bytes)
+      console.log('✅ Buffer conversion successful:', buffer.length, 'bytes')
+    } catch (error) {
+      console.error('❌ Buffer conversion failed:', error)
+      throw new Error('فشل في تحويل الملف: ' + (error instanceof Error ? error.message : 'خطأ غير معروف'))
+    }
+
+    console.log('📤 Uploading certificate:', {
+      fileName,
+      bufferSize: buffer.length,
+      fileType: file.type,
+      folder: 'certificates'
+    })
+
+    let uploadResult: any
+    try {
+      uploadResult = await uploadFile(buffer, fileName, file.type, 'certificates')
+      console.log('📊 Upload result:', {
+        success: uploadResult.success,
+        url: uploadResult.url,
+        error: uploadResult.error
+      })
+    } catch (error) {
+      console.error('❌ Upload function threw error:', error)
+      throw new Error('فشل في استدعاء دالة الرفع: ' + (error instanceof Error ? error.message : 'خطأ غير معروف'))
+    }
 
     if (!uploadResult.success) {
       console.error('❌ Upload failed:', uploadResult.error)
@@ -58,14 +96,23 @@ export async function POST(
     console.log('✅ Upload successful:', uploadResult.url)
 
     // Update hackathon in database with the uploaded URL
-    await prisma.hackathon.update({
-      where: { id: hackathonId },
-      data: {
-        certificateTemplate: uploadResult.url
-      }
+    console.log('💾 Saving to database:', {
+      hackathonId,
+      url: uploadResult.url
     })
 
-    console.log('✅ Certificate template saved to database:', uploadResult.url)
+    try {
+      await prisma.hackathon.update({
+        where: { id: hackathonId },
+        data: {
+          certificateTemplate: uploadResult.url
+        }
+      })
+      console.log('✅ Certificate template saved to database successfully')
+    } catch (error) {
+      console.error('❌ Database save failed:', error)
+      throw new Error('فشل في حفظ البيانات: ' + (error instanceof Error ? error.message : 'خطأ غير معروف'))
+    }
 
     return NextResponse.json({
       message: 'تم رفع قالب الشهادة بنجاح',
