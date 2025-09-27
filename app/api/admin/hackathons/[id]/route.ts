@@ -163,10 +163,16 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { status } = body
+    const { status, settings } = body
 
-    if (!status || !['draft', 'open', 'closed', 'completed'].includes(status)) {
+    // Validate status if provided
+    if (status && !['draft', 'open', 'closed', 'completed'].includes(status)) {
       return NextResponse.json({ error: 'حالة غير صحيحة' }, { status: 400 })
+    }
+
+    // Ensure at least one field is provided
+    if (!status && !settings) {
+      return NextResponse.json({ error: 'لا توجد بيانات للتحديث' }, { status: 400 })
     }
 
     const resolvedParams = await params
@@ -178,14 +184,23 @@ export async function PATCH(
       return NextResponse.json({ error: 'الهاكاثون غير موجود' }, { status: 404 })
     }
 
-    // Update hackathon status
+    // Prepare update data
+    const updateData: any = {}
+    if (status) updateData.status = status
+    if (settings) updateData.settings = settings
+
+    // Update hackathon
     const updatedHackathon = await prisma.hackathon.update({
       where: { id: resolvedParams.id },
-      data: { status }
+      data: updateData
     })
 
+    const message = status && settings ? 'تم تحديث الهاكاثون بنجاح' :
+                   status ? 'تم تحديث حالة الهاكاثون بنجاح' :
+                   'تم تحديث إعدادات الهاكاثون بنجاح'
+
     return NextResponse.json({
-      message: 'تم تحديث حالة الهاكاثون بنجاح',
+      message,
       hackathon: updatedHackathon
     })
 

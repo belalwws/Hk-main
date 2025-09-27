@@ -429,6 +429,43 @@ export default function HackathonManagementPage() {
     }
   }
 
+  const updateTeamSettings = async (setting: string, value: any) => {
+    try {
+      const currentSettings = (hackathon?.settings as any) || {}
+      const updatedSettings = {
+        ...currentSettings,
+        [setting]: value
+      }
+
+      const response = await fetch(`/api/admin/hackathons/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: updatedSettings })
+      })
+
+      if (response.ok) {
+        // Update local state
+        setHackathon(prev => prev ? {
+          ...prev,
+          settings: updatedSettings
+        } : null)
+
+        // Show success message
+        const settingNames: { [key: string]: string } = {
+          maxTeamSize: 'حجم الفريق',
+          allowIndividualParticipation: 'المشاركة الفردية'
+        }
+        alert(`✅ تم تحديث ${settingNames[setting] || setting} بنجاح`)
+      } else {
+        const error = await response.json()
+        alert(`❌ خطأ في تحديث الإعداد: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error updating team settings:', error)
+      alert('❌ حدث خطأ في تحديث الإعدادات')
+    }
+  }
+
   const previewTeamFormation = async () => {
     if (!hackathon || !hackathon.participants) {
       alert('لا توجد بيانات هاكاثون')
@@ -453,8 +490,9 @@ export default function HackathonManagementPage() {
       roleGroups[role].push(participant)
     })
 
-    // إنشاء الفرق
-    const teamSize = 4
+    // إنشاء الفرق باستخدام حجم الفريق من إعدادات الهاكاثون
+    const hackathonSettings = hackathon.settings as any
+    const teamSize = hackathonSettings?.maxTeamSize || 4
     const numberOfTeams = Math.ceil(approvedParticipants.length / teamSize)
     const teams: any[] = []
 
@@ -1120,8 +1158,11 @@ export default function HackathonManagementPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <h3 className="text-lg font-semibold text-[#01645e] mb-1">تكوين الفرق التلقائي</h3>
-                          <p className="text-sm text-[#8b7632]">
+                          <p className="text-sm text-[#8b7632] mb-2">
                             سيتم تجميع المشاركين المقبولين في فرق متنوعة حسب الأدوار المفضلة
+                          </p>
+                          <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            📊 حجم الفريق المحدد: {(hackathon?.settings as any)?.maxTeamSize || 4} أشخاص لكل فريق
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -1411,6 +1452,63 @@ export default function HackathonManagementPage() {
                       <p className="text-blue-700 text-sm">
                         💡 يمكنك إرسال إشعارات مخصصة للمستخدمين لدعوتهم للمشاركة أو إعلامهم بالتحديثات
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Team Settings */}
+                  <div className="border rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-[#01645e] mb-4 flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      إعدادات الفرق
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <h4 className="font-semibold text-[#01645e] mb-2">حجم الفريق للتعيين التلقائي</h4>
+                          <div className="flex items-center gap-3">
+                            <Input
+                              type="number"
+                              min="2"
+                              max="10"
+                              value={(hackathon?.settings as any)?.maxTeamSize || 4}
+                              onChange={(e) => updateTeamSettings('maxTeamSize', parseInt(e.target.value) || 4)}
+                              className="w-20"
+                            />
+                            <span className="text-sm text-[#8b7632]">أشخاص لكل فريق</span>
+                          </div>
+                          <p className="text-xs text-blue-600 mt-2">
+                            يحدد عدد الأشخاص في كل فريق عند استخدام التعيين التلقائي
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                          <h4 className="font-semibold text-[#01645e] mb-2">المشاركة الفردية</h4>
+                          <div className="flex items-center gap-3">
+                            <Select
+                              value={((hackathon?.settings as any)?.allowIndividualParticipation ?? true).toString()}
+                              onValueChange={(value) => updateTeamSettings('allowIndividualParticipation', value === 'true')}
+                            >
+                              <SelectTrigger className="w-40">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="true">مسموحة</SelectItem>
+                                <SelectItem value="false">غير مسموحة</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <p className="text-xs text-green-600 mt-2">
+                            السماح للمشاركين بالتسجيل بدون فريق
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-yellow-700 text-sm">
+                          ⚠️ <strong>تنبيه:</strong> تغيير حجم الفريق سيؤثر على التعيين التلقائي الجديد فقط.
+                          الفرق الموجودة حالياً لن تتأثر.
+                        </p>
+                      </div>
                     </div>
                   </div>
 

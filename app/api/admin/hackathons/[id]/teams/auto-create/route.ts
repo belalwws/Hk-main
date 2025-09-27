@@ -30,6 +30,26 @@ export async function POST(
 
     const startingTeamNumber = existingTeams.length > 0 ? existingTeams[0].teamNumber + 1 : 1
 
+    // Get hackathon with settings to determine team size
+    const hackathon = await prisma.hackathon.findUnique({
+      where: { id: hackathonId },
+      select: {
+        id: true,
+        title: true,
+        settings: true
+      }
+    })
+
+    if (!hackathon) {
+      return NextResponse.json({ error: 'الهاكاثون غير موجود' }, { status: 404 })
+    }
+
+    // Get team size from hackathon settings, default to 4 if not specified
+    const hackathonSettings = hackathon.settings as any
+    const teamSize = hackathonSettings?.maxTeamSize || 4
+
+    console.log(`🎯 Using team size: ${teamSize} from hackathon settings`)
+
     // Get approved participants with user data
     const approvedParticipants = await prisma.participant.findMany({
       where: {
@@ -73,8 +93,7 @@ export async function POST(
 
     console.log('📊 Role distribution:', Object.keys(roleGroups).map(role => `${role}: ${roleGroups[role].length}`))
 
-    // Create balanced teams (4-5 members each)
-    const teamSize = 4
+    // Create balanced teams using the configured team size
     const teams: Array<{
       name: string
       teamNumber: number

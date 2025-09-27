@@ -29,7 +29,12 @@ export default function CreateHackathonPage() {
       third: ''
     },
     requirements: [''],
-    categories: ['']
+    categories: [''],
+    settings: {
+      maxTeamSize: 4,
+      allowIndividualParticipation: true,
+      autoTeaming: false
+    }
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +47,17 @@ export default function CreateHackathonPage() {
         ...formData,
         maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
         requirements: formData.requirements.filter(req => req.trim() !== ''),
-        categories: formData.categories.filter(cat => cat.trim() !== '')
+        categories: formData.categories.filter(cat => cat.trim() !== ''),
+        settings: {
+          ...formData.settings,
+          evaluationCriteria: [
+            { name: 'الابتكار', weight: 0.2 },
+            { name: 'الأثر التقني', weight: 0.25 },
+            { name: 'قابلية التنفيذ', weight: 0.25 },
+            { name: 'العرض التقديمي', weight: 0.2 },
+            { name: 'العمل الجماعي', weight: 0.1 },
+          ]
+        }
       }
 
       const response = await fetch('/api/admin/hackathons', {
@@ -312,11 +327,83 @@ export default function CreateHackathonPage() {
             </Card>
           </motion.div>
 
-          {/* Submit Button */}
+          {/* Team Settings */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-[#01645e]">
+                  <Users className="w-5 h-5" />
+                  إعدادات الفرق
+                </CardTitle>
+                <CardDescription>إعدادات تكوين الفرق والتعيين التلقائي</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="maxTeamSize">حجم الفريق للتعيين التلقائي *</Label>
+                    <Input
+                      id="maxTeamSize"
+                      type="number"
+                      min="2"
+                      max="10"
+                      value={formData.settings.maxTeamSize}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        settings: {
+                          ...formData.settings,
+                          maxTeamSize: parseInt(e.target.value) || 4
+                        }
+                      })}
+                      placeholder="4"
+                      required
+                    />
+                    <p className="text-sm text-[#8b7632] mt-1">
+                      عدد الأشخاص في كل فريق عند استخدام التعيين التلقائي (2-10)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="allowIndividualParticipation">السماح بالمشاركة الفردية</Label>
+                    <Select
+                      value={formData.settings.allowIndividualParticipation.toString()}
+                      onValueChange={(value) => setFormData({
+                        ...formData,
+                        settings: {
+                          ...formData.settings,
+                          allowIndividualParticipation: value === 'true'
+                        }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">نعم، السماح بالمشاركة الفردية</SelectItem>
+                        <SelectItem value="false">لا، الفرق فقط</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-blue-700 text-sm">
+                    💡 <strong>حجم الفريق:</strong> يحدد عدد الأشخاص في كل فريق عند استخدام ميزة "التعيين التلقائي" في إدارة الفرق.
+                    يمكنك تغيير هذا الإعداد لاحقاً من صفحة إدارة الهاكاثون.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Submit Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
             className="flex justify-end gap-4"
           >
             <Link href="/admin/hackathons">
