@@ -11,15 +11,27 @@ export async function POST(
     const { id: hackathonId } = await params
 
     // Verify admin authentication
-    const token = request.cookies.get('auth-token')?.value
+    console.log('🔐 Checking authentication...')
+
+    // Try to get token from Authorization header first, then cookies
+    let token = request.headers.get('authorization')?.replace('Bearer ', '')
     if (!token) {
-      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+      token = request.cookies.get('auth-token')?.value
     }
 
+    if (!token) {
+      console.log('❌ No token found in headers or cookies')
+      return NextResponse.json({ error: 'غير مصرح - لا يوجد token' }, { status: 401 })
+    }
+
+    console.log('✅ Token found, verifying...')
     const payload = await verifyToken(token)
     if (!payload || payload.role !== 'admin') {
-      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+      console.log('❌ Token verification failed or not admin')
+      return NextResponse.json({ error: 'غير مصرح - صلاحيات غير كافية' }, { status: 401 })
     }
+
+    console.log('✅ Admin authentication successful')
 
     console.log('📥 Processing form data...')
     const formData = await request.formData()
