@@ -161,33 +161,32 @@ export async function POST(
               phone: row[headerMap.phone]?.toString().trim() || null,
               university: row[headerMap.university]?.toString().trim() || null,
               major: row[headerMap.major]?.toString().trim() || null,
-              year: row[headerMap.year]?.toString().trim() || null,
+              graduationYear: row[headerMap.year]?.toString().trim() || null, // Fixed: year -> graduationYear
               role: 'participant',
               password: 'temp123', // Temporary password - user should reset
-              isVerified: false
+              emailVerified: false // Fixed: isVerified -> emailVerified
             }
           })
           userId = newUser.id
         }
 
         // Check if already registered for this hackathon
-        const existingRegistration = await prisma.registration.findFirst({
+        const existingParticipant = await prisma.participant.findFirst({
           where: {
             userId,
             hackathonId
           }
         })
 
-        if (!existingRegistration) {
-          // Create registration with 'accepted' status
-          await prisma.registration.create({
+        if (!existingParticipant) {
+          // Create participant with 'approved' status
+          await prisma.participant.create({
             data: {
               userId,
               hackathonId,
-              status: 'accepted',
-              submittedAt: new Date(),
-              reviewedAt: new Date(),
-              reviewedBy: payload.name || 'admin'
+              status: 'approved', // Auto-approve bulk imported participants
+              registeredAt: new Date(),
+              approvedAt: new Date()
             }
           })
         }
@@ -196,7 +195,7 @@ export async function POST(
           name,
           email,
           status: existingUser ? 'existing_user' : 'new_user',
-          registration: existingRegistration ? 'already_registered' : 'registered'
+          registration: existingParticipant ? 'already_registered' : 'registered'
         })
 
       } catch (error) {
