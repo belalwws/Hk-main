@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
 import { prisma } from '@/lib/prisma'
+import { uploadFile } from '@/lib/storage'
 
 export async function POST(
   request: NextRequest,
@@ -37,40 +36,42 @@ export async function POST(
       }, { status: 400 })
     }
 
-    // Create certificates directory if it doesn't exist
-    const certificatesDir = path.join(process.cwd(), 'public', 'certificates')
-    try {
-      await mkdir(certificatesDir, { recursive: true })
-    } catch (error) {
-      // Directory might already exist
-    }
-
     // Generate unique filename
     const timestamp = Date.now()
-    const fileExtension = path.extname(file.name)
-    const fileName = `hackathon-${hackathonId}-${timestamp}${fileExtension}`
-    const filePath = path.join(certificatesDir, fileName)
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'png'
+    const fileName = `hackathon-${hackathonId}-${timestamp}.${fileExtension}`
 
-    // Save file
+    // Upload file using smart storage
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
 
-    // Update hackathon in database with public path (will be served by API)
-    const publicPath = `/certificates/${fileName}`
+    console.log('📤 Uploading certificate:', fileName, 'Size:', buffer.length)
+    const uploadResult = await uploadFile(buffer, fileName, file.type, 'certificates')
+
+    if (!uploadResult.success) {
+      console.error('❌ Upload failed:', uploadResult.error)
+      return NextResponse.json({
+        error: 'فشل في رفع الملف: ' + uploadResult.error
+      }, { status: 500 })
+    }
+
+    console.log('✅ Upload successful:', uploadResult.url)
+
+    // Update hackathon in database with the uploaded URL
     await prisma.hackathon.update({
       where: { id: hackathonId },
       data: {
-        certificateTemplate: publicPath
+        certificateTemplate: uploadResult.url
       }
     })
 
-    console.log('✅ Certificate template saved:', publicPath)
+    console.log('✅ Certificate template saved to database:', uploadResult.url)
 
     return NextResponse.json({
       message: 'تم رفع قالب الشهادة بنجاح',
       fileName: fileName,
-      filePath: publicPath
+      filePath: uploadResult.url,
+      storage: uploadResult.url?.startsWith('https://') ? 'S3' : 'Local'
     })
 
   } catch (error) {
