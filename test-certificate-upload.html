@@ -70,6 +70,7 @@
         </div>
         
         <div class="form-group">
+            <button type="button" onclick="forceCloudinaryTest()" style="background-color: #dc3545; color: white; font-weight: bold;">☁️ FORCE CLOUDINARY</button>
             <button type="button" onclick="quickFixTest()" style="background-color: #28a745; font-weight: bold;">🚀 QUICK FIX TEST</button>
             <button type="button" onclick="testHackathonExists()">Test Hackathon Exists</button>
             <button type="button" onclick="createTestImage()">Create Test Image</button>
@@ -118,6 +119,38 @@
                 }
             } catch (error) {
                 showResult(`❌ QUICK FIX error: ${error.message}`, 'error');
+            }
+        }
+
+        async function forceCloudinaryTest() {
+            const fileInput = document.getElementById('certificateFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showResult('Please select a file first', 'error');
+                return;
+            }
+
+            showResult('☁️ Testing FORCE CLOUDINARY upload...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(`https://hackathon-platform-601l.onrender.com/api/force-cloudinary`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(`✅ FORCE CLOUDINARY successful!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    showResult(`❌ FORCE CLOUDINARY failed (${response.status}):<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ FORCE CLOUDINARY error: ${error.message}`, 'error');
             }
         }
 

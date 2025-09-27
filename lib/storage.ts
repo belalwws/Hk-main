@@ -86,6 +86,11 @@ export async function uploadToCloudinary(
 
     // Ensure Cloudinary is configured
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error('❌ Missing Cloudinary credentials:', {
+        cloud_name: !!process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: !!process.env.CLOUDINARY_API_KEY,
+        api_secret: !!process.env.CLOUDINARY_API_SECRET
+      })
       throw new Error('Cloudinary credentials not configured')
     }
 
@@ -95,6 +100,8 @@ export async function uploadToCloudinary(
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_API_SECRET,
     })
+
+    console.log('✅ Cloudinary configured with cloud_name:', process.env.CLOUDINARY_CLOUD_NAME)
 
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
@@ -177,7 +184,16 @@ export async function uploadFile(
       console.log('☁️ Using Cloudinary storage')
       const result = await uploadToCloudinary(file, filename, folder)
       console.log('☁️ Cloudinary result:', result)
-      return result
+
+      // If Cloudinary succeeds, return it
+      if (result.success) {
+        return result
+      }
+
+      // If Cloudinary fails, log the error but continue to local fallback
+      console.log('⚠️ Cloudinary failed, trying local fallback:', result.error)
+    } else {
+      console.log('⚠️ Cloudinary not configured, using local storage')
     }
 
     // Fallback to local storage
