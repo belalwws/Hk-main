@@ -101,7 +101,8 @@ const registration = await fetch(`${BASE_URL}/hackathons/{id}/register`, {
 ### 1. الكود جاهز ✅
 - تم رفع الكود إلى GitHub
 - Branch: `رندر`
-- Commit: `18bf0ee`
+- Commit: `a927ebb`
+- إصلاح جميع مشاكل الـ compilation
 
 ### 2. إعداد متغيرات البيئة في Render
 1. اذهب إلى [Render Dashboard](https://dashboard.render.com)
