@@ -104,38 +104,7 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      // Try to find in file-based storage
-      try {
-        const { getAllParticipants } = await import('@/lib/participants-storage')
-        const participants = getAllParticipants()
-        const fileUser = participants.find((p: any) => p.id === payload.userId || p.email === payload.email)
-
-        if (fileUser) {
-          console.log('✅ [VERIFY-SESSION] File-based user found:', fileUser.email)
-          return NextResponse.json({
-            user: {
-              id: fileUser.id,
-              name: fileUser.name,
-              email: fileUser.email,
-              role: fileUser.role || 'participant',
-              isActive: true,
-              phone: fileUser.phone || null,
-              university: fileUser.university || null,
-              major: fileUser.major || null,
-              graduationYear: fileUser.graduationYear || null,
-              city: fileUser.city || null,
-              nationality: fileUser.nationality || null,
-              skills: fileUser.skills || null,
-              experience: fileUser.experience || null,
-              preferredRole: fileUser.preferredRole || null,
-              profileImage: fileUser.profileImage || null,
-              createdAt: fileUser.createdAt || new Date().toISOString()
-            }
-          })
-        }
-      } catch (fileError) {
-        console.log('🔍 [VERIFY-SESSION] File-based user lookup failed:', fileError.message)
-      }
+      // File-based storage removed - using database only
 
       console.log('❌ [VERIFY-SESSION] User not found in any storage')
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

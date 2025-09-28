@@ -15,6 +15,10 @@
 - ✅ **تقارير وإحصائيات** - تحليلات مفصلة
 - ✅ **واجهة عربية كاملة** - RTL support
 - ✅ **تصميم متجاوب** - يعمل على جميع الأجهزة
+- 🆕 **External API** - واجهة برمجية للمواقع الخارجية
+- 🆕 **تكامل خارجي** - السماح للمواقع الأخرى بالتسجيل
+- 🆕 **مصادقة API Key** - حماية متقدمة للواجهة البرمجية
+- 🆕 **دعم CORS** - طلبات من المتصفحات مباشرة
 
 ## 🚀 البدء السريع
 
@@ -239,10 +243,75 @@ npm run update-production-db # تحديث آمن لقاعدة البيانات
 npm run safe-deploy
 ```
 
+## 🔗 External API (جديد!)
+
+### الرابط الأساسي
+```
+https://hackathon-platform-601l.onrender.com/api/external/v1
+```
+
+### المصادقة
+جميع طلبات API تتطلب API key في الـ headers:
+```
+X-API-Key: your-api-key-here
+```
+
+### نقاط النهاية المتاحة
+
+#### 1. جلب قائمة الهاكاثونات
+```
+GET /hackathons
+GET /hackathons?status=open
+```
+
+#### 2. جلب هاكاثون محدد
+```
+GET /hackathons/{id}
+GET /hackathons/{id}?includeForm=true
+```
+
+#### 3. التسجيل في هاكاثون
+```
+POST /hackathons/{id}/register
+```
+
+### مثال على الاستخدام
+
+```javascript
+const API_KEY = 'your-api-key';
+const BASE_URL = 'https://hackathon-platform-601l.onrender.com/api/external/v1';
+
+// جلب الهاكاثونات المفتوحة
+const response = await fetch(`${BASE_URL}/hackathons?status=open`, {
+  headers: {
+    'X-API-Key': API_KEY
+  }
+});
+
+// التسجيل في هاكاثون
+const registration = await fetch(`${BASE_URL}/hackathons/{id}/register`, {
+  method: 'POST',
+  headers: {
+    'X-API-Key': API_KEY,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'أحمد محمد',
+    email: 'ahmed@example.com',
+    phone: '+966501234567'
+  })
+});
+```
+
+### التوثيق الكامل
+- `EXTERNAL_API_DOCS.md` - توثيق شامل للـ API
+- `EXTERNAL_API_README.md` - دليل الإعداد والاستخدام
+- `RENDER_DEPLOYMENT.md` - تعليمات النشر
+
 ## 📞 الدعم
 
 للمساعدة أو الاستفسارات، يرجى فتح issue في المستودع.
 
 ---
 
-**🎉 مبروك! المشروع جاهز للاستخدام والنشر!**
+**🎉 مبروك! المشروع جاهز للاستخدام والنشر مع External API!**
