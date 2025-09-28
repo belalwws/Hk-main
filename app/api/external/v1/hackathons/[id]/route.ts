@@ -7,6 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
   'Access-Control-Max-Age': '86400',
+  'Access-Control-Allow-Credentials': 'false',
 }
 
 // Handle OPTIONS request for CORS

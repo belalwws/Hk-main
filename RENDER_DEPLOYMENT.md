@@ -26,7 +26,7 @@ git push origin main
 ```
 DATABASE_URL=postgresql://... (يتم إنشاؤها تلقائياً بواسطة Render)
 JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
-EXTERNAL_API_KEY=hk_0bed91ea29cbbb96de975ecb0ac7e128db682d0809309e11620594171253c75f
+EXTERNAL_API_KEY=hk_4824b9a0dc9f16dad38c376134c7abe54b3e75cde5778af252c82583812e5f36
 NEXTAUTH_URL=https://hackathon-platform-601l.onrender.com
 NEXTAUTH_SECRET=your-nextauth-secret-here
 ```
@@ -63,7 +63,7 @@ https://hackathon-platform-601l.onrender.com/api/external/v1/hackathons
 
 #### ج. اختبار API Key:
 ```bash
-curl -H "X-API-Key: hk_0bed91ea29cbbb96de975ecb0ac7e128db682d0809309e11620594171253c75f" \
+curl -H "X-API-Key: hk_4824b9a0dc9f16dad38c376134c7abe54b3e75cde5778af252c82583812e5f36" \
   "https://hackathon-platform-601l.onrender.com/api/external/v1/hackathons"
 ```
 
@@ -95,7 +95,7 @@ POST https://hackathon-platform-601l.onrender.com/api/external/v1/hackathons/{id
 
 **API Key الجديد للإنتاج:**
 ```
-hk_0bed91ea29cbbb96de975ecb0ac7e128db682d0809309e11620594171253c75f
+hk_4824b9a0dc9f16dad38c376134c7abe54b3e75cde5778af252c82583812e5f36
 ```
 
 ⚠️ **مهم:** احتفظ بهذا المفتاح آمناً ولا تشاركه علناً!
