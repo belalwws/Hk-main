@@ -115,22 +115,62 @@ export async function uploadToLocal(
 export async function uploadFile(
   buffer: Buffer,
   filename: string,
-  options: StorageOptions = {}
-): Promise<StorageResult> {
+  mimeType?: string,
+  folder?: string
+): Promise<{ success: boolean; url?: string; error?: string; public_id?: string }> {
   try {
-    // Try Cloudinary first
-    if (process.env.CLOUDINARY_CLOUD_NAME) {
-      return await uploadToCloudinary(buffer, {
-        ...options,
-        public_id: options.public_id || filename.split('.')[0],
-      })
+    console.log('🔄 uploadFile called with:', { filename, mimeType, folder, bufferSize: buffer.length })
+
+    const options: StorageOptions = {
+      folder: folder || 'uploads',
+      resource_type: mimeType?.startsWith('image/') ? 'image' : 'auto'
     }
-    
+
+    // Try Cloudinary first
+    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+      console.log('🌤️ Trying Cloudinary upload...')
+      try {
+        const result = await uploadToCloudinary(buffer, {
+          ...options,
+          public_id: filename.split('.')[0],
+        })
+        console.log('✅ Cloudinary upload successful:', result.url)
+        return {
+          success: true,
+          url: result.secure_url,
+          public_id: result.public_id
+        }
+      } catch (cloudinaryError) {
+        console.error('❌ Cloudinary upload failed:', cloudinaryError)
+        // Continue to local fallback
+      }
+    } else {
+      console.log('⚠️ Cloudinary not configured, using local storage')
+    }
+
     // Fallback to local storage
-    return await uploadToLocal(buffer, filename, options.folder)
+    console.log('💾 Trying local storage...')
+    try {
+      const result = await uploadToLocal(buffer, filename, options.folder)
+      console.log('✅ Local upload successful:', result.url)
+      return {
+        success: true,
+        url: result.url,
+        public_id: result.public_id
+      }
+    } catch (localError) {
+      console.error('❌ Local upload failed:', localError)
+      return {
+        success: false,
+        error: `Upload failed: ${localError instanceof Error ? localError.message : 'Unknown error'}`
+      }
+    }
   } catch (error) {
-    console.error('File upload error:', error)
-    throw error
+    console.error('❌ uploadFile error:', error)
+    return {
+      success: false,
+      error: `File upload error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
   }
 }
 

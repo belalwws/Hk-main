@@ -42,7 +42,7 @@ export default function HackathonCertificateSettingsPage() {
   const [previewName, setPreviewName] = useState('محمد أحمد علي')
   const [imageLoaded, setImageLoaded] = useState(false)
   const [uploadingCertificate, setUploadingCertificate] = useState(false)
-  const [certificateImageSrc, setCertificateImageSrc] = useState('/row-certificat.png')
+  const [certificateImageSrc, setCertificateImageSrc] = useState('/row-certificat.svg')
   const [previewError, setPreviewError] = useState('')
 
   useEffect(() => {
@@ -135,9 +135,9 @@ export default function HackathonCertificateSettingsPage() {
       setImageLoaded(false)
       setPreviewError('فشل في تحميل صورة الشهادة. تأكد من وجود الملف.')
 
-      if (certificateImageSrc !== '/row-certificat.png') {
+      if (certificateImageSrc !== '/row-certificat.svg') {
         console.log('🔄 Trying fallback to default certificate')
-        setCertificateImageSrc('/row-certificat.png')
+        setCertificateImageSrc('/row-certificat.svg')
       }
     }
 
@@ -242,7 +242,7 @@ export default function HackathonCertificateSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...settings,
-          certificateTemplate: certificateImageSrc !== '/row-certificat.png' ? certificateImageSrc : undefined,
+          certificateTemplate: certificateImageSrc !== '/row-certificat.svg' ? certificateImageSrc : undefined,
           updatedBy: user?.name || 'admin'
         })
       })
@@ -364,7 +364,7 @@ export default function HackathonCertificateSettingsPage() {
         }
         
         setSettings(defaultSettings)
-        setCertificateImageSrc('/row-certificat.png')
+        setCertificateImageSrc('/row-certificat.svg')
         
         // Save default settings
         const response = await fetch(`/api/admin/hackathons/${hackathonId}/certificate-settings`, {
@@ -601,7 +601,7 @@ export default function HackathonCertificateSettingsPage() {
 
               <div className="space-y-4">
                 {/* Current Template Info */}
-                {certificateImageSrc !== '/row-certificat.png' && (
+                {certificateImageSrc !== '/row-certificat.svg' && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
