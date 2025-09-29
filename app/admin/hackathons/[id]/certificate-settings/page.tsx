@@ -80,11 +80,16 @@ export default function HackathonCertificateSettingsPage() {
       const response = await fetch(`/api/admin/hackathons/${hackathonId}/certificate-settings`)
       if (response.ok) {
         const data = await response.json()
+        console.log('📋 Loaded settings:', data)
         setSettings(data)
-        
+
+        // Update certificate image source if custom template exists
         if (data.certificateTemplate) {
-          console.log('Loading custom certificate template:', data.certificateTemplate)
+          console.log('🖼️ Loading custom certificate template:', data.certificateTemplate)
           setCertificateImageSrc(data.certificateTemplate)
+        } else {
+          console.log('🖼️ Using default certificate template')
+          setCertificateImageSrc('/row-certificat.svg')
         }
       }
     } catch (error) {
@@ -324,9 +329,10 @@ export default function HackathonCertificateSettingsPage() {
 
         alert('✅ تم رفع قالب الشهادة بنجاح!')
 
+        // Reload settings to ensure consistency
         setTimeout(() => {
-          console.log('🔄 Reloading certificate image...')
-          loadCertificateImage()
+          console.log('🔄 Reloading settings and certificate image...')
+          loadSettings()
         }, 500)
 
       } else {

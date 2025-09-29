@@ -12,9 +12,14 @@ export async function GET(
     const params = await context.params
     const { id: hackathonId } = params
 
-    // Check if hackathon exists
+    // Check if hackathon exists and get certificate template
     const hackathon = await prisma.hackathon.findUnique({
-      where: { id: hackathonId }
+      where: { id: hackathonId },
+      select: {
+        id: true,
+        title: true,
+        certificateTemplate: true
+      }
     })
 
     if (!hackathon) {
@@ -42,7 +47,8 @@ export async function GET(
         namePositionX: 0.50,
         nameFont: 'bold 48px Arial',
         nameColor: '#1a472a',
-        hackathonId: hackathonId
+        hackathonId: hackathonId,
+        certificateTemplate: hackathon.certificateTemplate || null
       })
     }
 
@@ -52,13 +58,16 @@ export async function GET(
       namePositionX: 0.50,
       nameFont: 'bold 48px Arial',
       nameColor: '#1a472a',
-      hackathonId: hackathonId
+      hackathonId: hackathonId,
+      certificateTemplate: hackathon.certificateTemplate || null
     }
 
     try {
       if (setting.settings) {
         const parsed = typeof setting.settings === 'string' ? JSON.parse(setting.settings) : setting.settings
         parsedSettings = { ...parsedSettings, ...parsed }
+        // Make sure certificateTemplate from hackathon table takes precedence
+        parsedSettings.certificateTemplate = hackathon.certificateTemplate || parsedSettings.certificateTemplate || null
       }
     } catch (parseError) {
       console.error('Error parsing certificate settings:', parseError)
