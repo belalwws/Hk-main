@@ -18,34 +18,82 @@ export async function GET(request: NextRequest) {
 
     console.log('📋 Fetching all judges...')
 
-    const judges = await prisma.judge.findMany({
-      include: {
-        user: {
+    // Check if Judge table exists by trying a simple query first
+    let judges = []
+    try {
+      judges = await prisma.judge.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              role: true
+            }
+          },
+          hackathon: {
+            select: {
+              id: true,
+              title: true,
+              status: true
+            }
+          },
+          _count: {
+            select: {
+              scores: true
+            }
+          }
+        },
+        orderBy: {
+          assignedAt: 'desc'
+        }
+      })
+    } catch (dbError) {
+      console.error('❌ Database error (Judge table might not exist):', dbError)
+
+      // Fallback: Return users with judge role
+      try {
+        const judgeUsers = await prisma.user.findMany({
+          where: { role: 'judge' },
           select: {
             id: true,
             name: true,
             email: true,
             phone: true,
-            role: true
+            role: true,
+            createdAt: true
           }
-        },
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            status: true
-          }
-        },
-        _count: {
-          select: {
-            scores: true
-          }
-        }
-      },
-      orderBy: {
-        assignedAt: 'desc'
+        })
+
+        return NextResponse.json({
+          judges: judgeUsers.map(user => ({
+            id: user.id,
+            userId: user.id,
+            hackathonId: null,
+            isActive: true,
+            assignedAt: user.createdAt,
+            user: user,
+            hackathon: null,
+            _count: { scores: 0 }
+          })),
+          total: judgeUsers.length,
+          active: judgeUsers.length,
+          inactive: 0,
+          fallback: true,
+          message: 'عرض المحكمين من جدول المستخدمين (Judge table غير متاح)'
+        })
+      } catch (fallbackError) {
+        console.error('❌ Fallback query failed:', fallbackError)
+        return NextResponse.json({
+          judges: [],
+          total: 0,
+          active: 0,
+          inactive: 0,
+          error: 'لا يمكن الوصول لبيانات المحكمين'
+        })
       }
-    })
+    }
 
     console.log(`✅ Found ${judges.length} judges`)
 
@@ -58,7 +106,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Error fetching judges:', error)
-    return NextResponse.json({ error: 'خطأ في جلب المحكمين' }, { status: 500 })
+    return NextResponse.json({
+      error: 'خطأ في جلب المحكمين',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
@@ -123,31 +174,52 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Create judge assignment
-      const judge = await tx.judge.create({
-        data: {
-          userId: user.id,
-          hackathonId,
-          isActive: true
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              role: true
-            }
+      // Try to create judge assignment, fallback if Judge table doesn't exist
+      let judge = null
+      try {
+        judge = await tx.judge.create({
+          data: {
+            userId: user.id,
+            hackathonId,
+            isActive: true
           },
-          hackathon: {
-            select: {
-              id: true,
-              title: true
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true
+              }
+            },
+            hackathon: {
+              select: {
+                id: true,
+                title: true
+              }
             }
           }
+        })
+      } catch (judgeError) {
+        console.warn('⚠️ Judge table not available, user created with judge role only')
+        // Create a mock judge object for response
+        judge = {
+          id: user.id,
+          userId: user.id,
+          hackathonId,
+          isActive: true,
+          assignedAt: new Date(),
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role
+          },
+          hackathon: hackathon
         }
-      })
+      }
 
       return { user, judge }
     })
