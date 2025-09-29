@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
-import { PrismaClient, UserRole } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
           email,
           password_hash: passwordHash,
           phone: phone || null,
-          role: UserRole.judge
+          role: 'judge'
         }
       })
 
@@ -237,7 +237,27 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Error creating judge:', error)
-    return NextResponse.json({ error: 'خطأ في إنشاء المحكم' }, { status: 500 })
+    console.error('❌ Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown',
+    })
+
+    let errorMessage = 'خطأ في إنشاء المحكم'
+    if (error instanceof Error) {
+      if (error.message.includes('Unique constraint')) {
+        errorMessage = 'هذا الإيميل مستخدم بالفعل'
+      } else if (error.message.includes('Foreign key constraint')) {
+        errorMessage = 'الهاكاثون المحدد غير موجود'
+      } else if (error.message.includes('judge')) {
+        errorMessage = 'خطأ في إنشاء بيانات المحكم'
+      }
+    }
+
+    return NextResponse.json({
+      error: errorMessage,
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
