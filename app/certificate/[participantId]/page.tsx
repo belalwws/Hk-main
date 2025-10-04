@@ -167,7 +167,7 @@ export default function CertificatePage() {
           <div className="bg-white rounded-2xl shadow-2xl p-8">
             <div className="relative">
               <img 
-                src="/row-certificat.png" 
+                src="/row-certificat.svg" 
                 alt="شهادة تقدير" 
                 className="w-full max-w-4xl mx-auto"
               />

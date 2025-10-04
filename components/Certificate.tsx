@@ -73,12 +73,12 @@ function Certificate({
           // إضافة timestamp لتجنب التخزين المؤقت
           setCertificateImageSrc(`${data.templatePath}?t=${Date.now()}`)
         } else {
-          setCertificateImageSrc(`/row-certificat.png?t=${Date.now()}`)
+          setCertificateImageSrc(`/row-certificat.svg?t=${Date.now()}`)
         }
       }
     } catch (error) {
       console.error('Error loading certificate template:', error)
-      setCertificateImageSrc(`/row-certificat.png?t=${Date.now()}`)
+      setCertificateImageSrc(`/row-certificat.svg?t=${Date.now()}`)
     }
   }
 
@@ -148,7 +148,7 @@ export function CertificateGenerator({
   const downloadCertificate = async () => {
     // Load current settings
     let currentSettings = DEFAULT_CERTIFICATE_CONFIG
-    let certificateImageSrc = '/row-certificat.png'
+    let certificateImageSrc = '/row-certificat.svg'
 
     try {
       const response = await fetch(`/api/admin/certificate-settings?t=${Date.now()}`, {
