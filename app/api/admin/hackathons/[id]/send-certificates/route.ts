@@ -128,7 +128,7 @@ export async function POST(
             date: new Date().toLocaleDateString('ar-SA')
           }
 
-          const certificateBuffer = await generateCertificateImage(certificateData)
+          const certificateBuffer = await generateCertificateImage(certificateData, hackathonId)
           const certificateFileName = `certificate-${participant.user.name.replace(/\s+/g, '-')}-${hackathon.title.replace(/\s+/g, '-')}.png`
 
           const emailHtml = generateCertificateEmailWithAttachment(
