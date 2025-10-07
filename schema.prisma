@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -67,6 +67,8 @@ model Hackathon {
   registrationForm   HackathonForm?
   landingPage        HackathonLandingPage?
   formDesign         HackathonFormDesign?
+  feedbackForm       HackathonFeedbackForm?
+  feedbacks          HackathonFeedback[]
 
   @@map("hackathons")
 }
@@ -408,4 +410,130 @@ model HackathonFormDesign {
   hackathon Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
 
   @@map("hackathon_form_designs")
+}
+
+// JudgeInvitation model - Invitations for judges to register
+model JudgeInvitation {
+  id             String   @id @default(cuid())
+  email          String
+  name           String?
+  hackathonId    String
+  token          String   @unique
+  status         InvitationStatus @default(pending)
+  invitedBy      String   // Admin user ID
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("judge_invitations")
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+  cancelled
+}
+
+// JudgeApplication model - Judge applications submitted via form
+model JudgeApplication {
+  id                String   @id @default(cuid())
+  hackathonId       String
+  name              String
+  email             String
+  phone             String?
+  bio               String?
+  expertise         String?  // Areas of expertise
+  experience        String?  // Years of experience or description
+  linkedin          String?
+  twitter           String?
+  website           String?
+  profileImage      String?  // URL to uploaded image
+  status            ApplicationStatus @default(pending)
+  reviewedBy        String?  // Admin user ID who reviewed
+  reviewNotes       String?  // Admin notes
+  rejectionReason   String?  // Reason if rejected
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  reviewedAt        DateTime?
+
+  @@map("judge_applications")
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+// JudgeFormDesign model - Custom design for judge application forms
+model JudgeFormDesign {
+  id                String   @id @default(cuid())
+  hackathonId       String   @unique
+  isEnabled         Boolean  @default(true)
+  coverImage        String?  // Cover image URL
+  primaryColor      String   @default("#01645e")
+  secondaryColor    String   @default("#3ab666")
+  accentColor       String   @default("#c3e956")
+  backgroundColor   String   @default("#ffffff")
+  title             String?  // Custom form title
+  description       String?  // Custom form description
+  welcomeMessage    String?  // Welcome message
+  successMessage    String?  // Success message after submission
+  logoUrl           String?  // Logo URL
+  customCss         String?  // Custom CSS
+  settings          String?  // JSON settings
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("judge_form_designs")
+}
+
+// Hackathon Feedback Form Design - تصميم فورم تقييم الهاكاثون
+model HackathonFeedbackForm {
+  id                String   @id @default(cuid())
+  hackathonId       String   @unique
+  isEnabled         Boolean  @default(true)
+  title             String   @default("قيّم تجربتك في الهاكاثون")
+  description       String?
+  welcomeMessage    String?
+  thankYouMessage   String?
+  ratingScale       Int      @default(5) // 1-3, 1-5, 1-10
+  coverImage        String?  // Base64 or URL
+  primaryColor      String   @default("#01645e")
+  secondaryColor    String   @default("#3ab666")
+  accentColor       String   @default("#c3e956")
+  backgroundColor   String   @default("#ffffff")
+  logoUrl           String?
+  customCss         String?
+  questions         String   // JSON array of questions
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  hackathon         Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  feedbacks         HackathonFeedback[]
+
+  @@map("hackathon_feedback_forms")
+}
+
+// Hackathon Feedback - تقييمات المشاركين للهاكاثون
+model HackathonFeedback {
+  id                String   @id @default(cuid())
+  hackathonId       String
+  formId            String
+  participantEmail  String
+  participantName   String
+  overallRating     Int      // التقييم العام
+  responses         String   // JSON object of question responses
+  suggestions       String?  // اقتراحات إضافية
+  createdAt         DateTime @default(now())
+
+  // Relations
+  hackathon         Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  form              HackathonFeedbackForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@unique([hackathonId, participantEmail])
+  @@map("hackathon_feedbacks")
 }

@@ -48,6 +48,7 @@ export default function SendCertificatesPage() {
   const [results, setResults] = useState<TeamResult[]>([])
   const [loading, setLoading] = useState(true)
   const [sendingEmails, setSendingEmails] = useState(false)
+  const [sendingFeedbackLinks, setSendingFeedbackLinks] = useState(false)
   const [emailResults, setEmailResults] = useState<EmailResult[]>([])
   const [showEmailResults, setShowEmailResults] = useState(false)
   const [previewMode, setPreviewMode] = useState(false)
@@ -223,6 +224,62 @@ ${isWinner ?
     }
   }
 
+  const sendFeedbackLinks = async () => {
+    if (!selectedHackathon) return
+
+    const totalParticipants = results.reduce((total, team) => total + team.participants.length, 0)
+
+    const confirmMessage = `
+🎯 هل أنت متأكد من إرسال روابط التقييم؟
+
+📊 الإحصائيات:
+• إجمالي المشاركين: ${totalParticipants}
+
+📧 سيتم إرسال:
+• رابط فورم التقييم لكل مشارك
+• دعوة لتقييم تجربتهم في الهاكاثون
+
+⚠️ تأكد من تفعيل فورم التقييم أولاً!
+    `
+
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    setSendingFeedbackLinks(true)
+
+    try {
+      const response = await fetch(`/api/admin/hackathons/${selectedHackathon.id}/send-feedback-links`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+
+        const successMessage = `
+✅ تم إرسال روابط التقييم بنجاح!
+
+📊 النتائج:
+• تم الإرسال بنجاح: ${data.successCount}
+• فشل في الإرسال: ${data.failureCount}
+• إجمالي المحاولات: ${data.totalCount}
+
+🎉 جميع المشاركين سيتمكنون من تقييم تجربتهم!
+        `
+        alert(successMessage)
+      } else {
+        const error = await response.json()
+        alert(`❌ حدث خطأ: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error sending feedback links:', error)
+      alert('❌ حدث خطأ في إرسال روابط التقييم')
+    } finally {
+      setSendingFeedbackLinks(false)
+    }
+  }
+
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
@@ -315,6 +372,28 @@ ${isWinner ?
                   <>
                     <Send className="w-6 h-6" />
                     📧 إرسال الشهادات والرسائل لجميع المشاركين
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Feedback Links Button */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl blur-xl opacity-40 animate-pulse"></div>
+              <button
+                onClick={sendFeedbackLinks}
+                disabled={sendingFeedbackLinks || !selectedHackathon || results.length === 0}
+                className="relative bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-12 py-4 rounded-2xl font-bold shadow-2xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 text-lg"
+              >
+                {sendingFeedbackLinks ? (
+                  <>
+                    <Clock className="w-6 h-6 animate-spin" />
+                    جاري إرسال روابط التقييم...
+                  </>
+                ) : (
+                  <>
+                    <Star className="w-6 h-6" />
+                    ⭐ إرسال روابط تقييم الهاكاثون للمشاركين
                   </>
                 )}
               </button>

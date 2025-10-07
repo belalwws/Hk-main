@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -1416,6 +1416,35 @@ export default function HackathonManagementPage() {
                   <CardDescription>تعديل إعدادات وإرسال إشعارات</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Feedback Form Section */}
+                  <div className="border rounded-lg p-6 bg-gradient-to-r from-purple-50 to-pink-50">
+                    <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                      <Star className="w-5 h-5" />
+                      فورم تقييم الهاكاثون
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Button
+                        onClick={() => router.push(`/admin/feedback-form-design/${hackathon?.id}`)}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                      >
+                        <Palette className="w-4 h-4 ml-2" />
+                        تخصيص فورم التقييم
+                      </Button>
+                      <Button
+                        onClick={() => router.push(`/admin/feedback-results/${hackathon?.id}`)}
+                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
+                      >
+                        <BarChart3 className="w-4 h-4 ml-2" />
+                        عرض نتائج التقييمات
+                      </Button>
+                    </div>
+                    <div className="mt-4 p-4 bg-purple-100 border border-purple-200 rounded-lg">
+                      <p className="text-purple-700 text-sm">
+                        ⭐ يمكنك تخصيص فورم التقييم وإرسال روابطه للمشاركين من صفحة "إرسال النتائج"
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Notification Section */}
                   <div className="border rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-[#01645e] mb-4 flex items-center gap-2">
