@@ -36,16 +36,21 @@ export default function FormsManagement() {
 
   const fetchHackathons = async () => {
     try {
-      const response = await fetch('/api/hackathons')
+      const response = await fetch('/api/hackathons?all=true')
       if (response.ok) {
         const data = await response.json()
-        setHackathons(data)
-        if (data.length > 0) {
-          setSelectedHackathon(data[0].id)
+        // API returns { hackathons: [...] }
+        const hackathonsArray = Array.isArray(data.hackathons) ? data.hackathons : (Array.isArray(data) ? data : [])
+        setHackathons(hackathonsArray)
+        if (hackathonsArray.length > 0) {
+          setSelectedHackathon(hackathonsArray[0].id)
         }
+      } else {
+        setHackathons([])
       }
     } catch (error) {
       console.error('Error fetching hackathons:', error)
+      setHackathons([])
     } finally {
       setLoading(false)
     }
