@@ -15,12 +15,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
-    // Get all hackathons with their registration stats
+    // Get all hackathons with their participant stats
     const hackathons = await prisma.hackathon.findMany({
       select: {
         id: true,
         title: true,
-        registrations: {
+        participants: {
           select: {
             status: true
           }
@@ -33,12 +33,12 @@ export async function GET(request: NextRequest) {
 
     // Process the data to get overview stats
     const formsOverview = hackathons.map(hackathon => {
-      const registrations = hackathon.registrations
-      
-      const totalSubmissions = registrations.length
-      const pendingReview = registrations.filter(r => r.status === 'pending').length
-      const approved = registrations.filter(r => r.status === 'accepted' || r.status === 'approved').length
-      const rejected = registrations.filter(r => r.status === 'rejected').length
+      const participants = hackathon.participants
+
+      const totalSubmissions = participants.length
+      const pendingReview = participants.filter(p => p.status === 'pending').length
+      const approved = participants.filter(p => p.status === 'accepted' || p.status === 'approved').length
+      const rejected = participants.filter(p => p.status === 'rejected').length
 
       return {
         hackathonId: hackathon.id,
