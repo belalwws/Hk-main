@@ -257,15 +257,15 @@ export default function FormsManagement() {
                         فورم تقييم الهاكاثون
                       </CardTitle>
                       <CardDescription>
-                        فورم لجمع آراء وتقييمات المشاركين عن الهاكاثون
+                        فورم ديناميكي لجمع آراء وتقييمات المشاركين - أضف الحقول التي تريدها
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                       <div className="flex flex-col gap-2">
-                        <Link href={`/admin/hackathons/${selectedHackathon}/feedback-form`}>
+                        <Link href={`/admin/feedback-form-builder/${selectedHackathon}`}>
                           <Button className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600">
-                            <Palette className="w-4 h-4 ml-2" />
-                            تصميم الفورم
+                            <Settings className="w-4 h-4 ml-2" />
+                            بناء الفورم
                           </Button>
                         </Link>
 
