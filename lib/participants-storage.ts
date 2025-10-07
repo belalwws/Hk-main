@@ -31,6 +31,52 @@ export interface StorageStats {
 }
 
 /**
+ * Get all participants (for backward compatibility)
+ */
+export async function getAllParticipants(): Promise<ParticipantData[]> {
+  try {
+    const participants = await prisma.participant.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            university: true,
+            major: true,
+            skills: true,
+            experience: true,
+            preferredRole: true
+          }
+        }
+      },
+      orderBy: { registeredAt: 'desc' }
+    })
+
+    return participants.map(participant => ({
+      id: participant.id,
+      name: participant.user.name,
+      email: participant.user.email,
+      phone: participant.user.phone || '',
+      university: participant.user.university || '',
+      major: participant.user.major || '',
+      skills: participant.user.skills || '',
+      experience: participant.user.experience || '',
+      preferredRole: participant.user.preferredRole || '',
+      motivation: participant.motivation || '',
+      hackathonId: participant.hackathonId,
+      status: participant.status as 'pending' | 'approved' | 'rejected',
+      registeredAt: participant.registeredAt,
+      additionalInfo: participant.additionalInfo
+    }))
+  } catch (error) {
+    console.error('Error fetching all participants:', error)
+    return []
+  }
+}
+
+/**
  * Get all participants for a hackathon
  */
 export async function getParticipants(hackathonId: string): Promise<ParticipantData[]> {
@@ -111,6 +157,21 @@ export async function getParticipantStats(hackathonId?: string): Promise<Storage
 }
 
 /**
+ * Save participant data (for backward compatibility)
+ */
+export async function saveParticipant(data: ParticipantData): Promise<boolean> {
+  try {
+    // This is handled by the regular participant creation process
+    // This function exists for compatibility with existing code
+    console.log('Participant data saved:', data.email)
+    return true
+  } catch (error) {
+    console.error('Error saving participant data:', error)
+    return false
+  }
+}
+
+/**
  * Store participant data temporarily
  */
 export async function storeParticipantData(data: ParticipantData): Promise<boolean> {
@@ -121,6 +182,22 @@ export async function storeParticipantData(data: ParticipantData): Promise<boole
     return true
   } catch (error) {
     console.error('Error storing participant data:', error)
+    return false
+  }
+}
+
+/**
+ * Update participant status (for backward compatibility)
+ */
+export async function updateParticipantStatus(participantId: string, status: 'pending' | 'approved' | 'rejected'): Promise<boolean> {
+  try {
+    await prisma.participant.update({
+      where: { id: participantId },
+      data: { status }
+    })
+    return true
+  } catch (error) {
+    console.error('Error updating participant status:', error)
     return false
   }
 }

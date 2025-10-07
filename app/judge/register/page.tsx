@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,7 +23,7 @@ interface HackathonData {
   status: string
 }
 
-export default function JudgeRegisterPage() {
+function JudgeRegisterContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -324,6 +324,21 @@ export default function JudgeRegisterPage() {
         </Card>
       </motion.div>
     </div>
+  )
+}
+
+export default function JudgeRegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-16 h-16 text-[#01645e] animate-spin mx-auto mb-4" />
+          <p className="text-[#01645e] font-semibold">جاري تحميل الصفحة...</p>
+        </div>
+      </div>
+    }>
+      <JudgeRegisterContent />
+    </Suspense>
   )
 }
 
