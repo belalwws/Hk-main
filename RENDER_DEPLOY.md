@@ -1,74 +1,108 @@
-# Render Deployment Guide
+# دليل النشر على Render
 
-## تم حل المشاكل التالية:
+## 📋 الخطوات المطلوبة
 
-### 1. مشكلة قاعدة البيانات ✅
-- تم تغيير schema.prisma من SQLite إلى PostgreSQL
-- تم إنشاء schema.dev.prisma منفصل للتطوير المحلي
-- تم إضافة scripts آمنة لإعداد قاعدة البيانات
-
-### 2. مشاكل الـ Exports المفقودة ✅
-- تم إضافة `getAllParticipants()` في lib/participants-storage.ts
-- تم إضافة `saveParticipant()` في lib/participants-storage.ts  
-- تم إضافة `updateParticipantStatus()` في lib/participants-storage.ts
-
-### 3. مشكلة useSearchParams ✅
-- تم إضافة Suspense boundary في app/judge/register/page.tsx
-- تم تقسيم المكون إلى JudgeRegisterContent مع Suspense wrapper
-
-## متغيرات البيئة المطلوبة في Render:
+### 1. إعداد متغيرات البيئة في Render Dashboard
 
 ```bash
-# Database (يتم توفيرها تلقائياً من Render)
-DATABASE_URL=postgresql://...
+# Database
+DATABASE_URL=postgresql://username:password@hostname:port/database
 
-# Authentication
-JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
-NEXTAUTH_URL=https://hackathon-platform-601l.onrender.com
-NEXTAUTH_SECRET=your-nextauth-secret-here
+# NextAuth
+NEXTAUTH_SECRET=your-secret-key-here
+NEXTAUTH_URL=https://your-app.onrender.com
 
-# Email
-GMAIL_USER=racein668@gmail.com
-GMAIL_PASS=gpbyxbbvrzfyluqt
-MAIL_FROM=racein668@gmail.com
-
-# API
-EXTERNAL_API_KEY=hk_4824b9a0dc9f16dad38c376134c7abe54b3e75cde5778af252c82583812e5f36
-
-# Environment
-NODE_ENV=production
-RENDER=true
-NEXT_PUBLIC_BASE_URL=https://hackathon-platform-601l.onrender.com
-NEXT_PUBLIC_APP_URL=https://hackathon-platform-601l.onrender.com
+# Email (اختياري)
+EMAIL_FROM=noreply@yourdomain.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
 ```
 
-## أمر البناء في Render:
+### 2. إعداد Build Command في Render
 
 ```bash
-rm -rf node_modules package-lock.json && npm install --force --no-package-lock && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
+npm install && npm run build && node scripts/production-migrate.js && node scripts/production-admin-migrate.js
 ```
 
-## الملفات المهمة:
+### 3. إعداد Start Command
 
-- `schema.prisma` - للإنتاج (PostgreSQL)
-- `schema.dev.prisma` - للتطوير (SQLite)
-- `scripts/render-safe-deploy.js` - فحص البيئة
-- `scripts/safe-db-setup.js` - إعداد قاعدة البيانات الآمن
-- `.env.production` - متغيرات الإنتاج
+```bash
+npm start
+```
 
-## حماية البيانات:
+## 🔧 الملفات المحدثة للنشر
 
-✅ جميع scripts مصممة لعدم حذف البيانات الموجودة
-✅ يتم فقط إنشاء الجداول المفقودة
-✅ لا يتم تعديل البيانات الموجودة
+- ✅ `schema.prisma` - تم تحويله لـ PostgreSQL
+- ✅ `lib/participants-storage.ts` - تم إضافة الدوال المفقودة  
+- ✅ `app/judge/register/page.tsx` - تم إضافة Suspense wrapper
+- ✅ `scripts/production-migrate.js` - migration آمن للإنتاج
+- ✅ `scripts/production-admin-migrate.js` - migration نظام المشرفين
 
-## الخطوات التالية:
+## 🆕 المميزات الجديدة المضافة
 
-1. تأكد من إعداد متغيرات البيئة في Render Dashboard
-2. ادفع التغييرات إلى GitHub
-3. سيتم النشر تلقائياً على Render
+### نظام طلبات المشرفين
+- ✅ فورم طلب انضمام مخصص للمشرفين
+- ✅ رفع الصور الشخصية وصور الغلاف
+- ✅ لوحة إدارة طلبات المشرفين
+- ✅ تصميم فورم قابل للتخصيص بالكامل
+- ✅ نظام مراجعة وقبول/رفض الطلبات
 
-## API الخارجي:
+### الروابط الجديدة
+- `/admin/apply/[hackathonId]` - فورم طلب الانضمام كمشرف
+- `/admin/admin-applications` - إدارة طلبات المشرفين
+- `/admin/admin-form-design/[hackathonId]` - تصميم فورم المشرفين
 
-سيكون متاحاً على:
-https://hackathon-platform-601l.onrender.com/api/external/v1
+## 🛡️ ضمانات الأمان
+
+- جميع scripts مصممة لعدم حذف البيانات الموجودة
+- يتم إنشاء الجداول المفقودة فقط
+- لا يتم تعديل البيانات الحالية
+- التحقق من نوع وحجم الملفات المرفوعة
+- حماية من الطلبات المكررة
+
+## 🚀 بعد النشر
+
+1. تأكد من عمل الموقع بشكل صحيح
+2. اختبر تسجيل الدخول والتسجيل
+3. تأكد من عمل قاعدة البيانات
+4. اختبر رفع الملفات
+5. اختبر نظام طلبات المشرفين الجديد
+
+## 📁 مجلدات الرفع الجديدة
+
+تأكد من وجود المجلدات التالية في `/public/uploads/`:
+- `admin-profiles/` - للصور الشخصية للمشرفين
+- `admin-form-covers/` - لصور أغلفة فورم المشرفين
+
+## 🔗 روابط مهمة بعد النشر
+
+### للمديرين:
+- `https://your-app.onrender.com/admin/admin-applications` - إدارة طلبات المشرفين
+- `https://your-app.onrender.com/admin/admin-form-design/[hackathonId]` - تصميم فورم المشرفين
+
+### للمشرفين المحتملين:
+- `https://your-app.onrender.com/admin/apply/[hackathonId]` - فورم طلب الانضمام
+
+## 📊 اختبار النظام
+
+### 1. اختبار فورم المشرفين:
+1. اذهب إلى `/admin/apply/[hackathonId]`
+2. املأ النموذج مع رفع صورة شخصية
+3. تأكد من إرسال الطلب بنجاح
+
+### 2. اختبار لوحة الإدارة:
+1. اذهب إلى `/admin/admin-applications`
+2. تأكد من ظهور الطلبات
+3. اختبر قبول/رفض الطلبات
+
+### 3. اختبار تصميم الفورم:
+1. اذهب إلى `/admin/admin-form-design/[hackathonId]`
+2. اختبر رفع صورة الغلاف
+3. اختبر تغيير الألوان والنصوص
+4. تأكد من حفظ التغييرات
+
+---
+
+✅ **المشروع جاهز للنشر على Render مع نظام المشرفين الجديد!**

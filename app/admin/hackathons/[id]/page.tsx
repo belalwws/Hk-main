@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -1666,6 +1666,35 @@ export default function HackathonManagementPage() {
                                 رفع بيانات مجمعة
                               </Button>
                             </Link>
+                          </div>
+                        </div>
+
+                        {/* Supervisors Management */}
+                        <div>
+                          <h5 className="font-medium text-[#01645e] mb-2 text-sm">إدارة المشرفين</h5>
+                          <div className="flex flex-wrap gap-2">
+                            <Link href={`/admin/admin-applications`}>
+                              <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white">
+                                <Users className="w-4 h-4 ml-2" />
+                                طلبات المشرفين
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/admin-form-design/${hackathon.id}`}>
+                              <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white">
+                                <Palette className="w-4 h-4 ml-2" />
+                                تصميم فورم المشرفين
+                              </Button>
+                            </Link>
+                            <a
+                              href={`/admin/apply/${hackathon.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-500 hover:text-white">
+                                <ExternalLink className="w-4 h-4 ml-2" />
+                                معاينة فورم المشرفين
+                              </Button>
+                            </a>
                           </div>
                         </div>
                       </div>

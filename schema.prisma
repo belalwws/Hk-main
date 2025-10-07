@@ -537,3 +537,55 @@ model HackathonFeedback {
   @@unique([hackathonId, participantEmail])
   @@map("hackathon_feedbacks")
 }
+
+// Admin Application - طلبات المشرفين للانضمام
+model AdminApplication {
+  id                String   @id @default(cuid())
+  hackathonId       String
+  name              String
+  email             String
+  phone             String?
+  bio               String?
+  experience        String?  // سنوات الخبرة أو وصف الخبرة
+  expertise         String?  // مجالات الخبرة
+  linkedin          String?
+  twitter           String?
+  website           String?
+  profileImage      String?  // URL للصورة المرفوعة
+  coverImage        String?  // صورة الغلاف للفورم
+  motivation        String?  // سبب الرغبة في الانضمام
+  availability      String?  // مدى التفرغ
+  previousWork      String?  // أعمال سابقة
+  status            ApplicationStatus @default(pending)
+  reviewedBy        String?  // Admin user ID who reviewed
+  reviewNotes       String?  // ملاحظات المراجع
+  rejectionReason   String?  // سبب الرفض إن وجد
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  reviewedAt        DateTime?
+
+  @@map("admin_applications")
+}
+
+// Admin Form Design - تصميم فورم طلبات المشرفين
+model AdminFormDesign {
+  id                String   @id @default(cuid())
+  hackathonId       String   @unique
+  isEnabled         Boolean  @default(true)
+  coverImage        String?  // صورة الغلاف
+  primaryColor      String   @default("#01645e")
+  secondaryColor    String   @default("#3ab666")
+  accentColor       String   @default("#c3e956")
+  backgroundColor   String   @default("#ffffff")
+  title             String?  // عنوان الفورم المخصص
+  description       String?  // وصف الفورم المخصص
+  welcomeMessage    String?  // رسالة الترحيب
+  successMessage    String?  // رسالة النجاح بعد الإرسال
+  logoUrl           String?  // رابط الشعار
+  customCss         String?  // CSS مخصص
+  settings          String?  // إعدادات JSON
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("admin_form_designs")
+}
