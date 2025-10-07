@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -1693,6 +1693,35 @@ export default function HackathonManagementPage() {
                               <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-500 hover:text-white">
                                 <ExternalLink className="w-4 h-4 ml-2" />
                                 معاينة فورم المشرفين
+                              </Button>
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* Judges Management */}
+                        <div>
+                          <h5 className="font-medium text-[#01645e] mb-2 text-sm">إدارة المحكمين</h5>
+                          <div className="flex flex-wrap gap-2">
+                            <Link href={`/admin/judges`}>
+                              <Button variant="outline" className="border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white">
+                                <Award className="w-4 h-4 ml-2" />
+                                طلبات المحكمين
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/judge-form-design/${hackathon.id}`}>
+                              <Button variant="outline" className="border-indigo-500 text-indigo-600 hover:bg-indigo-500 hover:text-white">
+                                <Palette className="w-4 h-4 ml-2" />
+                                تصميم فورم المحكمين
+                              </Button>
+                            </Link>
+                            <a
+                              href={`/judge/apply/${hackathon.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button variant="outline" className="border-teal-500 text-teal-600 hover:bg-teal-500 hover:text-white">
+                                <ExternalLink className="w-4 h-4 ml-2" />
+                                معاينة فورم المحكمين
                               </Button>
                             </a>
                           </div>

@@ -2,174 +2,71 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, FileText, Eye, Edit, Trash2, Users, Calendar, BarChart3, Share2, Mail, Copy, Send } from 'lucide-react'
+import { Plus, FileText, Eye, Edit, Trash2, Users, Calendar, BarChart3, Share2, Mail, Copy, Send, Award, UserCheck, Palette, ExternalLink, Settings, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-interface Form {
+interface Hackathon {
   id: string
   title: string
   description: string
-  status: 'draft' | 'published' | 'closed'
-  isPublic: boolean
-  createdAt: string
-  updatedAt: string
-  _count: {
-    responses: number
-  }
+  status: string
 }
 
 export default function FormsManagement() {
   const { user } = useAuth()
   const router = useRouter()
-  const [forms, setForms] = useState<Form[]>([])
   const [loading, setLoading] = useState(true)
-  const [shareModalOpen, setShareModalOpen] = useState(false)
-  const [emailModalOpen, setEmailModalOpen] = useState(false)
-  const [selectedForm, setSelectedForm] = useState<Form | null>(null)
-  const [emailContent, setEmailContent] = useState('')
-  const [emailSubject, setEmailSubject] = useState('')
-  const [emailRecipients, setEmailRecipients] = useState<'all' | 'hackathon'>('all')
-  const [selectedHackathon, setSelectedHackathon] = useState('')
-  const [hackathons, setHackathons] = useState<any[]>([])
+  const [hackathons, setHackathons] = useState<Hackathon[]>([])
+  const [selectedHackathon, setSelectedHackathon] = useState<string>('')
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
       router.push('/login')
       return
     }
-    fetchForms()
+    fetchHackathons()
   }, [user, router])
 
-  const fetchForms = async () => {
+  const fetchHackathons = async () => {
     try {
-      const response = await fetch('/api/admin/forms')
+      const response = await fetch('/api/hackathons')
       if (response.ok) {
         const data = await response.json()
-        setForms(data.forms)
+        setHackathons(data)
+        if (data.length > 0) {
+          setSelectedHackathon(data[0].id)
+        }
       }
     } catch (error) {
-      console.error('Error fetching forms:', error)
+      console.error('Error fetching hackathons:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchHackathons = async () => {
+  const copyLink = async (url: string, label: string) => {
     try {
-      const response = await fetch('/api/admin/hackathons')
-      if (response.ok) {
-        const data = await response.json()
-        setHackathons(data.hackathons || [])
-      }
-    } catch (error) {
-      console.error('Error fetching hackathons:', error)
-    }
-  }
-
-  const copyFormLink = async (formId: string) => {
-    const formUrl = `${window.location.origin}/forms/${formId}`
-    try {
-      await navigator.clipboard.writeText(formUrl)
-      alert('تم نسخ رابط الفورم بنجاح!')
+      await navigator.clipboard.writeText(url)
+      alert(`تم نسخ رابط ${label} بنجاح!`)
     } catch (error) {
       console.error('Error copying link:', error)
       alert('حدث خطأ في نسخ الرابط')
     }
   }
 
-  const openShareModal = (form: Form) => {
-    setSelectedForm(form)
-    setShareModalOpen(true)
-  }
-
-  const openEmailModal = (form: Form) => {
-    setSelectedForm(form)
-    setEmailSubject(`استطلاع: ${form.title}`)
-    setEmailContent(`مرحباً،\n\nنود دعوتكم للمشاركة في الاستطلاع التالي:\n\n${form.title}\n${form.description}\n\nيمكنكم الوصول للاستطلاع عبر الرابط التالي:\n${window.location.origin}/forms/${form.id}\n\nشكراً لكم`)
-    setEmailModalOpen(true)
-    fetchHackathons()
-  }
-
-  const sendFormEmail = async () => {
-    if (!selectedForm) return
-
-    try {
-      const response = await fetch('/api/admin/emails/broadcast', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: emailSubject,
-          content: emailContent,
-          recipients: emailRecipients,
-          hackathonId: emailRecipients === 'hackathon' ? selectedHackathon : null,
-          formId: selectedForm.id
-        })
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        alert('تم إرسال البريد الإلكتروني بنجاح!')
-        setEmailModalOpen(false)
-      } else {
-        alert(`خطأ: ${data.error}`)
-      }
-    } catch (error) {
-      console.error('Error sending email:', error)
-      alert('حدث خطأ في إرسال البريد الإلكتروني')
-    }
-  }
-
-  const deleteForm = async (formId: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا النموذج؟ سيتم حذف جميع الردود أيضاً.')) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/admin/forms/${formId}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        setForms(forms.filter(form => form.id !== formId))
-        alert('تم حذف النموذج بنجاح')
-      } else {
-        alert('فشل في حذف النموذج')
-      }
-    } catch (error) {
-      console.error('Error deleting form:', error)
-      alert('حدث خطأ في حذف النموذج')
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      draft: { label: 'مسودة', color: 'bg-gray-500' },
-      published: { label: 'منشور', color: 'bg-green-500' },
-      closed: { label: 'مغلق', color: 'bg-red-500' }
-    }
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
-    return (
-      <Badge className={`${config.color} text-white`}>
-        {config.label}
-      </Badge>
-    )
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-[#01645e]/20 border-t-[#01645e] rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-[#01645e] font-medium">جاري تحميل النماذج...</p>
-            </div>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#01645e] mx-auto mb-4"></div>
+          <p className="text-[#01645e] font-semibold">جاري تحميل الفورمات...</p>
         </div>
       </div>
     )
@@ -180,329 +77,367 @@ export default function FormsManagement() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-[#01645e] mb-2">إدارة النماذج</h1>
-              <p className="text-[#8b7632] text-lg">إنشاء وإدارة النماذج ومتابعة الردود</p>
+              <h1 className="text-4xl font-bold text-[#01645e] mb-2 flex items-center gap-3">
+                <FileText className="w-10 h-10" />
+                إدارة الفورمات
+              </h1>
+              <p className="text-[#8b7632] text-lg">
+                إدارة جميع فورمات الهاكاثون من مكان واحد
+              </p>
             </div>
-            <Link href="/admin/forms/create">
-              <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52] text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300">
-                <Plus className="w-5 h-5 ml-2" />
-                إنشاء نموذج جديد
-              </Button>
-            </Link>
           </div>
-        </motion.div>
 
-        {/* Stats Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
-        >
-          <Card className="bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white">
+          {/* Hackathon Selector */}
+          <Card className="bg-white/80 backdrop-blur">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm opacity-90">إجمالي النماذج</p>
-                  <p className="text-3xl font-bold">{forms.length}</p>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-[#01645e] mb-2">
+                    اختر الهاكاثون
+                  </label>
+                  <Select value={selectedHackathon} onValueChange={setSelectedHackathon}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="اختر هاكاثون" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hackathons.map((hackathon) => (
+                        <SelectItem key={hackathon.id} value={hackathon.id}>
+                          {hackathon.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <FileText className="w-8 h-8 opacity-80" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-[#3ab666] to-[#c3e956] text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm opacity-90">النماذج المنشورة</p>
-                  <p className="text-3xl font-bold">{forms.filter(f => f.status === 'published').length}</p>
-                </div>
-                <Eye className="w-8 h-8 opacity-80" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-[#8b7632] to-[#c3e956] text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm opacity-90">إجمالي الردود</p>
-                  <p className="text-3xl font-bold">{forms.reduce((sum, form) => sum + form._count.responses, 0)}</p>
-                </div>
-                <Users className="w-8 h-8 opacity-80" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-[#6c757d] to-[#8b7632] text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm opacity-90">المسودات</p>
-                  <p className="text-3xl font-bold">{forms.filter(f => f.status === 'draft').length}</p>
-                </div>
-                <Edit className="w-8 h-8 opacity-80" />
+                {selectedHackathon && (
+                  <div className="text-sm text-gray-600">
+                    <Badge variant="outline" className="bg-[#c3e956]/20 text-[#8b7632] border-[#c3e956]">
+                      {hackathons.find(h => h.id === selectedHackathon)?.status}
+                    </Badge>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Forms List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          {forms.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <FileText className="w-16 h-16 text-[#01645e]/30 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-[#01645e] mb-2">لا توجد نماذج</h3>
-                <p className="text-[#8b7632] mb-6">ابدأ بإنشاء نموذج جديد لجمع البيانات من المستخدمين</p>
-                <Link href="/admin/forms/create">
-                  <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white">
-                    <Plus className="w-4 h-4 ml-2" />
-                    إنشاء أول نموذج
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {forms.map((form, index) => (
-                <motion.div
-                  key={form.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * index }}
-                >
-                  <Card className="hover:shadow-lg transition-shadow duration-300">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <CardTitle className="text-[#01645e] text-lg mb-2">{form.title}</CardTitle>
-                          <CardDescription className="text-sm text-[#8b7632]">
-                            {form.description || 'لا يوجد وصف'}
-                          </CardDescription>
-                        </div>
-                        {getStatusBadge(form.status)}
+        {/* Forms Grid */}
+        {selectedHackathon && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Tabs defaultValue="judges" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsTrigger value="judges">
+                  <Award className="w-4 h-4 ml-2" />
+                  فورم المحكمين
+                </TabsTrigger>
+                <TabsTrigger value="admins">
+                  <UserCheck className="w-4 h-4 ml-2" />
+                  فورم المشرفين
+                </TabsTrigger>
+                <TabsTrigger value="feedback">
+                  <MessageSquare className="w-4 h-4 ml-2" />
+                  فورم التقييم
+                </TabsTrigger>
+                <TabsTrigger value="registration">
+                  <Users className="w-4 h-4 ml-2" />
+                  فورم التسجيل
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Judge Forms Tab */}
+              <TabsContent value="judges">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Judge Application Form */}
+                  <Card className="hover:shadow-xl transition-shadow border-2 border-orange-200">
+                    <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
+                      <div className="flex items-center justify-between">
+                        <Award className="w-8 h-8 text-orange-600" />
+                        <Badge className="bg-orange-600 text-white">محكمين</Badge>
                       </div>
+                      <CardTitle className="text-xl text-orange-900 mt-4">
+                        فورم طلب الانضمام كمحكم
+                      </CardTitle>
+                      <CardDescription>
+                        فورم لاستقبال طلبات المحكمين للانضمام للهاكاثون
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#8b7632]">عدد الردود:</span>
-                          <span className="font-semibold text-[#01645e]">{form._count.responses}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#8b7632]">تاريخ الإنشاء:</span>
-                          <span className="text-[#01645e]">{new Date(form.createdAt).toLocaleDateString('ar-EG')}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#8b7632]">عام:</span>
-                          <Badge variant="outline" className={form.isPublic ? 'border-green-500 text-green-600' : 'border-orange-500 text-orange-600'}>
-                            {form.isPublic ? 'عام' : 'خاص'}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 mt-6">
-                        <div className="flex gap-2">
-                          <Link href={`/admin/forms/${form.id}/responses`} className="flex-1">
-                            <Button variant="outline" size="sm" className="w-full border-[#3ab666] text-[#3ab666] hover:bg-[#3ab666] hover:text-white">
-                              <BarChart3 className="w-4 h-4 ml-1" />
-                              الردود
-                            </Button>
-                          </Link>
-                          <Link href={`/admin/forms/${form.id}/edit`} className="flex-1">
-                            <Button variant="outline" size="sm" className="w-full border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white">
-                              <Edit className="w-4 h-4 ml-1" />
-                              تعديل
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteForm(form.id)}
-                            className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
-                          >
-                            <Trash2 className="w-4 h-4" />
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Link href={`/admin/judge-form-design/${selectedHackathon}`}>
+                          <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600">
+                            <Palette className="w-4 h-4 ml-2" />
+                            تصميم الفورم
                           </Button>
-                        </div>
+                        </Link>
                         
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyFormLink(form.id)}
-                            className="flex-1 border-[#8b7632] text-[#8b7632] hover:bg-[#8b7632] hover:text-white"
-                          >
-                            <Copy className="w-4 h-4 ml-1" />
-                            نسخ الرابط
+                        <Button
+                          variant="outline"
+                          className="w-full border-orange-500 text-orange-600 hover:bg-orange-50"
+                          onClick={() => window.open(`/judge/apply/${selectedHackathon}`, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                          معاينة الفورم
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => copyLink(`${window.location.origin}/judge/apply/${selectedHackathon}`, 'فورم المحكمين')}
+                        >
+                          <Copy className="w-4 h-4 ml-2" />
+                          نسخ الرابط
+                        </Button>
+
+                        <Link href="/admin/judges">
+                          <Button variant="outline" className="w-full border-orange-300">
+                            <Users className="w-4 h-4 ml-2" />
+                            إدارة الطلبات
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openShareModal(form)}
-                            className="flex-1 border-[#6c757d] text-[#6c757d] hover:bg-[#6c757d] hover:text-white"
-                          >
-                            <Share2 className="w-4 h-4 ml-1" />
-                            مشاركة
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Judge Invitation Form */}
+                  <Card className="hover:shadow-xl transition-shadow border-2 border-blue-200">
+                    <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                      <div className="flex items-center justify-between">
+                        <Mail className="w-8 h-8 text-blue-600" />
+                        <Badge className="bg-blue-600 text-white">دعوات</Badge>
+                      </div>
+                      <CardTitle className="text-xl text-blue-900 mt-4">
+                        نظام دعوات المحكمين
+                      </CardTitle>
+                      <CardDescription>
+                        إرسال دعوات مخصصة للمحكمين عبر البريد الإلكتروني
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Link href="/admin/judges">
+                          <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                            <Mail className="w-4 h-4 ml-2" />
+                            إدارة الدعوات
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEmailModal(form)}
-                            className="flex-1 border-[#c3e956] text-[#c3e956] hover:bg-[#c3e956] hover:text-black"
-                          >
-                            <Mail className="w-4 h-4 ml-1" />
-                            إرسال
-                          </Button>
+                        </Link>
+
+                        <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
+                          <p className="font-medium mb-1">📧 نظام الدعوات</p>
+                          <p className="text-xs">يمكنك إرسال دعوات مخصصة للمحكمين مع روابط تسجيل فريدة</p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </motion.div>
+                </div>
+              </TabsContent>
 
-        {/* Share Modal */}
-        {shareModalOpen && selectedForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-xl font-bold text-[#01645e] mb-4">مشاركة الفورم</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">رابط الفورم:</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={`${window.location.origin}/forms/${selectedForm.id}`}
-                      readOnly
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                    <Button
-                      onClick={() => copyFormLink(selectedForm.id)}
-                      size="sm"
-                      className="bg-[#01645e] text-white"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
+              {/* Admin Forms Tab */}
+              <TabsContent value="admins">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Admin Application Form */}
+                  <Card className="hover:shadow-xl transition-shadow border-2 border-purple-200">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+                      <div className="flex items-center justify-between">
+                        <UserCheck className="w-8 h-8 text-purple-600" />
+                        <Badge className="bg-purple-600 text-white">مشرفين</Badge>
+                      </div>
+                      <CardTitle className="text-xl text-purple-900 mt-4">
+                        فورم طلب الانضمام كمشرف
+                      </CardTitle>
+                      <CardDescription>
+                        فورم لاستقبال طلبات المشرفين للانضمام للهاكاثون
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Link href={`/admin/admin-form-design/${selectedHackathon}`}>
+                          <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+                            <Palette className="w-4 h-4 ml-2" />
+                            تصميم الفورم
+                          </Button>
+                        </Link>
+                        
+                        <Button
+                          variant="outline"
+                          className="w-full border-purple-500 text-purple-600 hover:bg-purple-50"
+                          onClick={() => window.open(`/admin/apply/${selectedHackathon}`, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                          معاينة الفورم
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => copyLink(`${window.location.origin}/admin/apply/${selectedHackathon}`, 'فورم المشرفين')}
+                        >
+                          <Copy className="w-4 h-4 ml-2" />
+                          نسخ الرابط
+                        </Button>
+
+                        <Link href="/admin/admin-applications">
+                          <Button variant="outline" className="w-full border-purple-300">
+                            <Users className="w-4 h-4 ml-2" />
+                            إدارة الطلبات
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    onClick={() => setShareModalOpen(false)}
-                    variant="outline"
-                  >
-                    إغلاق
-                  </Button>
+              </TabsContent>
+
+              {/* Feedback Forms Tab */}
+              <TabsContent value="feedback">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Hackathon Feedback Form */}
+                  <Card className="hover:shadow-xl transition-shadow border-2 border-green-200">
+                    <CardHeader className="bg-gradient-to-r from-green-50 to-teal-50">
+                      <div className="flex items-center justify-between">
+                        <MessageSquare className="w-8 h-8 text-green-600" />
+                        <Badge className="bg-green-600 text-white">تقييم</Badge>
+                      </div>
+                      <CardTitle className="text-xl text-green-900 mt-4">
+                        فورم تقييم الهاكاثون
+                      </CardTitle>
+                      <CardDescription>
+                        فورم لجمع آراء وتقييمات المشاركين عن الهاكاثون
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Link href={`/admin/hackathons/${selectedHackathon}/feedback-form`}>
+                          <Button className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600">
+                            <Palette className="w-4 h-4 ml-2" />
+                            تصميم الفورم
+                          </Button>
+                        </Link>
+
+                        <Button
+                          variant="outline"
+                          className="w-full border-green-500 text-green-600 hover:bg-green-50"
+                          onClick={() => window.open(`/feedback/${selectedHackathon}`, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                          معاينة الفورم
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => copyLink(`${window.location.origin}/feedback/${selectedHackathon}`, 'فورم التقييم')}
+                        >
+                          <Copy className="w-4 h-4 ml-2" />
+                          نسخ الرابط
+                        </Button>
+
+                        <Link href={`/admin/hackathons/${selectedHackathon}/feedback-results`}>
+                          <Button variant="outline" className="w-full border-green-300">
+                            <BarChart3 className="w-4 h-4 ml-2" />
+                            عرض النتائج
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </div>
-            </div>
-          </div>
+              </TabsContent>
+
+              {/* Registration Forms Tab */}
+              <TabsContent value="registration">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Registration Form */}
+                  <Card className="hover:shadow-xl transition-shadow border-2 border-[#01645e]/30">
+                    <CardHeader className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10">
+                      <div className="flex items-center justify-between">
+                        <Users className="w-8 h-8 text-[#01645e]" />
+                        <Badge className="bg-[#01645e] text-white">تسجيل</Badge>
+                      </div>
+                      <CardTitle className="text-xl text-[#01645e] mt-4">
+                        فورم تسجيل المشاركين
+                      </CardTitle>
+                      <CardDescription>
+                        فورم التسجيل الديناميكي للمشاركين في الهاكاثون
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Link href={`/admin/hackathons/${selectedHackathon}/registration-form`}>
+                          <Button className="w-full bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#01645e]/90 hover:to-[#3ab666]/90">
+                            <Settings className="w-4 h-4 ml-2" />
+                            إعداد الفورم
+                          </Button>
+                        </Link>
+
+                        <Link href={`/admin/hackathons/${selectedHackathon}/register-form-design`}>
+                          <Button variant="outline" className="w-full border-[#01645e] text-[#01645e]">
+                            <Palette className="w-4 h-4 ml-2" />
+                            تصميم الفورم
+                          </Button>
+                        </Link>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => window.open(`/hackathons/${selectedHackathon}/register-form`, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                          معاينة الفورم
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => copyLink(`${window.location.origin}/hackathons/${selectedHackathon}/register-form`, 'فورم التسجيل')}
+                        >
+                          <Copy className="w-4 h-4 ml-2" />
+                          نسخ الرابط
+                        </Button>
+
+                        <Link href={`/admin/hackathons/${selectedHackathon}/form-submissions`}>
+                          <Button variant="outline" className="w-full border-[#3ab666] text-[#3ab666]">
+                            <FileText className="w-4 h-4 ml-2" />
+                            النماذج المرسلة
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </motion.div>
         )}
 
-        {/* Email Modal */}
-        {emailModalOpen && selectedForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <h3 className="text-xl font-bold text-[#01645e] mb-4">إرسال الفورم بالبريد الإلكتروني</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">الموضوع:</label>
-                  <input
-                    type="text"
-                    value={emailSubject}
-                    onChange={(e) => setEmailSubject(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">المستلمون:</label>
-                  <div className="space-y-2">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        value="all"
-                        checked={emailRecipients === 'all'}
-                        onChange={(e) => setEmailRecipients(e.target.value as 'all')}
-                        className="ml-2"
-                      />
-                      جميع المستخدمين
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        value="hackathon"
-                        checked={emailRecipients === 'hackathon'}
-                        onChange={(e) => setEmailRecipients(e.target.value as 'hackathon')}
-                        className="ml-2"
-                      />
-                      المشاركون في هاكثون معين
-                    </label>
-                  </div>
-                </div>
-
-                {emailRecipients === 'hackathon' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">اختر الهاكثون:</label>
-                    <select
-                      value={selectedHackathon}
-                      onChange={(e) => setSelectedHackathon(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="">اختر الهاكثون</option>
-                      {hackathons.map((hackathon) => (
-                        <option key={hackathon.id} value={hackathon.id}>
-                          {hackathon.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">المحتوى:</label>
-                  <textarea
-                    value={emailContent}
-                    onChange={(e) => setEmailContent(e.target.value)}
-                    rows={8}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    onClick={() => setEmailModalOpen(false)}
-                    variant="outline"
-                  >
-                    إلغاء
-                  </Button>
-                  <Button
-                    onClick={sendFormEmail}
-                    className="bg-[#01645e] text-white"
-                    disabled={!emailSubject || !emailContent || (emailRecipients === 'hackathon' && !selectedHackathon)}
-                  >
-                    <Send className="w-4 h-4 ml-1" />
-                    إرسال
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Empty State */}
+        {!selectedHackathon && hackathons.length === 0 && (
+          <Card className="text-center p-12">
+            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+              لا توجد هاكاثونات
+            </h3>
+            <p className="text-gray-500 mb-6">
+              قم بإنشاء هاكاثون أولاً لإدارة الفورمات
+            </p>
+            <Link href="/admin/hackathons">
+              <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666]">
+                <Plus className="w-4 h-4 ml-2" />
+                إنشاء هاكاثون
+              </Button>
+            </Link>
+          </Card>
         )}
       </div>
     </div>
   )
 }
+
