@@ -139,14 +139,10 @@ export default function FormsManagement() {
             transition={{ delay: 0.2 }}
           >
             <Tabs defaultValue="judges" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="judges">
                   <Award className="w-4 h-4 ml-2" />
                   فورم المحكمين
-                </TabsTrigger>
-                <TabsTrigger value="admins">
-                  <UserCheck className="w-4 h-4 ml-2" />
-                  فورم المشرفين
                 </TabsTrigger>
                 <TabsTrigger value="feedback">
                   <MessageSquare className="w-4 h-4 ml-2" />
@@ -172,15 +168,15 @@ export default function FormsManagement() {
                         فورم طلب الانضمام كمحكم
                       </CardTitle>
                       <CardDescription>
-                        فورم لاستقبال طلبات المحكمين للانضمام للهاكاثون
+                        فورم ديناميكي لاستقبال طلبات المحكمين - أضف الحقول التي تريدها
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                       <div className="flex flex-col gap-2">
-                        <Link href={`/admin/judge-form-design/${selectedHackathon}`}>
+                        <Link href={`/admin/judge-form-builder/${selectedHackathon}`}>
                           <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600">
-                            <Palette className="w-4 h-4 ml-2" />
-                            تصميم الفورم
+                            <Settings className="w-4 h-4 ml-2" />
+                            بناء الفورم
                           </Button>
                         </Link>
                         
@@ -245,61 +241,7 @@ export default function FormsManagement() {
                 </div>
               </TabsContent>
 
-              {/* Admin Forms Tab */}
-              <TabsContent value="admins">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Admin Application Form */}
-                  <Card className="hover:shadow-xl transition-shadow border-2 border-purple-200">
-                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
-                      <div className="flex items-center justify-between">
-                        <UserCheck className="w-8 h-8 text-purple-600" />
-                        <Badge className="bg-purple-600 text-white">مشرفين</Badge>
-                      </div>
-                      <CardTitle className="text-xl text-purple-900 mt-4">
-                        فورم طلب الانضمام كمشرف
-                      </CardTitle>
-                      <CardDescription>
-                        فورم لاستقبال طلبات المشرفين للانضمام للهاكاثون
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex flex-col gap-2">
-                        <Link href={`/admin/admin-form-design/${selectedHackathon}`}>
-                          <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
-                            <Palette className="w-4 h-4 ml-2" />
-                            تصميم الفورم
-                          </Button>
-                        </Link>
-                        
-                        <Button
-                          variant="outline"
-                          className="w-full border-purple-500 text-purple-600 hover:bg-purple-50"
-                          onClick={() => window.open(`/admin/apply/${selectedHackathon}`, '_blank')}
-                        >
-                          <ExternalLink className="w-4 h-4 ml-2" />
-                          معاينة الفورم
-                        </Button>
 
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => copyLink(`${window.location.origin}/admin/apply/${selectedHackathon}`, 'فورم المشرفين')}
-                        >
-                          <Copy className="w-4 h-4 ml-2" />
-                          نسخ الرابط
-                        </Button>
-
-                        <Link href="/admin/admin-applications">
-                          <Button variant="outline" className="w-full border-purple-300">
-                            <Users className="w-4 h-4 ml-2" />
-                            إدارة الطلبات
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
 
               {/* Feedback Forms Tab */}
               <TabsContent value="feedback">
