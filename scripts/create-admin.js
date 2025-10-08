@@ -18,7 +18,7 @@ async function createAdmin() {
       data: {
         name: "مدير النظام",
         email: "admin@hackathon.com",
-        password_hash: hashedPassword,
+        password: hashedPassword,
         phone: "+966500000000",
         city: "الرياض",
         nationality: "سعودي",

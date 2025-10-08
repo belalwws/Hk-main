@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
-        password_hash: passwordHash,
+        password: passwordHash,
         phone: phone || null,
         role: 'judge'
       },
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error) {
       if (error.message.includes('Unique constraint')) {
         errorMessage = 'هذا الإيميل مستخدم بالفعل'
-      } else if (error.message.includes('password_hash')) {
+      } else if (error.message.includes('password')) {
         errorMessage = 'خطأ في تشفير كلمة المرور'
       }
     }

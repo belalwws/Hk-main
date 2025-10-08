@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
-        password_hash: hashedPassword,
+        password: hashedPassword,
         phone: phone || null,
         city: city || null,
         nationality: nationality || null,

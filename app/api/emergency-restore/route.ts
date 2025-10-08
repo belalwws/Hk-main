@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: 'Emergency Admin',
         email: 'admin@hackathon.com',
-        password_hash: await bcrypt.hash('admin123456', 12),
+        password: await bcrypt.hash('admin123456', 12),
         role: 'admin',
         isActive: true,
         phone: '+966500000000',
