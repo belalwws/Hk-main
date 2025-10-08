@@ -161,6 +161,12 @@ export default function AdminDashboard() {
                 التقارير والإحصائيات
               </Button>
             </Link>
+            <Link href="/admin/presentations">
+              <Button variant="outline">
+                <FileText className="w-5 h-5 ml-2" />
+                متابعة العروض
+              </Button>
+            </Link>
           </div>
         </motion.div>
 

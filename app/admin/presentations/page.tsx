@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FileText, Download, CheckCircle2, XCircle, Eye, Users } from 'lucide-react'
+import { FileText, Download, CheckCircle2, XCircle, Eye, Users, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useModal } from '@/hooks/use-modal'
 
 interface Team {
   id: string
@@ -34,6 +35,8 @@ export default function PresentationsPage() {
   const [hackathons, setHackathons] = useState<any[]>([])
   const [selectedHackathon, setSelectedHackathon] = useState<string>('all')
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const { showSuccess, showError, showConfirm, ModalComponents } = useModal()
 
   useEffect(() => {
     fetchData()
@@ -70,6 +73,35 @@ export default function PresentationsPage() {
 
   const handleDownload = (fileUrl: string, teamName: string) => {
     window.open(fileUrl, '_blank')
+  }
+
+  const handleDelete = async (teamId: string, teamName: string) => {
+    const confirmed = await showConfirm(
+      `هل أنت متأكد من حذف العرض التقديمي للفريق "${teamName}"؟`,
+      'سيتمكن الفريق من رفع عرض جديد بعد الحذف.'
+    )
+
+    if (!confirmed) return
+
+    setDeleting(teamId)
+    try {
+      const response = await fetch(`/api/admin/teams/${teamId}/delete-presentation`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        showSuccess('تم حذف العرض التقديمي بنجاح')
+        fetchData() // Reload data
+      } else {
+        const error = await response.json()
+        showError(error.error || 'فشل في حذف العرض التقديمي')
+      }
+    } catch (error) {
+      console.error('Error deleting presentation:', error)
+      showError('حدث خطأ في حذف العرض التقديمي')
+    } finally {
+      setDeleting(null)
+    }
   }
 
   if (loading) {
@@ -206,13 +238,32 @@ export default function PresentationsPage() {
                           الأعضاء: {team.participants.map(p => p.user.name).join(', ')}
                         </p>
                       </div>
-                      <Button
-                        onClick={() => handleDownload(team.ideaFile!, team.name)}
-                        className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
-                      >
-                        <Download className="w-4 h-4 ml-2" />
-                        تحميل
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleDownload(team.ideaFile!, team.name)}
+                          className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
+                        >
+                          <Download className="w-4 h-4 ml-2" />
+                          تحميل
+                        </Button>
+                        <Button
+                          onClick={() => handleDelete(team.id, team.name)}
+                          disabled={deleting === team.id}
+                          variant="destructive"
+                        >
+                          {deleting === team.id ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></div>
+                              جاري الحذف...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-4 h-4 ml-2" />
+                              حذف
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -259,6 +310,9 @@ export default function PresentationsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <ModalComponents />
     </div>
   )
 }
