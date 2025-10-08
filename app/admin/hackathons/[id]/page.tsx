@@ -1159,11 +1159,20 @@ export default function HackathonManagementPage() {
                         <div>
                           <h3 className="text-lg font-semibold text-[#01645e] mb-1">تكوين الفرق التلقائي</h3>
                           <p className="text-sm text-[#8b7632] mb-2">
-                            سيتم تجميع المشاركين المقبولين في فرق متنوعة حسب الأدوار المفضلة
+                            سيتم تجميع المشاركين المقبولين في فرق متنوعة حسب القواعد المحددة
                           </p>
-                          <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                            📊 حجم الفريق المحدد: {(hackathon?.settings as any)?.maxTeamSize || 4} أشخاص لكل فريق
+                          <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block">
+                            📊 حجم الفريق المحدد: {(hackathon?.settings as any)?.teamFormationSettings?.teamSize || (hackathon?.settings as any)?.maxTeamSize || 4} أشخاص لكل فريق
                           </p>
+                          <Button
+                            onClick={() => router.push(`/admin/hackathons/${params.id}/team-formation-settings`)}
+                            variant="outline"
+                            size="sm"
+                            className="mr-2 border-[#01645e] text-[#01645e] hover:bg-[#01645e] hover:text-white"
+                          >
+                            <Settings className="w-4 h-4 ml-1" />
+                            إعدادات التكوين
+                          </Button>
                         </div>
                         <div className="flex gap-2">
                           {hasExistingTeams && (

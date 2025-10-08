@@ -44,13 +44,23 @@ export async function POST(
       return NextResponse.json({ error: 'الهاكاثون غير موجود' }, { status: 404 })
     }
 
-    // Get team size from hackathon settings, default to 4 if not specified
+    // Get team formation settings
     const hackathonSettings = hackathon.settings as any
-    const teamSize = hackathonSettings?.maxTeamSize || 4
+    const teamFormationSettings = hackathonSettings?.teamFormationSettings || {
+      teamSize: 4,
+      minTeamSize: 3,
+      maxTeamSize: 5,
+      allowPartialTeams: true,
+      rules: []
+    }
+
+    const teamSize = teamFormationSettings.teamSize
+    const rules = teamFormationSettings.rules || []
 
     console.log(`🎯 Using team size: ${teamSize} from hackathon settings`)
+    console.log(`📋 Using ${rules.length} distribution rules`)
 
-    // Get approved participants with user data
+    // Get approved participants with user data and custom fields
     const approvedParticipants = await prisma.participant.findMany({
       where: {
         hackathonId: hackathonId,
@@ -80,20 +90,58 @@ export async function POST(
 
     console.log(`👥 Found ${approvedParticipants.length} approved participants`)
 
-    // Group participants by role
-    const roleGroups: { [key: string]: typeof approvedParticipants } = {}
-    
-    approvedParticipants.forEach(participant => {
-      const role = participant.user.preferredRole || 'مطور'
-      if (!roleGroups[role]) {
-        roleGroups[role] = []
-      }
-      roleGroups[role].push(participant)
-    })
+    // Group participants based on rules
+    const groups: { [key: string]: { [value: string]: typeof approvedParticipants } } = {}
 
-    console.log('📊 Role distribution:', Object.keys(roleGroups).map(role => `${role}: ${roleGroups[role].length}`))
+    // Process each rule
+    for (const rule of rules) {
+      if (rule.distribution === 'ignore') continue
 
-    // Create balanced teams using the configured team size
+      groups[rule.fieldId] = {}
+
+      approvedParticipants.forEach(participant => {
+        // Get value from participant's custom fields or standard fields
+        let value: string | undefined
+
+        // Check standard fields first
+        if (rule.fieldId === 'preferredRole' || rule.fieldLabel.includes('دور') || rule.fieldLabel.includes('role')) {
+          value = participant.user.preferredRole || participant.preferredRole || 'غير محدد'
+        } else if (participant.additionalInfo) {
+          const additionalInfo = participant.additionalInfo as any
+          value = additionalInfo[rule.fieldId] || additionalInfo[rule.fieldLabel] || 'غير محدد'
+        } else {
+          // Try to get from other participant fields
+          value = (participant as any)[rule.fieldId] || 'غير محدد'
+        }
+
+        if (!groups[rule.fieldId][value]) {
+          groups[rule.fieldId][value] = []
+        }
+        groups[rule.fieldId][value].push(participant)
+      })
+
+      console.log(`📊 ${rule.fieldLabel} distribution:`,
+        Object.keys(groups[rule.fieldId]).map(val => `${val}: ${groups[rule.fieldId][val].length}`)
+      )
+    }
+
+    // Fallback: if no rules, group by preferredRole
+    if (rules.length === 0) {
+      const roleGroups: { [key: string]: typeof approvedParticipants } = {}
+
+      approvedParticipants.forEach(participant => {
+        const role = participant.user.preferredRole || 'مطور'
+        if (!roleGroups[role]) {
+          roleGroups[role] = []
+        }
+        roleGroups[role].push(participant)
+      })
+
+      groups['preferredRole'] = roleGroups
+      console.log('📊 Role distribution (fallback):', Object.keys(roleGroups).map(role => `${role}: ${roleGroups[role].length}`))
+    }
+
+    // Create balanced teams using the configured team size and rules
     const teams: Array<{
       name: string
       teamNumber: number
@@ -115,22 +163,60 @@ export async function POST(
       })
     }
 
-    // Distribute participants across teams to ensure diversity
-    const roles = Object.keys(roleGroups)
-    let currentTeamIndex = 0
+    // Distribute participants based on rules
+    const assignedParticipants = new Set<string>()
 
-    // First, distribute one member from each role to each team (round-robin)
-    for (const role of roles) {
-      const participants = [...roleGroups[role]] // Copy array
-      
-      while (participants.length > 0) {
-        const participant = participants.shift()!
-        teams[currentTeamIndex].members.push(participant)
-        currentTeamIndex = (currentTeamIndex + 1) % numberOfTeams
+    // Sort rules by priority
+    const sortedRules = [...rules].sort((a, b) => (a.priority || 999) - (b.priority || 999))
+
+    // Process each rule
+    for (const rule of sortedRules) {
+      if (rule.distribution === 'ignore' || !groups[rule.fieldId]) continue
+
+      const fieldGroups = groups[rule.fieldId]
+      const values = Object.keys(fieldGroups)
+
+      if (rule.distribution === 'balanced' || rule.distribution === 'one_per_team') {
+        // Distribute evenly across teams
+        let currentTeamIndex = 0
+
+        for (const value of values) {
+          const participants = fieldGroups[value].filter(p => !assignedParticipants.has(p.id))
+
+          for (const participant of participants) {
+            // Check team constraints
+            if (rule.distribution === 'one_per_team') {
+              const maxPerTeam = rule.maxPerTeam || 1
+              const currentCount = teams[currentTeamIndex].members.filter(m => {
+                const mValue = (m.additionalInfo as any)?.[rule.fieldId] || (m as any)[rule.fieldId] || m.user.preferredRole
+                return mValue === value
+              }).length
+
+              if (currentCount >= maxPerTeam) {
+                currentTeamIndex = (currentTeamIndex + 1) % numberOfTeams
+                continue
+              }
+            }
+
+            teams[currentTeamIndex].members.push(participant)
+            assignedParticipants.add(participant.id)
+            currentTeamIndex = (currentTeamIndex + 1) % numberOfTeams
+          }
+        }
       }
     }
 
+    // Assign remaining participants (not assigned by rules)
+    const remainingParticipants = approvedParticipants.filter(p => !assignedParticipants.has(p.id))
+    let currentTeamIndex = 0
+
+    for (const participant of remainingParticipants) {
+      teams[currentTeamIndex].members.push(participant)
+      currentTeamIndex = (currentTeamIndex + 1) % numberOfTeams
+    }
+
     console.log('🔄 Team formation completed')
+    console.log(`📊 Assigned by rules: ${assignedParticipants.size}, Remaining: ${remainingParticipants.length}`)
 
     // Create teams in database and assign participants
     const createdTeams: any[] = []
