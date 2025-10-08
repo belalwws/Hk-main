@@ -5,7 +5,7 @@ services:
     env: node
     region: oregon
     plan: starter
-    buildCommand: rm -rf package-lock.json node_modules && npm install --legacy-peer-deps --no-package-lock && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
+    buildCommand: rm -rf package-lock.json node_modules && npm install --legacy-peer-deps --no-package-lock && node scripts/fix-database-url.js && npx prisma generate --schema ./schema.prisma && node scripts/safe-db-setup.js && npm run build
     installCommand: echo "Skipping install - handled in buildCommand"
     startCommand: npm start
     healthCheckPath: /
@@ -19,6 +19,10 @@ services:
         fromDatabase:
           name: hackathon-db
           property: connectionString
+      - key: DATABASE_POOL_SIZE
+        value: 10
+      - key: DATABASE_POOL_TIMEOUT
+        value: 20
       - key: JWT_SECRET
         generateValue: true
       - key: NEXTAUTH_URL
