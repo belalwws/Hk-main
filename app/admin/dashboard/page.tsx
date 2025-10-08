@@ -2,18 +2,19 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Calendar, 
-  Users, 
-  Trophy, 
-  Star, 
-  Plus, 
-  ArrowRight, 
+import {
+  Calendar,
+  Users,
+  Trophy,
+  Star,
+  Plus,
+  ArrowRight,
   ArrowLeft,
-  Mail, 
-  Settings, 
+  Mail,
+  Settings,
   BarChart3,
-  FileText
+  FileText,
+  Code
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -165,6 +166,18 @@ export default function AdminDashboard() {
               <Button variant="outline">
                 <FileText className="w-5 h-5 ml-2" />
                 متابعة العروض
+              </Button>
+            </Link>
+            <Link href="/admin/api-docs">
+              <Button variant="outline">
+                <Code className="w-5 h-5 ml-2" />
+                External API
+              </Button>
+            </Link>
+            <Link href="/admin/import-excel">
+              <Button variant="outline">
+                <FileText className="w-5 h-5 ml-2" />
+                استيراد Excel
               </Button>
             </Link>
           </div>

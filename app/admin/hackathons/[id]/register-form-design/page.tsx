@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Save, Eye, ArrowLeft, Settings, Palette, Code, Monitor, Smartphone, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
+import { ImageUploader } from '@/components/admin/ImageUploader'
 
 interface FormDesign {
   id?: string
@@ -32,6 +33,7 @@ interface FormDesign {
     showHackathonInfo: boolean
     showProgressBar: boolean
     enableAnimations: boolean
+    coverImage?: string | null
   }
 }
 
@@ -58,7 +60,8 @@ export default function RegisterFormDesignPage({ params }: { params: Promise<{ i
       borderRadius: '12px',
       showHackathonInfo: true,
       showProgressBar: true,
-      enableAnimations: true
+      enableAnimations: true,
+      coverImage: null
     }
   })
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
@@ -190,14 +193,21 @@ export default function RegisterFormDesignPage({ params }: { params: Promise<{ i
         }
         
         .header {
-            background: linear-gradient(135deg, ${design.settings.primaryColor} 0%, ${design.settings.secondaryColor} 100%);
+            ${design.settings.coverImage
+              ? `background: url('${design.settings.coverImage}') center/cover;`
+              : `background: linear-gradient(135deg, ${design.settings.primaryColor} 0%, ${design.settings.secondaryColor} 100%);`
+            }
             color: white;
             padding: 3rem 2rem;
             text-align: center;
             position: relative;
             overflow: hidden;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
+
         .header::before {
             content: '';
             position: absolute;
@@ -205,7 +215,10 @@ export default function RegisterFormDesignPage({ params }: { params: Promise<{ i
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            ${design.settings.coverImage
+              ? 'background: rgba(0,0,0,0.4);'
+              : `background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');`
+            }
             opacity: 0.3;
         }
         
@@ -493,6 +506,19 @@ export default function RegisterFormDesignPage({ params }: { params: Promise<{ i
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Cover Image */}
+                <ImageUploader
+                  label="صورة الغلاف"
+                  value={design.settings.coverImage || null}
+                  onChange={(url) => setDesign(prev => ({
+                    ...prev,
+                    settings: { ...prev.settings, coverImage: url }
+                  }))}
+                  folder="registration-forms"
+                  aspectRatio="21/9"
+                  maxSizeMB={5}
+                />
+
                 <div>
                   <Label>القالب</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
