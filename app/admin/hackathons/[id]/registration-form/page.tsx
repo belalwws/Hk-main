@@ -189,11 +189,12 @@ export default function HackathonRegistrationFormPage() {
       const response = await fetch(`/api/hackathons/${hackathonId}`)
       if (response.ok) {
         const data = await response.json()
-        setHackathon(data)
+        const hackathonData = data.hackathon || data
+        setHackathon(hackathonData)
         setForm(prev => ({
           ...prev,
-          title: `نموذج التسجيل - ${data.title}`,
-          description: `نموذج التسجيل في ${data.title}`
+          title: `نموذج التسجيل - ${hackathonData.title}`,
+          description: `نموذج التسجيل في ${hackathonData.title}`
         }))
       }
     } catch (error) {
@@ -281,18 +282,23 @@ export default function HackathonRegistrationFormPage() {
 
     setLoading(true)
     try {
+      console.log('💾 Saving form:', form)
+
       const response = await fetch(`/api/admin/hackathons/${hackathonId}/registration-form`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
 
+      const data = await response.json()
+      console.log('📥 Save response:', data)
+
       if (response.ok) {
-        alert('تم حفظ النموذج بنجاح')
-        router.push(`/admin/hackathons/${hackathonId}`)
+        alert('✅ تم حفظ النموذج بنجاح!')
+        // Reload the form to get the saved data
+        await fetchExistingForm()
       } else {
-        const error = await response.json()
-        alert(error.error || 'حدث خطأ في حفظ النموذج')
+        alert(data.error || 'حدث خطأ في حفظ النموذج')
       }
     } catch (error) {
       console.error('Error saving form:', error)
