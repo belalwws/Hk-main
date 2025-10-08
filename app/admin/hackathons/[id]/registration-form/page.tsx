@@ -10,12 +10,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
-import { 
-  ArrowLeft, 
-  Save, 
-  Plus, 
-  Trash2, 
-  Eye, 
+import {
+  ArrowLeft,
+  Save,
+  Plus,
+  Trash2,
+  Eye,
   Settings,
   FormInput,
   List,
@@ -24,10 +24,17 @@ import {
   Phone,
   User,
   FileText,
-  ToggleLeft
+  ToggleLeft,
+  Code,
+  Copy,
+  CheckCircle2,
+  Globe,
+  Clock
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 
 interface FormField {
   id: string
@@ -65,6 +72,8 @@ export default function HackathonRegistrationFormPage() {
   
   const [loading, setLoading] = useState(false)
   const [hackathon, setHackathon] = useState<any>(null)
+  const [copied, setCopied] = useState<string | null>(null)
+  const [apiKey, setApiKey] = useState<string>('')
   const [form, setForm] = useState<RegistrationForm>({
     hackathonId,
     title: 'نموذج التسجيل',
@@ -104,7 +113,76 @@ export default function HackathonRegistrationFormPage() {
   useEffect(() => {
     fetchHackathon()
     fetchExistingForm()
+    fetchAPIKey()
   }, [hackathonId])
+
+  const fetchAPIKey = async () => {
+    try {
+      const response = await fetch('/api/admin/api-key')
+      if (response.ok) {
+        const data = await response.json()
+        setApiKey(data.apiKey)
+      }
+    } catch (error) {
+      console.error('Error fetching API key:', error)
+    }
+  }
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(id)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  const generateRequestBody = () => {
+    const body: any = {
+      hackathonId: hackathonId
+    }
+
+    form.fields.forEach(field => {
+      if (field.type === 'text' || field.type === 'email' || field.type === 'phone') {
+        body[field.id] = `string${field.required ? ' (required)' : ' (optional)'}`
+      } else if (field.type === 'textarea') {
+        body[field.id] = `string${field.required ? ' (required)' : ' (optional)'}`
+      } else if (field.type === 'select' || field.type === 'radio') {
+        body[field.id] = `"${field.options?.[0] || 'option'}"${field.required ? ' (required)' : ' (optional)'}`
+      } else if (field.type === 'checkbox') {
+        body[field.id] = `boolean${field.required ? ' (required)' : ' (optional)'}`
+      } else if (field.type === 'date') {
+        body[field.id] = `"2025-01-01"${field.required ? ' (required)' : ' (optional)'}`
+      }
+    })
+
+    return JSON.stringify(body, null, 2)
+  }
+
+  const generateRequestExample = () => {
+    const example: any = {
+      hackathonId: hackathonId
+    }
+
+    form.fields.forEach(field => {
+      if (field.id === 'name') {
+        example[field.id] = 'أحمد محمد'
+      } else if (field.id === 'email') {
+        example[field.id] = 'ahmed@example.com'
+      } else if (field.id === 'phone') {
+        example[field.id] = '0501234567'
+      } else if (field.type === 'text') {
+        example[field.id] = `مثال ${field.label}`
+      } else if (field.type === 'textarea') {
+        example[field.id] = `نص طويل لـ ${field.label}`
+      } else if (field.type === 'select' || field.type === 'radio') {
+        example[field.id] = field.options?.[0] || 'خيار 1'
+      } else if (field.type === 'checkbox') {
+        example[field.id] = true
+      } else if (field.type === 'date') {
+        example[field.id] = '2025-01-15'
+      }
+    })
+
+    return JSON.stringify(example, null, 2)
+  }
 
   const fetchHackathon = async () => {
     try {
@@ -546,6 +624,275 @@ export default function HackathonRegistrationFormPage() {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* API Documentation Section */}
+        <div className="mt-12">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <Code className="w-6 h-6 text-[#01645e]" />
+                External API Documentation
+              </CardTitle>
+              <CardDescription>
+                استخدم هذه الـ APIs لربط موقعك الخارجي بهذا الهاكاثون
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="register" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="register">تسجيل مشارك</TabsTrigger>
+                  <TabsTrigger value="countdown">العد التنازلي</TabsTrigger>
+                  <TabsTrigger value="info">معلومات الهاكاثون</TabsTrigger>
+                </TabsList>
+
+                {/* Register API */}
+                <TabsContent value="register" className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-600">POST</Badge>
+                      <code className="text-sm">
+                        {typeof window !== 'undefined' ? window.location.origin : ''}/api/external/register
+                      </code>
+                    </div>
+                    <Button
+                      onClick={() => copyToClipboard(
+                        `${typeof window !== 'undefined' ? window.location.origin : ''}/api/external/register`,
+                        'register-url'
+                      )}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {copied === 'register-url' ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* API Key */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">API Key:</label>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 bg-gray-100 p-3 rounded-lg font-mono text-sm">
+                        {apiKey || 'جاري التحميل...'}
+                      </code>
+                      <Button
+                        onClick={() => copyToClipboard(apiKey, 'api-key')}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {copied === 'api-key' ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      أضف في الـ Header: <code className="bg-gray-100 px-2 py-1 rounded">X-API-Key: {apiKey}</code>
+                    </p>
+                  </div>
+
+                  {/* Request Body Schema */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Request Body Schema:</label>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                      <pre className="text-sm font-mono">{generateRequestBody()}</pre>
+                    </div>
+                  </div>
+
+                  {/* Request Example */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Request Example:</label>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                      <pre className="text-sm font-mono">{generateRequestExample()}</pre>
+                    </div>
+                  </div>
+
+                  {/* cURL Example */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">cURL Example:</label>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto relative">
+                      <pre className="text-sm font-mono">
+{`curl -X POST "${typeof window !== 'undefined' ? window.location.origin : ''}/api/external/register" \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: ${apiKey}" \\
+  -d '${generateRequestExample()}'`}
+                      </pre>
+                      <Button
+                        onClick={() => copyToClipboard(
+                          `curl -X POST "${typeof window !== 'undefined' ? window.location.origin : ''}/api/external/register" -H "Content-Type: application/json" -H "X-API-Key: ${apiKey}" -d '${generateRequestExample()}'`,
+                          'curl-register'
+                        )}
+                        variant="outline"
+                        size="sm"
+                        className="absolute top-2 left-2"
+                      >
+                        {copied === 'curl-register' ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Response Example */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Response Example:</label>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                      <pre className="text-sm font-mono">
+{`{
+  "success": true,
+  "message": "Registration successful",
+  "participant": {
+    "id": "...",
+    "name": "أحمد محمد",
+    "email": "ahmed@example.com",
+    "status": "pending",
+    "registeredAt": "2025-01-15T10:30:00.000Z"
+  }
+}`}
+                      </pre>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Countdown API */}
+                <TabsContent value="countdown" className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-blue-600">GET</Badge>
+                      <code className="text-sm">
+                        {typeof window !== 'undefined' ? window.location.origin : ''}/api/external/countdown/{hackathonId}
+                      </code>
+                    </div>
+                    <Button
+                      onClick={() => copyToClipboard(
+                        `${typeof window !== 'undefined' ? window.location.origin : ''}/api/external/countdown/${hackathonId}`,
+                        'countdown-url'
+                      )}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {copied === 'countdown-url' ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* cURL Example */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">cURL Example:</label>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                      <pre className="text-sm font-mono">
+{`curl -X GET "${typeof window !== 'undefined' ? window.location.origin : ''}/api/external/countdown/${hackathonId}" \\
+  -H "X-API-Key: ${apiKey}"`}
+                      </pre>
+                    </div>
+                  </div>
+
+                  {/* Response Example */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Response Example:</label>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                      <pre className="text-sm font-mono">
+{`{
+  "success": true,
+  "hackathon": {
+    "id": "${hackathonId}",
+    "title": "${hackathon?.title || 'هاكاثون الباحة 2025'}",
+    "startDate": "2025-02-15T09:00:00.000Z",
+    "endDate": "2025-02-17T18:00:00.000Z",
+    "status": "upcoming",
+    "countdown": {
+      "label": "يبدأ خلال",
+      "days": 15,
+      "hours": 8,
+      "minutes": 30,
+      "seconds": 45,
+      "totalSeconds": 1324245,
+      "formatted": "15 يوم، 8 ساعة، 30 دقيقة، 45 ثانية"
+    }
+  }
+}`}
+                      </pre>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Hackathon Info API */}
+                <TabsContent value="info" className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-blue-600">GET</Badge>
+                      <code className="text-sm">
+                        {typeof window !== 'undefined' ? window.location.origin : ''}/api/external/hackathon/{hackathonId}
+                      </code>
+                    </div>
+                    <Button
+                      onClick={() => copyToClipboard(
+                        `${typeof window !== 'undefined' ? window.location.origin : ''}/api/external/hackathon/${hackathonId}`,
+                        'info-url'
+                      )}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {copied === 'info-url' ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* cURL Example */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">cURL Example:</label>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                      <pre className="text-sm font-mono">
+{`curl -X GET "${typeof window !== 'undefined' ? window.location.origin : ''}/api/external/hackathon/${hackathonId}" \\
+  -H "X-API-Key: ${apiKey}"`}
+                      </pre>
+                    </div>
+                  </div>
+
+                  {/* Response Example */}
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Response Example:</label>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                      <pre className="text-sm font-mono">
+{`{
+  "success": true,
+  "hackathon": {
+    "id": "${hackathonId}",
+    "title": "${hackathon?.title || 'هاكاثون الباحة 2025'}",
+    "description": "...",
+    "startDate": "2025-02-15T09:00:00.000Z",
+    "endDate": "2025-02-17T18:00:00.000Z",
+    "location": "الباحة",
+    "maxParticipants": 100,
+    "currentParticipants": 45,
+    "status": "upcoming",
+    "registrationOpen": true,
+    "registrationForm": {
+      "id": "...",
+      "title": "نموذج التسجيل",
+      "fields": ${JSON.stringify(form.fields.map(f => ({ id: f.id, label: f.label, type: f.type, required: f.required })), null, 6)}
+    }
+  }
+}`}
+                      </pre>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

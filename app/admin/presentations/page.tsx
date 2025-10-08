@@ -72,36 +72,47 @@ export default function PresentationsPage() {
   const teamsWithoutPresentation = filteredTeams.filter(t => !t.ideaFile)
 
   const handleDownload = (fileUrl: string, teamName: string) => {
-    window.open(fileUrl, '_blank')
+    // For Cloudinary URLs, add fl_attachment flag to force download
+    let downloadUrl = fileUrl
+
+    if (fileUrl.includes('cloudinary.com')) {
+      // Insert fl_attachment before the file path
+      downloadUrl = fileUrl.replace('/upload/', '/upload/fl_attachment/')
+    }
+
+    // Open in new tab (will download due to fl_attachment flag)
+    window.open(downloadUrl, '_blank')
   }
 
   const handleDelete = async (teamId: string, teamName: string) => {
-    const confirmed = await showConfirm(
-      `هل أنت متأكد من حذف العرض التقديمي للفريق "${teamName}"؟`,
-      'سيتمكن الفريق من رفع عرض جديد بعد الحذف.'
+    showConfirm(
+      `هل أنت متأكد من حذف العرض التقديمي للفريق "${teamName}"؟\n\nسيتمكن الفريق من رفع عرض جديد بعد الحذف.`,
+      async () => {
+        setDeleting(teamId)
+        try {
+          const response = await fetch(`/api/admin/teams/${teamId}/delete-presentation`, {
+            method: 'DELETE'
+          })
+
+          if (response.ok) {
+            showSuccess('تم حذف العرض التقديمي بنجاح')
+            fetchData() // Reload data
+          } else {
+            const error = await response.json()
+            showError(error.error || 'فشل في حذف العرض التقديمي')
+          }
+        } catch (error) {
+          console.error('Error deleting presentation:', error)
+          showError('حدث خطأ في حذف العرض التقديمي')
+        } finally {
+          setDeleting(null)
+        }
+      },
+      '🗑️ تأكيد الحذف',
+      'حذف',
+      'إلغاء',
+      'danger'
     )
-
-    if (!confirmed) return
-
-    setDeleting(teamId)
-    try {
-      const response = await fetch(`/api/admin/teams/${teamId}/delete-presentation`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        showSuccess('تم حذف العرض التقديمي بنجاح')
-        fetchData() // Reload data
-      } else {
-        const error = await response.json()
-        showError(error.error || 'فشل في حذف العرض التقديمي')
-      }
-    } catch (error) {
-      console.error('Error deleting presentation:', error)
-      showError('حدث خطأ في حذف العرض التقديمي')
-    } finally {
-      setDeleting(null)
-    }
   }
 
   if (loading) {
@@ -234,14 +245,28 @@ export default function PresentationsPage() {
                             {team.ideaDescription}
                           </p>
                         )}
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 mb-1">
                           الأعضاء: {team.participants.map(p => p.user.name).join(', ')}
                         </p>
+                        {team.ideaFile && (
+                          <p className="text-xs text-gray-400">
+                            📎 {team.ideaFile.split('/').pop()?.split('?')[0]}
+                          </p>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <Button
+                          onClick={() => window.open(team.ideaFile!, '_blank')}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Eye className="w-4 h-4 ml-2" />
+                          عرض
+                        </Button>
+                        <Button
                           onClick={() => handleDownload(team.ideaFile!, team.name)}
                           className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
+                          size="sm"
                         >
                           <Download className="w-4 h-4 ml-2" />
                           تحميل
@@ -250,11 +275,12 @@ export default function PresentationsPage() {
                           onClick={() => handleDelete(team.id, team.name)}
                           disabled={deleting === team.id}
                           variant="destructive"
+                          size="sm"
                         >
                           {deleting === team.id ? (
                             <>
                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></div>
-                              جاري الحذف...
+                              جاري...
                             </>
                           ) : (
                             <>

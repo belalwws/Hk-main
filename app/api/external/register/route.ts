@@ -19,22 +19,34 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       hackathonId,
-      name,
-      email,
-      phone,
-      organization,
-      preferredRole,
-      customFields
+      ...formData
     } = body
 
-    console.log('📝 External registration request:', { hackathonId, name, email })
+    console.log('📝 External registration request:', { hackathonId, formData })
 
     // Validate required fields
-    if (!hackathonId || !name || !email) {
+    if (!hackathonId) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Missing required fields: hackathonId, name, email' 
+        {
+          success: false,
+          error: 'Missing required field: hackathonId'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Extract standard fields
+    const name = formData.name || formData.fullName || formData.الاسم
+    const email = formData.email || formData.البريد_الإلكتروني
+    const phone = formData.phone || formData.رقم_الهاتف || formData.الجوال
+    const organization = formData.organization || formData.المؤسسة || formData.الجامعة
+    const preferredRole = formData.preferredRole || formData.الدور_المفضل
+
+    if (!name || !email) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing required fields: name and email are required'
         },
         { status: 400 }
       )
@@ -100,6 +112,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Prepare custom fields (exclude standard fields)
+    const standardFields = ['name', 'fullName', 'الاسم', 'email', 'البريد_الإلكتروني', 'phone', 'رقم_الهاتف', 'الجوال', 'organization', 'المؤسسة', 'الجامعة', 'preferredRole', 'الدور_المفضل', 'hackathonId']
+    const customFields: any = {}
+
+    Object.keys(formData).forEach(key => {
+      if (!standardFields.includes(key)) {
+        customFields[key] = formData[key]
+      }
+    })
+
     // Create participant
     const participant = await prisma.participant.create({
       data: {
@@ -107,7 +129,7 @@ export async function POST(request: NextRequest) {
         hackathonId: hackathonId,
         status: 'pending',
         registeredAt: new Date(),
-        customFields: customFields || {}
+        customFields: customFields
       },
       include: {
         user: {

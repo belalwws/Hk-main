@@ -46,10 +46,27 @@ export async function uploadToCloudinary(
 /**
  * Delete file from Cloudinary
  * @param publicId - Public ID of the file
+ * @param resourceType - Type of resource (image, video, raw, auto)
  */
-export async function deleteFromCloudinary(publicId: string) {
+export async function deleteFromCloudinary(publicId: string, resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto') {
   try {
-    await cloudinary.uploader.destroy(publicId)
+    // Try different resource types if auto doesn't work
+    const types = resourceType === 'auto' ? ['raw', 'image', 'video'] : [resourceType]
+
+    for (const type of types) {
+      try {
+        const result = await cloudinary.uploader.destroy(publicId, { resource_type: type })
+        if (result.result === 'ok') {
+          console.log(`✅ Deleted from Cloudinary (${type}):`, publicId)
+          return result
+        }
+      } catch (err) {
+        // Continue to next type
+        console.log(`⚠️ Failed to delete as ${type}, trying next...`)
+      }
+    }
+
+    console.warn('⚠️ Could not delete from Cloudinary:', publicId)
   } catch (error) {
     console.error('Cloudinary delete error:', error)
     throw new Error('Failed to delete file from Cloudinary')
