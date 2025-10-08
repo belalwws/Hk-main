@@ -296,10 +296,31 @@ export default function JudgeApplicationPage() {
       <div className="max-w-3xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Card>
-            <CardHeader className="text-center" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}>
-              <CardTitle className="text-3xl text-white">{formConfig.title}</CardTitle>
-              {hackathon && <CardDescription className="text-white/90 text-lg">{hackathon.title}</CardDescription>}
-              {formConfig.description && <p className="text-white/80 mt-2">{formConfig.description}</p>}
+            {/* Cover Image */}
+            {formConfig.coverImage && (
+              <div className="w-full h-48 md:h-64 overflow-hidden rounded-t-lg">
+                <img
+                  src={formConfig.coverImage}
+                  alt="Cover"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            <CardHeader className="text-center" style={{ background: formConfig.coverImage ? 'transparent' : `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}>
+              <CardTitle className="text-3xl" style={{ color: formConfig.coverImage ? primaryColor : 'white' }}>
+                {formConfig.title}
+              </CardTitle>
+              {hackathon && (
+                <CardDescription className="text-lg" style={{ color: formConfig.coverImage ? secondaryColor : 'rgba(255,255,255,0.9)' }}>
+                  {hackathon.title}
+                </CardDescription>
+              )}
+              {formConfig.description && (
+                <p className="mt-2" style={{ color: formConfig.coverImage ? '#666' : 'rgba(255,255,255,0.8)' }}>
+                  {formConfig.description}
+                </p>
+              )}
             </CardHeader>
             <CardContent className="p-8">
               {error && (

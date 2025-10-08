@@ -22,6 +22,7 @@ import {
   FileText
 } from 'lucide-react'
 import FormBuilder, { FormField } from '@/components/admin/FormBuilder'
+import { ImageUploader } from '@/components/admin/ImageUploader'
 import { useModal } from '@/hooks/use-modal'
 
 export default function JudgeFormBuilderPage() {
@@ -66,6 +67,7 @@ export default function JudgeFormBuilderPage() {
   ])
 
   // Design Settings
+  const [coverImage, setCoverImage] = useState<string | null>(null)
   const [primaryColor, setPrimaryColor] = useState('#01645e')
   const [secondaryColor, setSecondaryColor] = useState('#3ab666')
   const [accentColor, setAccentColor] = useState('#c3e956')
@@ -93,6 +95,7 @@ export default function JudgeFormBuilderPage() {
           setWelcomeMessage(data.form.welcomeMessage || '')
           setSuccessMessage(data.form.successMessage || successMessage)
           setFields(data.form.fields || fields)
+          setCoverImage(data.form.coverImage || null)
           setPrimaryColor(data.form.primaryColor || primaryColor)
           setSecondaryColor(data.form.secondaryColor || secondaryColor)
           setAccentColor(data.form.accentColor || accentColor)
@@ -117,6 +120,7 @@ export default function JudgeFormBuilderPage() {
           welcomeMessage,
           successMessage,
           fields,
+          coverImage,
           primaryColor,
           secondaryColor,
           accentColor
@@ -306,6 +310,16 @@ export default function JudgeFormBuilderPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Cover Image */}
+                <ImageUploader
+                  label="صورة الغلاف"
+                  value={coverImage}
+                  onChange={setCoverImage}
+                  folder="judge-forms"
+                  aspectRatio="21/9"
+                  maxSizeMB={5}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <Label>اللون الأساسي</Label>
