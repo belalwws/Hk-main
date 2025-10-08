@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { uploadFile } from '@/lib/storage'
+import { uploadToCloudinary } from '@/lib/cloudinary'
 
 export async function POST(
   request: NextRequest,
@@ -96,19 +96,20 @@ export async function POST(
 
     let uploadResult: any
     try {
-      console.log('🔄 Starting upload process...')
+      console.log('🔄 Starting Cloudinary upload...')
       console.log('🔧 Environment check:', {
         hasCloudinaryName: !!process.env.CLOUDINARY_CLOUD_NAME,
         hasCloudinaryKey: !!process.env.CLOUDINARY_API_KEY,
         hasCloudinarySecret: !!process.env.CLOUDINARY_API_SECRET
       })
 
-      uploadResult = await uploadFile(buffer, fileName, file.type, 'certificates')
-      console.log('📊 Upload result:', {
-        success: uploadResult.success,
-        url: uploadResult.url,
-        error: uploadResult.error
-      })
+      const cloudinaryResult = await uploadToCloudinary(buffer, 'certificates', fileName)
+      uploadResult = {
+        success: true,
+        url: cloudinaryResult.url,
+        publicId: cloudinaryResult.publicId
+      }
+      console.log('📊 Cloudinary upload result:', uploadResult)
     } catch (error) {
       console.error('❌ Upload function threw error:', error)
       console.error('❌ Upload error details:', {

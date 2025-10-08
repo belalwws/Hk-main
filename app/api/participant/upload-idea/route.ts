@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+import { uploadToCloudinary } from '@/lib/cloudinary'
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,11 +51,11 @@ export async function POST(request: NextRequest) {
 
     console.log('📁 File details:', file.name, file.type, file.size)
 
-    // Validate file size (max 4MB)
-    const maxSize = 4 * 1024 * 1024 // 4MB
+    // Validate file size (max 10MB for Cloudinary)
+    const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
       return NextResponse.json({
-        error: 'حجم الملف كبير جداً. الحد الأقصى المسموح 4 ميجابايت'
+        error: 'حجم الملف كبير جداً. الحد الأقصى المسموح 10 ميجابايت'
       }, { status: 400 })
     }
 
@@ -73,42 +72,31 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    try {
-      await mkdir(uploadsDir, { recursive: true })
-    } catch (error) {
-      // Directory might already exist
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now()
-    const fileExtension = path.extname(file.name)
-    const fileName = `team-${participant.team.id}-${timestamp}${fileExtension}`
-    const filePath = path.join(uploadsDir, fileName)
-
-    console.log('💾 Saving file to:', filePath)
-
-    // Save file
+    // Upload to Cloudinary
+    console.log('☁️ Uploading to Cloudinary...')
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
+
+    const timestamp = Date.now()
+    const fileName = `team-${participant.team.id}-${timestamp}`
+
+    const cloudinaryResult = await uploadToCloudinary(buffer, 'presentations', fileName)
+
+    console.log('✅ File uploaded to Cloudinary:', cloudinaryResult.url)
 
     // Update team in database
     await prisma.team.update({
       where: { id: participant.team.id },
       data: {
-        ideaFile: fileName,
+        ideaFile: cloudinaryResult.url,
         ideaTitle: title,
         ideaDescription: description || null
       }
     })
 
-    console.log('✅ File uploaded successfully:', fileName)
-
     return NextResponse.json({
       message: 'تم رفع العرض التقديمي بنجاح',
-      fileName: fileName,
+      fileUrl: cloudinaryResult.url,
       teamId: participant.team.id,
       teamName: participant.team.name
     })
