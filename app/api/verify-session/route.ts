@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
           skills: true,
           experience: true,
           preferredRole: true,
-          profileImage: true,
+          profilePicture: true,
           createdAt: true
         }
       })
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
             skills: null,
             experience: null,
             preferredRole: null,
-            profileImage: null,
+            profilePicture: null,
             createdAt: new Date().toISOString()
           }
         })
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
         skills: user.skills,
         experience: user.experience,
         preferredRole: user.preferredRole,
-        profileImage: user.profileImage,
+        profilePicture: user.profilePicture,
         createdAt: user.createdAt
       }
     })

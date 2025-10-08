@@ -6,19 +6,24 @@ const prisma = new PrismaClient()
 // POST /api/judge/apply - Submit judge application
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
-    
-    const hackathonId = formData.get('hackathonId') as string
-    const name = formData.get('name') as string
-    const email = formData.get('email') as string
-    const phone = formData.get('phone') as string | null
-    const bio = formData.get('bio') as string | null
-    const expertise = formData.get('expertise') as string | null
-    const experience = formData.get('experience') as string | null
-    const linkedin = formData.get('linkedin') as string | null
-    const twitter = formData.get('twitter') as string | null
-    const website = formData.get('website') as string | null
-    const profileImage = formData.get('profileImage') as File | null
+    const formDataRaw = await request.formData()
+
+    const hackathonId = formDataRaw.get('hackathonId') as string
+    const formDataJson = formDataRaw.get('formData') as string
+
+    // Parse the JSON form data
+    const parsedData = formDataJson ? JSON.parse(formDataJson) : {}
+
+    const name = parsedData.name || formDataRaw.get('name') as string
+    const email = parsedData.email || formDataRaw.get('email') as string
+    const phone = parsedData.phone || formDataRaw.get('phone') as string | null
+    const bio = parsedData.bio || formDataRaw.get('bio') as string | null
+    const expertise = parsedData.expertise || formDataRaw.get('expertise') as string | null
+    const experience = parsedData.experience || formDataRaw.get('experience') as string | null
+    const linkedin = parsedData.linkedin || formDataRaw.get('linkedin') as string | null
+    const twitter = parsedData.twitter || formDataRaw.get('twitter') as string | null
+    const website = parsedData.website || formDataRaw.get('website') as string | null
+    const profileImage = formDataRaw.get('profileImage') as File | null
 
     console.log('📝 Submitting judge application:', { name, email, hackathonId })
 
