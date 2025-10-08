@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Users, Eye, Edit, Trash2, UserCheck, UserX, Mail, Download, Send, Copy, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Users, Eye, Edit, Trash2, UserCheck, UserX, Mail, Download, Send, Copy, Clock, CheckCircle, XCircle, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
