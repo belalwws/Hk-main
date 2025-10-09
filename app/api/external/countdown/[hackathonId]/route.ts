@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// CORS headers for external API access
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+  'Access-Control-Max-Age': '86400',
+  'Access-Control-Allow-Credentials': 'false',
+}
+
+// Handle OPTIONS request for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 200, headers: corsHeaders })
+}
+
 // GET /api/external/countdown/[hackathonId] - Get countdown for hackathon
 export async function GET(
   request: NextRequest,
@@ -10,11 +24,11 @@ export async function GET(
     // Verify API Key
     const apiKey = request.headers.get('X-API-Key')
     const validApiKey = process.env.EXTERNAL_API_KEY || 'hackathon-api-key-2025'
-    
+
     if (!apiKey || apiKey !== validApiKey) {
       return NextResponse.json(
         { success: false, error: 'Invalid API Key' },
-        { status: 401 }
+        { status: 401, headers: corsHeaders }
       )
     }
 
@@ -46,7 +60,7 @@ export async function GET(
     if (!hackathon) {
       return NextResponse.json(
         { success: false, error: 'Hackathon not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       )
     }
 
@@ -104,18 +118,20 @@ export async function GET(
           formatted: `${days} يوم، ${hours} ساعة، ${minutes} دقيقة، ${seconds} ثانية`
         }
       }
-    })
+    }, { headers: corsHeaders })
 
   } catch (error) {
     console.error('❌ Countdown API error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
+
+export const dynamic = 'force-dynamic'
 
