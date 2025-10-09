@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
         data: {
           name,
           email,
-          password_hash: passwordHash,
+          password: passwordHash,
           phone: phone || null,
           role: 'judge'
         }
