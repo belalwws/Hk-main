@@ -2,17 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
+// CORS headers for external API access
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+  'Access-Control-Max-Age': '86400',
+  'Access-Control-Allow-Credentials': 'false',
+}
+
+// Handle OPTIONS request for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 200, headers: corsHeaders })
+}
+
 // POST /api/external/register - Register participant via external API
 export async function POST(request: NextRequest) {
   try {
     // Verify API Key
     const apiKey = request.headers.get('X-API-Key')
     const validApiKey = process.env.EXTERNAL_API_KEY || 'hackathon-api-key-2025'
-    
+
     if (!apiKey || apiKey !== validApiKey) {
       return NextResponse.json(
         { success: false, error: 'Invalid API Key' },
-        { status: 401 }
+        { status: 401, headers: corsHeaders }
       )
     }
 
@@ -31,7 +45,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: 'Missing required field: hackathonId'
         },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -48,7 +62,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: 'Missing required fields: name and email are required'
         },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -60,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (!hackathon) {
       return NextResponse.json(
         { success: false, error: 'Hackathon not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       )
     }
 
@@ -100,15 +114,15 @@ export async function POST(request: NextRequest) {
 
     if (existingParticipant) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'User already registered for this hackathon',
           participant: {
             id: existingParticipant.id,
             status: existingParticipant.status
           }
         },
-        { status: 409 }
+        { status: 409, headers: corsHeaders }
       )
     }
 
@@ -161,18 +175,20 @@ export async function POST(request: NextRequest) {
         registeredAt: participant.registeredAt,
         customFields: participant.customFields
       }
-    })
+    }, { headers: corsHeaders })
 
   } catch (error) {
     console.error('❌ External registration error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
+
+export const dynamic = 'force-dynamic'
 
