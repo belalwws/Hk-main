@@ -212,11 +212,11 @@ export default function FeedbackPage() {
   }
 
   const ratingIcons = [
-    { icon: Star, label: "ممتاز", color: "#FFD700" },
-    { icon: Heart, label: "رائع", color: "#FF69B4" },
-    { icon: ThumbsUp, label: "جيد", color: "#4169E1" },
+    { icon: Sparkles, label: "ضعيف", color: "#9370DB" },
     { icon: Zap, label: "مقبول", color: "#FFA500" },
-    { icon: Sparkles, label: "ضعيف", color: "#9370DB" }
+    { icon: ThumbsUp, label: "جيد", color: "#4169E1" },
+    { icon: Heart, label: "رائع", color: "#FF69B4" },
+    { icon: Star, label: "ممتاز", color: "#FFD700" }
   ]
 
   return (
