@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const name = formData.name || formData.fullName || formData.الاسم
     const email = formData.email || formData.البريد_الإلكتروني
     const phone = formData.phone || formData.رقم_الهاتف || formData.الجوال
-    const organization = formData.organization || formData.المؤسسة || formData.الجامعة
+    const university = formData.university || formData.organization || formData.المؤسسة || formData.الجامعة
     const preferredRole = formData.preferredRole || formData.الدور_المفضل
 
     if (!name || !email) {
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // If user doesn't exist, create one
     if (!user) {
       const hashedPassword = await bcrypt.hash('external-user-' + Date.now(), 10)
-      
+
       user = await prisma.user.create({
         data: {
           name,
@@ -94,11 +94,11 @@ export async function POST(request: NextRequest) {
           password: hashedPassword,
           role: 'participant',
           phone: phone || null,
-          organization: organization || null,
+          university: university || null,
           preferredRole: preferredRole || null
         }
       })
-      
+
       console.log('✅ New user created:', user.email)
     } else {
       console.log('👤 Existing user found:', user.email)
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare custom fields (exclude standard fields)
-    const standardFields = ['name', 'fullName', 'الاسم', 'email', 'البريد_الإلكتروني', 'phone', 'رقم_الهاتف', 'الجوال', 'organization', 'المؤسسة', 'الجامعة', 'preferredRole', 'الدور_المفضل', 'hackathonId']
+    const standardFields = ['name', 'fullName', 'الاسم', 'email', 'البريد_الإلكتروني', 'phone', 'رقم_الهاتف', 'الجوال', 'university', 'organization', 'المؤسسة', 'الجامعة', 'preferredRole', 'الدور_المفضل', 'hackathonId']
     const customFields: any = {}
 
     Object.keys(formData).forEach(key => {
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
         name: participant.user.name,
         email: participant.user.email,
         phone: participant.user.phone,
-        organization: participant.user.organization,
+        university: participant.user.university,
         preferredRole: participant.user.preferredRole,
         status: participant.status,
         registeredAt: participant.registeredAt,
