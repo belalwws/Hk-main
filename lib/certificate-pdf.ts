@@ -21,7 +21,8 @@ export async function generateCertificatePDF(data: CertificateData, hackathonId?
     // تحميل إعدادات الشهادة
     let settings = DEFAULT_CERTIFICATE_CONFIG
     let certificateImagePath = path.join(process.cwd(), 'public', 'row-certificat.png')
-    
+    let certificateImageUrl: string | null = null
+
     try {
       // محاولة تحميل الإعدادات من قاعدة البيانات أولاً
       if (hackathonId) {
@@ -31,15 +32,22 @@ export async function generateCertificatePDF(data: CertificateData, hackathonId?
             where: { id: hackathonId },
             select: { certificateTemplate: true }
           })
-          
+
           if (hackathon?.certificateTemplate) {
-            let templatePath = path.join(process.cwd(), 'public', hackathon.certificateTemplate.replace('/certificates/', ''))
-            if (!fs.existsSync(templatePath)) {
-              templatePath = path.join(process.cwd(), 'public', hackathon.certificateTemplate.replace('/', ''))
-            }
-            if (fs.existsSync(templatePath)) {
-              certificateImagePath = templatePath
-              console.log('✅ Using certificate template from hackathon table:', certificateImagePath)
+            // تحقق إذا كان URL خارجي (Cloudinary/S3)
+            if (hackathon.certificateTemplate.startsWith('http://') || hackathon.certificateTemplate.startsWith('https://')) {
+              certificateImageUrl = hackathon.certificateTemplate
+              console.log('✅ Using certificate template from URL:', certificateImageUrl)
+            } else {
+              // محاولة تحميل من الملف المحلي
+              let templatePath = path.join(process.cwd(), 'public', hackathon.certificateTemplate.replace('/certificates/', ''))
+              if (!fs.existsSync(templatePath)) {
+                templatePath = path.join(process.cwd(), 'public', hackathon.certificateTemplate.replace('/', ''))
+              }
+              if (fs.existsSync(templatePath)) {
+                certificateImagePath = templatePath
+                console.log('✅ Using certificate template from hackathon table:', certificateImagePath)
+              }
             }
           }
           
@@ -103,8 +111,9 @@ export async function generateCertificatePDF(data: CertificateData, hackathonId?
       console.log('Using default certificate settings')
     }
 
-    console.log('🖼️ Loading certificate image from:', certificateImagePath)
-    const image = await loadImage(certificateImagePath)
+    // تحميل الصورة من URL أو من الملف المحلي
+    console.log('🖼️ Loading certificate image from:', certificateImageUrl || certificateImagePath)
+    const image = await loadImage(certificateImageUrl || certificateImagePath)
 
     // إنشاء canvas بحجم الصورة
     const canvas = createCanvas(image.width, image.height)
@@ -144,7 +153,8 @@ export async function generateCertificateImage(data: CertificateData, hackathonI
     // تحميل إعدادات الشهادة
     let settings = DEFAULT_CERTIFICATE_CONFIG
     let certificateImagePath = path.join(process.cwd(), 'public', 'row-certificat.png')
-    
+    let certificateImageUrl: string | null = null
+
     try {
       // محاولة تحميل الإعدادات من قاعدة البيانات أولاً
       if (hackathonId) {
@@ -154,15 +164,22 @@ export async function generateCertificateImage(data: CertificateData, hackathonI
             where: { id: hackathonId },
             select: { certificateTemplate: true }
           })
-          
+
           if (hackathon?.certificateTemplate) {
-            let templatePath = path.join(process.cwd(), 'public', hackathon.certificateTemplate.replace('/certificates/', ''))
-            if (!fs.existsSync(templatePath)) {
-              templatePath = path.join(process.cwd(), 'public', hackathon.certificateTemplate.replace('/', ''))
-            }
-            if (fs.existsSync(templatePath)) {
-              certificateImagePath = templatePath
-              console.log('✅ Using certificate template from hackathon table:', certificateImagePath)
+            // تحقق إذا كان URL خارجي (Cloudinary/S3)
+            if (hackathon.certificateTemplate.startsWith('http://') || hackathon.certificateTemplate.startsWith('https://')) {
+              certificateImageUrl = hackathon.certificateTemplate
+              console.log('✅ Using certificate template from URL:', certificateImageUrl)
+            } else {
+              // محاولة تحميل من الملف المحلي
+              let templatePath = path.join(process.cwd(), 'public', hackathon.certificateTemplate.replace('/certificates/', ''))
+              if (!fs.existsSync(templatePath)) {
+                templatePath = path.join(process.cwd(), 'public', hackathon.certificateTemplate.replace('/', ''))
+              }
+              if (fs.existsSync(templatePath)) {
+                certificateImagePath = templatePath
+                console.log('✅ Using certificate template from hackathon table:', certificateImagePath)
+              }
             }
           }
           
@@ -226,8 +243,9 @@ export async function generateCertificateImage(data: CertificateData, hackathonI
       console.log('Using default certificate settings')
     }
 
-    console.log('🖼️ Loading certificate image from:', certificateImagePath)
-    const image = await loadImage(certificateImagePath)
+    // تحميل الصورة من URL أو من الملف المحلي
+    console.log('🖼️ Loading certificate image from:', certificateImageUrl || certificateImagePath)
+    const image = await loadImage(certificateImageUrl || certificateImagePath)
 
     // إنشاء canvas بحجم الصورة
     const canvas = createCanvas(image.width, image.height)
