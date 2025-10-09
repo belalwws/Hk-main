@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         hackathonId: hackathonId,
         status: 'pending',
         registeredAt: new Date(),
-        customFields: customFields
+        additionalInfo: Object.keys(customFields).length > 0 ? customFields : null
       },
       include: {
         user: {
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
             name: true,
             email: true,
             phone: true,
-            organization: true,
+            university: true,
             preferredRole: true
           }
         }
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
         preferredRole: participant.user.preferredRole,
         status: participant.status,
         registeredAt: participant.registeredAt,
-        customFields: participant.customFields
+        additionalInfo: participant.additionalInfo
       }
     }, { headers: corsHeaders })
 
