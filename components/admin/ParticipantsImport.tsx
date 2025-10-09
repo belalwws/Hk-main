@@ -73,11 +73,11 @@ export default function ParticipantsImport({ hackathonId, onImportComplete }: Pa
   }
 
   const downloadTemplate = () => {
-    // Create a sample Excel template
-    const csvContent = `Name,Email,Phone,University,Major,Year
-أحمد محمد,ahmed@example.com,0501234567,جامعة الملك سعود,علوم الحاسب,الثالثة
-فاطمة علي,fatima@example.com,0509876543,جامعة الأميرة نورة,هندسة البرمجيات,الثانية
-محمد خالد,mohammed@example.com,0512345678,جامعة الإمام,نظم المعلومات,الرابعة`
+    // Create a sample Excel template with all supported columns
+    const csvContent = `Name,Email,Phone,University,Major,Year,City,Nationality,Skills,Experience,PreferredRole,Bio,Github,Linkedin,Portfolio,WorkExperience
+أحمد محمد,ahmed@example.com,0501234567,جامعة الملك سعود,علوم الحاسب,الثالثة,الرياض,سعودي,Python|JavaScript|React,3 سنوات,Full Stack Developer,مطور برمجيات متحمس,github.com/ahmed,linkedin.com/in/ahmed,portfolio.com/ahmed,مطور في شركة تقنية
+فاطمة علي,fatima@example.com,0509876543,جامعة الأميرة نورة,هندسة البرمجيات,الثانية,جدة,سعودية,Java|SQL|Spring,سنة واحدة,Backend Developer,مهندسة برمجيات طموحة,github.com/fatima,linkedin.com/in/fatima,portfolio.com/fatima,متدربة في شركة برمجيات
+محمد خالد,mohammed@example.com,0512345678,جامعة الإمام,نظم المعلومات,الرابعة,الدمام,سعودي,UI/UX|Figma|Adobe XD,سنتان,UI/UX Designer,مصمم واجهات مستخدم,github.com/mohammed,linkedin.com/in/mohammed,portfolio.com/mohammed,مصمم في وكالة تصميم`
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
@@ -126,7 +126,8 @@ export default function ParticipantsImport({ hackathonId, onImportComplete }: Pa
           <h4 className="font-semibold text-blue-800 mb-2">تعليمات الاستيراد:</h4>
           <ul className="text-sm text-blue-700 space-y-1">
             <li>• الملف يجب أن يحتوي على عمودي الاسم والإيميل على الأقل</li>
-            <li>• الأعمدة المدعومة: Name, Email, Phone, University, Major, Year</li>
+            <li>• <strong>الأعمدة الأساسية:</strong> Name, Email, Phone, University, Major, Year</li>
+            <li>• <strong>الأعمدة الإضافية:</strong> City, Nationality, Skills, Experience, PreferredRole, Bio, Github, Linkedin, Portfolio, WorkExperience</li>
             <li>• يمكن استخدام الأسماء بالعربية أو الإنجليزية</li>
             <li>• سيتم إنشاء حسابات جديدة للمستخدمين غير الموجودين</li>
             <li>• سيتم قبول جميع المشاركين تلقائياً</li>

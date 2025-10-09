@@ -86,7 +86,7 @@ export async function POST(
       }, { status: 400 })
     }
 
-    // Expected columns: Name, Email, Phone, University, Major, Year
+    // Expected columns: Name, Email, Phone, University, Major, Year, City, Nationality, Skills, Experience, PreferredRole, Bio, Github, Linkedin, Portfolio, WorkExperience
     const headers = jsonData[0] as string[]
     const rows = jsonData.slice(1)
 
@@ -96,7 +96,7 @@ export async function POST(
     // Validate required columns
     const requiredColumns = ['name', 'email']
     const headerMap: { [key: string]: number } = {}
-    
+
     headers.forEach((header, index) => {
       const normalizedHeader = header.toString().toLowerCase().trim()
       if (normalizedHeader.includes('name') || normalizedHeader.includes('اسم')) {
@@ -111,6 +111,26 @@ export async function POST(
         headerMap.major = index
       } else if (normalizedHeader.includes('year') || normalizedHeader.includes('سنة')) {
         headerMap.year = index
+      } else if (normalizedHeader.includes('city') || normalizedHeader.includes('مدينة')) {
+        headerMap.city = index
+      } else if (normalizedHeader.includes('nationality') || normalizedHeader.includes('جنسية')) {
+        headerMap.nationality = index
+      } else if (normalizedHeader.includes('skills') || normalizedHeader.includes('مهارات')) {
+        headerMap.skills = index
+      } else if (normalizedHeader.includes('experience') || normalizedHeader.includes('خبرة')) {
+        headerMap.experience = index
+      } else if (normalizedHeader.includes('preferredrole') || normalizedHeader.includes('دور') || normalizedHeader.includes('role')) {
+        headerMap.preferredRole = index
+      } else if (normalizedHeader.includes('bio') || normalizedHeader.includes('نبذة')) {
+        headerMap.bio = index
+      } else if (normalizedHeader.includes('github')) {
+        headerMap.github = index
+      } else if (normalizedHeader.includes('linkedin')) {
+        headerMap.linkedin = index
+      } else if (normalizedHeader.includes('portfolio') || normalizedHeader.includes('معرض')) {
+        headerMap.portfolio = index
+      } else if (normalizedHeader.includes('workexperience') || normalizedHeader.includes('خبرة عمل')) {
+        headerMap.workExperience = index
       }
     })
 
@@ -161,10 +181,20 @@ export async function POST(
               phone: row[headerMap.phone]?.toString().trim() || null,
               university: row[headerMap.university]?.toString().trim() || null,
               major: row[headerMap.major]?.toString().trim() || null,
-              graduationYear: row[headerMap.year]?.toString().trim() || null, // Fixed: year -> graduationYear
+              graduationYear: row[headerMap.year]?.toString().trim() || null,
+              city: row[headerMap.city]?.toString().trim() || null,
+              nationality: row[headerMap.nationality]?.toString().trim() || null,
+              skills: row[headerMap.skills]?.toString().trim() || null,
+              experience: row[headerMap.experience]?.toString().trim() || null,
+              preferredRole: row[headerMap.preferredRole]?.toString().trim() || null,
+              bio: row[headerMap.bio]?.toString().trim() || null,
+              github: row[headerMap.github]?.toString().trim() || null,
+              linkedin: row[headerMap.linkedin]?.toString().trim() || null,
+              portfolio: row[headerMap.portfolio]?.toString().trim() || null,
+              workExperience: row[headerMap.workExperience]?.toString().trim() || null,
               role: 'participant',
               password: 'temp123', // Temporary password - user should reset
-              emailVerified: false // Fixed: isVerified -> emailVerified
+              emailVerified: false
             }
           })
           userId = newUser.id
