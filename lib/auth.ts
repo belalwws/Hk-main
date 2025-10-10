@@ -7,7 +7,7 @@ const secret = new TextEncoder().encode(JWT_SECRET)
 export interface AuthPayload {
   userId: string
   email: string
-  role: "admin" | "judge" | "participant"
+  role: "admin" | "judge" | "participant" | "supervisor"
   name: string
   iat?: number
   exp?: number

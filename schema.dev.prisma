@@ -63,6 +63,7 @@ model Hackathon {
   judges             Judge[]
   scores             Score[]
   admins             Admin[]
+  supervisors        Supervisor[]
   evaluationCriteria EvaluationCriterion[]
   registrationForm   HackathonForm?
   landingPage        HackathonLandingPage?
@@ -113,6 +114,7 @@ model User {
   participations Participant[]
   judgeAssignments Judge[]
   adminActions   Admin[]
+  supervisorAssignments Supervisor[]
 
   @@map("users")
 }
@@ -121,6 +123,7 @@ enum UserRole {
   participant
   judge
   admin
+  supervisor
 }
 
 // Participant model - Links users to hackathons as participants
@@ -221,6 +224,27 @@ model Admin {
 
   @@unique([userId, hackathonId])
   @@map("admins")
+}
+
+// Supervisor model - Links users to hackathons as supervisors
+model Supervisor {
+  id          String   @id @default(cuid())
+  userId      String
+  hackathonId String?  // null means general supervisor
+  permissions Json?    // Store supervisor permissions
+  department  String?  // Department or area of responsibility
+  isActive    Boolean  @default(true)
+  lastLogin   DateTime?
+  assignedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hackathon   Hackathon? @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hackathonId])
+  @@map("supervisors")
 }
 
 model Team {
@@ -588,4 +612,23 @@ model AdminFormDesign {
   updatedAt         DateTime @updatedAt
 
   @@map("admin_form_designs")
+}
+
+// Supervisor Invitation - دعوات المشرفين الآمنة
+model SupervisorInvitation {
+  id             String   @id @default(cuid())
+  email          String
+  name           String?
+  hackathonId    String?  // null = general supervisor
+  token          String   @unique
+  status         InvitationStatus @default(pending)
+  invitedBy      String   // Admin user ID
+  permissions    Json?    // Supervisor permissions
+  department     String?  // Department assignment
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("supervisor_invitations")
 }

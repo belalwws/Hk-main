@@ -3,13 +3,15 @@ import type { NextRequest } from "next/server"
 import { verifyToken } from "@/lib/auth"
 
 // Define protected route prefixes and their required roles
-const protectedRoutes: { prefix: string; roles: ("admin" | "judge")[] }[] = [
-  { prefix: "/api/teams", roles: ["judge"] },
+const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor")[] }[] = [
+  { prefix: "/api/teams", roles: ["judge", "supervisor"] },
   { prefix: "/api/submit-score", roles: ["judge"] },
   { prefix: "/api/results", roles: ["admin"] },
   { prefix: "/api/admin", roles: ["admin"] },
+  { prefix: "/api/supervisor", roles: ["supervisor", "admin"] },
   { prefix: "/judge", roles: ["judge"] },
   { prefix: "/admin", roles: ["admin"] },
+  { prefix: "/supervisor", roles: ["supervisor", "admin"] },
 ]
 
 export async function middleware(request: NextRequest) {
@@ -67,6 +69,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/certificate/") ||
     pathname.startsWith("/forms/") ||
     pathname.startsWith("/judge/apply/") ||
+    pathname.startsWith("/supervisor/apply/") ||
+    pathname.startsWith("/supervisor/invitation/") ||
     pathname.startsWith("/feedback/")
   ) {
     return NextResponse.next()
@@ -123,6 +127,7 @@ export async function middleware(request: NextRequest) {
     // For pages, redirect based on role
     const redirectUrl = payload.role === "admin" ? "/admin/dashboard" :
                        payload.role === "judge" ? "/judge" :
+                       payload.role === "supervisor" ? "/supervisor/dashboard" :
                        "/participant/dashboard"
     return NextResponse.redirect(new URL(redirectUrl, request.url))
   }
@@ -145,5 +150,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*", "/certificates/:path*"],
+  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*", "/supervisor/:path*", "/certificates/:path*"],
 }

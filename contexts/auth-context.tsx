@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
-type Role = "admin" | "judge" | "participant"
+type Role = "admin" | "judge" | "participant" | "supervisor"
 
 interface User {
 	id: string
@@ -37,6 +37,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			try {
 				console.log('🚀 Initializing auth state...')
 
+				// Check if we're on the client side
+				if (typeof window === 'undefined') {
+					setLoading(false)
+					setInitialized(true)
+					return
+				}
+
 				// First try to get user from localStorage as backup
 				const storedUser = localStorage.getItem('auth-user')
 				const lastVerified = localStorage.getItem('auth-last-verified')
@@ -52,8 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 						return
 					} catch (e) {
 						console.log('❌ Invalid localStorage data, clearing...')
-						localStorage.removeItem('auth-user')
-						localStorage.removeItem('auth-last-verified')
+						if (typeof window !== 'undefined') {
+							localStorage.removeItem('auth-user')
+							localStorage.removeItem('auth-last-verified')
+						}
 					}
 				}
 
@@ -65,7 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 						setUser(userData)
 					} catch (e) {
 						console.log('❌ Invalid localStorage data, clearing...')
-						localStorage.removeItem('auth-user')
+						if (typeof window !== 'undefined') {
+							localStorage.removeItem('auth-user')
+						}
 					}
 				}
 
@@ -88,13 +99,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 						console.log('✅ User verified from server:', data.user.email, 'role:', data.user.role)
 						setUser(data.user)
 						// Store in localStorage as backup with timestamp
-						localStorage.setItem('auth-user', JSON.stringify(data.user))
-						localStorage.setItem('auth-last-verified', now.toString())
+						if (typeof window !== 'undefined') {
+							localStorage.setItem('auth-user', JSON.stringify(data.user))
+							localStorage.setItem('auth-last-verified', now.toString())
+						}
 					} else {
 						console.log('❌ No user in response')
 						setUser(null)
-						localStorage.removeItem('auth-user')
-						localStorage.removeItem('auth-last-verified')
+						if (typeof window !== 'undefined') {
+							localStorage.removeItem('auth-user')
+							localStorage.removeItem('auth-last-verified')
+						}
 					}
 				} else {
 					console.log('❌ Auth init failed, status:', response.status)
@@ -103,15 +118,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 						console.log('⚠️ Server verification failed but keeping cached user')
 					} else {
 						setUser(null)
-						localStorage.removeItem('auth-user')
-						localStorage.removeItem('auth-last-verified')
+						if (typeof window !== 'undefined') {
+							localStorage.removeItem('auth-user')
+							localStorage.removeItem('auth-last-verified')
+						}
 					}
 				}
 			} catch (error) {
 				console.error('❌ Auth initialization error:', error)
 				// Keep localStorage user if available
-				const storedUser = localStorage.getItem('auth-user')
-				if (!storedUser) {
+				if (typeof window !== 'undefined') {
+					const storedUser = localStorage.getItem('auth-user')
+					if (!storedUser) {
+						setUser(null)
+					}
+				} else {
 					setUser(null)
 				}
 			} finally {
@@ -140,7 +161,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			setUser(data.user as User)
 
 			// Store in localStorage as backup
-			localStorage.setItem('auth-user', JSON.stringify(data.user))
+			if (typeof window !== 'undefined') {
+				localStorage.setItem('auth-user', JSON.stringify(data.user))
+			}
 
 			// Redirect based on user role
 			switch (data.user.role) {
@@ -149,6 +172,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					break
 				case 'judge':
 					router.push('/judge/dashboard')
+					break
+				case 'supervisor':
+					router.push('/supervisor/dashboard')
 					break
 				case 'participant':
 					router.push('/participant/dashboard')
@@ -170,8 +196,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			await fetch("/api/logout", { method: "POST" })
 		} finally {
 			setUser(null)
-			localStorage.removeItem('auth-user')
-			localStorage.removeItem('auth-last-verified')
+			if (typeof window !== 'undefined') {
+				localStorage.removeItem('auth-user')
+				localStorage.removeItem('auth-last-verified')
+			}
 			console.log('✅ User logged out and localStorage cleared')
 		}
 	}, [])
@@ -181,11 +209,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			console.log('🔄 Refreshing user session...')
 
 			// Check if we recently verified (within 2 minutes)
-			const lastVerified = localStorage.getItem('auth-last-verified')
-			const now = Date.now()
-			if (lastVerified && (now - parseInt(lastVerified)) < 2 * 60 * 1000) {
-				console.log('⚡ Skipping refresh - recently verified')
-				return user
+			if (typeof window !== 'undefined') {
+				const lastVerified = localStorage.getItem('auth-last-verified')
+				const now = Date.now()
+				if (lastVerified && (now - parseInt(lastVerified)) < 2 * 60 * 1000) {
+					console.log('⚡ Skipping refresh - recently verified')
+					return user
+				}
 			}
 
 			const res = await fetch("/api/verify-session", {
@@ -207,8 +237,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					console.log('✅ User refreshed:', data.user.email, 'role:', data.user.role)
 					setUser(data.user)
 					// Update localStorage with timestamp
-					localStorage.setItem('auth-user', JSON.stringify(data.user))
-					localStorage.setItem('auth-last-verified', now.toString())
+					if (typeof window !== 'undefined') {
+						localStorage.setItem('auth-user', JSON.stringify(data.user))
+						localStorage.setItem('auth-last-verified', Date.now().toString())
+					}
 					return data.user
 				} else {
 					console.log('❌ No user in refresh response')
@@ -220,8 +252,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				if (res.status === 401) {
 					console.log('🚪 Setting user to null due to 401')
 					setUser(null)
-					localStorage.removeItem('auth-user')
-					localStorage.removeItem('auth-last-verified')
+					if (typeof window !== 'undefined') {
+						localStorage.removeItem('auth-user')
+						localStorage.removeItem('auth-last-verified')
+					}
 				}
 				return user // Return current user if refresh fails but not unauthorized
 			}
@@ -235,7 +269,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const forceSetUser = useCallback((userData: User) => {
 		console.log('🔥 Force setting user:', userData.email, 'role:', userData.role)
 		setUser(userData)
-		localStorage.setItem('auth-user', JSON.stringify(userData))
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('auth-user', JSON.stringify(userData))
+		}
 	}, [])
 
 	return <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, forceSetUser }}>{children}</AuthContext.Provider>

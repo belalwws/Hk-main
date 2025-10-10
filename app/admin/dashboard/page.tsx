@@ -14,7 +14,8 @@ import {
   Settings,
   BarChart3,
   FileText,
-  Code
+  Code,
+  Shield
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -148,6 +149,12 @@ export default function AdminDashboard() {
               <Button variant="outline">
                 <Users className="w-5 h-5 ml-2" />
                 إدارة المستخدمين
+              </Button>
+            </Link>
+            <Link href="/admin/supervisors">
+              <Button variant="outline">
+                <Shield className="w-5 h-5 ml-2" />
+                إدارة المشرفين
               </Button>
             </Link>
             <Link href="/admin/simple-participants">
