@@ -24,7 +24,10 @@
     "data:verify": "node scripts/data-protection-guard.js verify",
     "data:restore": "node scripts/data-protection-guard.js restore",
     "pre-deploy": "node scripts/pre-deploy-check.js",
-    "render-deploy": "node scripts/render-safe-deploy.js"
+    "render-deploy": "node scripts/render-safe-deploy.js",
+    "db:test": "node scripts/test-db-connection.js",
+    "db:migrate-production": "node scripts/migrate-production.js",
+    "supervisor:setup": "npm run db:migrate-production"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.894.0",
