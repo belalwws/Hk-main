@@ -9,10 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Users, 
-  Search, 
-  Plus, 
+import {
+  Users,
+  Search,
+  Plus,
   Mail,
   Phone,
   MapPin,
@@ -22,7 +22,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Shield
+  Shield,
+  Trash2
 } from "lucide-react"
 
 interface Supervisor {
@@ -183,6 +184,29 @@ export default function AdminSupervisors() {
       setError("حدث خطأ في الاتصال بالخادم")
     } finally {
       setInviting(false)
+    }
+  }
+
+  const deleteInvitation = async (invitationId: string, email: string) => {
+    if (!confirm(`هل أنت متأكد من حذف دعوة ${email}؟`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/supervisor/invite?id=${invitationId}`, {
+        method: "DELETE"
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess("تم حذف الدعوة بنجاح")
+        await fetchInvitations()
+      } else {
+        setError(data.error || "حدث خطأ في حذف الدعوة")
+      }
+    } catch (error) {
+      setError("حدث خطأ في الاتصال بالخادم")
     }
   }
 
@@ -420,7 +444,17 @@ export default function AdminSupervisors() {
                       تنتهي في: {new Date(invitation.expiresAt).toLocaleDateString('ar-SA')}
                     </p>
                   </div>
-                  {getStatusBadge(invitation.status)}
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(invitation.status)}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => deleteInvitation(invitation.id, invitation.email)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

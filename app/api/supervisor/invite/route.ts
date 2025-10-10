@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import crypto from "crypto"
-import { sendEmail } from "@/lib/mailer"
+import { sendMail } from "@/lib/mailer"
 
 const prisma = new PrismaClient()
 
@@ -39,7 +39,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingInvitation) {
-      return NextResponse.json({ error: "دعوة معلقة موجودة بالفعل لهذا البريد الإلكتروني" }, { status: 400 })
+      // حذف الدعوة القديمة وإنشاء دعوة جديدة
+      await prisma.supervisorInvitation.delete({
+        where: { id: existingInvitation.id }
+      })
     }
 
     // Generate secure token
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest) {
       </div>
     `
 
-    await sendEmail({
+    await sendMail({
       to: email,
       subject: "دعوة للانضمام كمشرف - نظام إدارة الهاكاثونات",
       html: emailContent
@@ -148,5 +151,43 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching supervisor invitations:", error)
     return NextResponse.json({ error: "حدث خطأ في جلب الدعوات" }, { status: 500 })
+  }
+}
+
+// DELETE - حذف دعوة معلقة
+export async function DELETE(request: NextRequest) {
+  try {
+    const userRole = request.headers.get("x-user-role")
+
+    if (userRole !== "admin") {
+      return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const invitationId = searchParams.get('id')
+    const email = searchParams.get('email')
+
+    if (!invitationId && !email) {
+      return NextResponse.json({ error: "معرف الدعوة أو البريد الإلكتروني مطلوب" }, { status: 400 })
+    }
+
+    // حذف الدعوة
+    const whereClause = invitationId ? { id: invitationId } : { email: email! }
+
+    const deletedInvitation = await prisma.supervisorInvitation.delete({
+      where: whereClause
+    })
+
+    return NextResponse.json({
+      message: "تم حذف الدعوة بنجاح",
+      deletedInvitation: {
+        id: deletedInvitation.id,
+        email: deletedInvitation.email
+      }
+    })
+
+  } catch (error) {
+    console.error("Error deleting supervisor invitation:", error)
+    return NextResponse.json({ error: "حدث خطأ أثناء حذف الدعوة" }, { status: 500 })
   }
 }
