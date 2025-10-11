@@ -48,10 +48,10 @@ async function testInvitationEndpoint() {
 }
 
 async function testInvitationPage() {
-  console.log('\n🧪 Testing supervisor invitation page in production...');
-  
-  const testUrl = 'https://hackathon-platform-601l.onrender.com/supervisor/invitation/test-token-123';
-  
+  console.log('\n🧪 Testing invitation page in production...');
+
+  const testUrl = 'https://hackathon-platform-601l.onrender.com/invitation/test-token-123';
+
   console.log('🔗 Testing URL:', testUrl);
   
   try {

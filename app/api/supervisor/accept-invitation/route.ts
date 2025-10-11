@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
-import { signToken } from "@/lib/auth"
+import { generateToken } from "@/lib/auth"
 
 const prisma = new PrismaClient()
 
@@ -51,18 +51,44 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: invitation.email }
+    })
+
     // Create user and supervisor in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create user
-      const user = await tx.user.create({
-        data: {
-          name: invitation.name || "مشرف جديد",
-          email: invitation.email,
-          password: hashedPassword,
-          role: "supervisor",
-          isActive: true,
-          emailVerified: true
-        }
+      let user
+
+      if (existingUser) {
+        // Update existing user to supervisor role
+        user = await tx.user.update({
+          where: { id: existingUser.id },
+          data: {
+            name: invitation.name || existingUser.name,
+            password: hashedPassword,
+            role: "supervisor",
+            isActive: true,
+            emailVerified: true
+          }
+        })
+      } else {
+        // Create new user
+        user = await tx.user.create({
+          data: {
+            name: invitation.name || "مشرف جديد",
+            email: invitation.email,
+            password: hashedPassword,
+            role: "supervisor",
+            isActive: true,
+            emailVerified: true
+          }
+        })
+      }
+
+      // Delete existing supervisor record if exists
+      await tx.supervisor.deleteMany({
+        where: { userId: user.id }
       })
 
       // Create supervisor record
@@ -88,8 +114,15 @@ export async function POST(request: NextRequest) {
       return { user, supervisor }
     })
 
+    console.log('✅ User created/updated:', {
+      id: result.user.id,
+      email: result.user.email,
+      role: result.user.role,
+      name: result.user.name
+    })
+
     // Generate JWT token
-    const authToken = await signToken({
+    const authToken = await generateToken({
       userId: result.user.id,
       email: result.user.email,
       role: result.user.role as "supervisor",
