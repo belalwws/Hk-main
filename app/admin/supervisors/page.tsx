@@ -343,6 +343,7 @@ export default function AdminSupervisors() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
 
       {success && (
         <Alert className="border-green-200 bg-green-50">
