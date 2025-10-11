@@ -1,24 +1,28 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Users, 
-  Trophy, 
-  CheckCircle, 
-  Clock, 
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Users,
+  Trophy,
+  CheckCircle,
+  Clock,
   TrendingUp,
   AlertCircle,
   Calendar,
-  Activity
+  Activity,
+  UserCircle
 } from "lucide-react"
 
 interface DashboardStats {
   totalParticipants: number
   approvedParticipants: number
   pendingParticipants: number
+  rejectedParticipants: number
   totalTeams: number
   activeTeams: number
   completedProjects: number
@@ -32,18 +36,38 @@ interface RecentActivity {
   status: "info" | "success" | "warning" | "error"
 }
 
+interface SupervisorInfo {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  city?: string
+  department?: string
+  hackathon?: {
+    id: string
+    title: string
+    status: string
+  }
+  permissions?: any
+  isProfileComplete: boolean
+}
+
 export default function SupervisorDashboard() {
+  const router = useRouter()
   const [stats, setStats] = useState<DashboardStats>({
     totalParticipants: 0,
     approvedParticipants: 0,
     pendingParticipants: 0,
+    rejectedParticipants: 0,
     totalTeams: 0,
     activeTeams: 0,
     completedProjects: 0
   })
-  
+
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
+  const [supervisor, setSupervisor] = useState<SupervisorInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     fetchDashboardData()
@@ -51,41 +75,24 @@ export default function SupervisorDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Simulate API calls - replace with actual API endpoints
-      setStats({
-        totalParticipants: 156,
-        approvedParticipants: 142,
-        pendingParticipants: 14,
-        totalTeams: 38,
-        activeTeams: 35,
-        completedProjects: 28
-      })
+      const response = await fetch("/api/supervisor/dashboard")
+      const data = await response.json()
 
-      setRecentActivity([
-        {
-          id: "1",
-          type: "participant",
-          message: "تم الموافقة على مشارك جديد: أحمد محمد",
-          timestamp: "منذ 5 دقائق",
-          status: "success"
-        },
-        {
-          id: "2",
-          type: "team",
-          message: "فريق الابتكار قام بتسليم المشروع",
-          timestamp: "منذ 15 دقيقة",
-          status: "info"
-        },
-        {
-          id: "3",
-          type: "alert",
-          message: "14 طلب مشاركة في انتظار المراجعة",
-          timestamp: "منذ ساعة",
-          status: "warning"
+      if (response.ok) {
+        setStats(data.stats)
+        setRecentActivity(data.recentActivity)
+        setSupervisor(data.supervisor)
+
+        // Check if profile is complete
+        if (data.supervisor && !data.supervisor.isProfileComplete) {
+          setError("يرجى إكمال بياناتك الشخصية للوصول الكامل للنظام")
         }
-      ])
+      } else {
+        setError(data.error || "حدث خطأ في جلب البيانات")
+      }
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
+      setError("حدث خطأ في الاتصال بالخادم")
     } finally {
       setLoading(false)
     }
@@ -136,12 +143,32 @@ export default function SupervisorDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Profile Incomplete Warning */}
+      {supervisor && !supervisor.isProfileComplete && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <UserCircle className="w-4 h-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <div className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button size="sm" onClick={() => router.push('/supervisor/profile')} className="bg-orange-600 hover:bg-orange-700">
+                إكمال البيانات
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">مرحباً بك في لوحة تحكم المشرف</h1>
+        <h1 className="text-2xl font-bold mb-2">
+          مرحباً {supervisor?.name || 'بك'} في لوحة تحكم المشرف
+        </h1>
         <p className="text-blue-100">
-          تابع أداء المشاركين والفرق، وأدر العمليات اليومية للهاكاثون
+          {supervisor?.hackathon ? `إدارة ${supervisor.hackathon.title}` : 'تابع أداء المشاركين والفرق'}
         </p>
+        {supervisor?.department && (
+          <Badge className="mt-2 bg-blue-500">{supervisor.department}</Badge>
+        )}
       </div>
 
       {/* Stats Cards */}
