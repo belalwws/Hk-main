@@ -17,6 +17,24 @@ const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Special handling for supervisor invitation endpoints - ALWAYS ALLOW (highest priority)
+  if (pathname.startsWith('/supervisor/invitation/') ||
+      pathname.includes('/supervisor/invitation/') ||
+      pathname.includes('/api/supervisor/accept-invitation') ||
+      pathname === '/api/supervisor/accept-invitation' ||
+      pathname.startsWith('/api/supervisor/accept-invitation?') ||
+      pathname.match(/^\/supervisor\/invitation\/[^\/]+$/)) {
+    console.log('🔓 PRIORITY: Allowing supervisor invitation access:', pathname)
+    const response = NextResponse.next()
+    // Add CORS headers for API endpoints
+    if (pathname.startsWith('/api/')) {
+      response.headers.set('Access-Control-Allow-Origin', '*')
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
+    }
+    return response
+  }
+
   // Handle CORS for external API routes
   if (pathname.startsWith('/api/external/')) {
     const corsHeaders = {
@@ -72,6 +90,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/supervisor/apply/") ||
     pathname.startsWith("/supervisor/invitation/") ||
     pathname.startsWith("/api/supervisor/accept-invitation") ||
+    pathname === "/api/supervisor/accept-invitation" ||
+    pathname.match(/^\/api\/supervisor\/accept-invitation(\?.*)?$/) ||
     pathname.startsWith("/feedback/")
   ) {
     return NextResponse.next()
@@ -151,5 +171,16 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/judge/:path*", "/admin/:path*", "/supervisor/:path*", "/certificates/:path*"],
+  matcher: [
+    "/api/:path*",
+    "/judge/:path*",
+    "/admin/:path*",
+    "/supervisor/dashboard/:path*",
+    "/supervisor/participants/:path*",
+    "/supervisor/teams/:path*",
+    "/supervisor/reports/:path*",
+    "/supervisor/messages/:path*",
+    "/supervisor/profile/:path*",
+    "/certificates/:path*"
+  ],
 }
