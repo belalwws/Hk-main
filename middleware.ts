@@ -17,14 +17,17 @@ const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Special handling for supervisor invitation endpoints - ALWAYS ALLOW (highest priority)
-  if (pathname.startsWith('/supervisor/invitation/') ||
+  // Special handling for invitation endpoints - ALWAYS ALLOW (highest priority)
+  if (pathname.startsWith('/invitation/') ||
+      pathname.includes('/invitation/') ||
+      pathname.startsWith('/supervisor/invitation/') ||
       pathname.includes('/supervisor/invitation/') ||
       pathname.includes('/api/supervisor/accept-invitation') ||
       pathname === '/api/supervisor/accept-invitation' ||
       pathname.startsWith('/api/supervisor/accept-invitation?') ||
+      pathname.match(/^\/invitation\/[^\/]+$/) ||
       pathname.match(/^\/supervisor\/invitation\/[^\/]+$/)) {
-    console.log('🔓 PRIORITY: Allowing supervisor invitation access:', pathname)
+    console.log('🔓 PRIORITY: Allowing invitation access:', pathname)
     const response = NextResponse.next()
     // Add CORS headers for API endpoints
     if (pathname.startsWith('/api/')) {
