@@ -112,6 +112,26 @@ export async function POST(request: NextRequest) {
           id: judge.hackathon.id,
           title: judge.hackathon.title
         }))
+    } else if (user && user.role === 'supervisor') {
+      // Handle supervisor role - fetch supervisor data
+      try {
+        const { prisma } = await import("@/lib/prisma")
+        const supervisorData = await prisma.supervisor.findFirst({
+          where: { userId: user.id, isActive: true },
+          include: { hackathon: true }
+        })
+        if (supervisorData) {
+          permissions = supervisorData.permissions || {}
+          if (supervisorData.hackathon) {
+            activeHackathons = [{
+              id: supervisorData.hackathon.id,
+              title: supervisorData.hackathon.title
+            }]
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching supervisor data:', error)
+      }
     } else if (user && user.role === 'participant') {
       activeHackathons = user.participations
         .filter((participation: any) => participation.status === 'approved' && participation.hackathon.isActive)
@@ -124,7 +144,7 @@ export async function POST(request: NextRequest) {
     const token = await generateToken({
       userId: user ? user.id : fileParticipant!.id,
       email: user ? user.email : fileParticipant!.email,
-      role: role as "admin" | "judge" | "participant",
+      role: role as "admin" | "judge" | "participant" | "supervisor",
       name: user ? user.name : fileParticipant!.name,
     })
 

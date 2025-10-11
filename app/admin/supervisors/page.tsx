@@ -83,45 +83,19 @@ export default function AdminSupervisors() {
 
   const fetchSupervisors = async () => {
     try {
-      // Simulate API call - replace with actual endpoint
-      setSupervisors([
-        {
-          id: "1",
-          user: {
-            id: "user1",
-            name: "أحمد محمد",
-            email: "ahmed@example.com",
-            phone: "+966501234567",
-            city: "الرياض",
-            createdAt: "2024-01-15T10:00:00Z",
-            isActive: true
-          },
-          department: "التقنية",
-          isActive: true,
-          assignedAt: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: "2",
-          user: {
-            id: "user2",
-            name: "فاطمة علي",
-            email: "fatima@example.com",
-            phone: "+966507654321",
-            city: "جدة",
-            createdAt: "2024-01-20T14:30:00Z",
-            isActive: true
-          },
-          hackathon: {
-            id: "hack1",
-            title: "هاكاثون الابتكار التقني"
-          },
-          department: "التصميم",
-          isActive: true,
-          assignedAt: "2024-01-20T14:30:00Z"
-        }
-      ])
+      const response = await fetch("/api/admin/supervisors")
+      const data = await response.json()
+
+      if (response.ok) {
+        setSupervisors(data.supervisors || [])
+        console.log('✅ Loaded supervisors:', data.supervisors?.length || 0)
+      } else {
+        console.error("Error fetching supervisors:", data.error)
+        setError(data.error || "حدث خطأ في جلب المشرفين")
+      }
     } catch (error) {
       console.error("Error fetching supervisors:", error)
+      setError("حدث خطأ في الاتصال بالخادم")
     } finally {
       setLoading(false)
     }

@@ -92,10 +92,41 @@ export default function InvitationPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setSuccess("تم إنشاء حسابك بنجاح! سيتم توجيهك لتسجيل الدخول...")
-        setTimeout(() => {
-          router.push("/login")
-        }, 2000)
+        setSuccess("تم إنشاء حسابك بنجاح! جاري تسجيل الدخول...")
+
+        // Force login to ensure proper session
+        try {
+          const loginResponse = await fetch("/api/force-login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              email: invitation?.email,
+              password: password
+            })
+          })
+
+          const loginData = await loginResponse.json()
+
+          if (loginResponse.ok) {
+            setSuccess("تم تسجيل الدخول بنجاح! سيتم توجيهك الآن...")
+            setTimeout(() => {
+              window.location.href = loginData.redirect || "/supervisor/dashboard"
+            }, 1000)
+          } else {
+            // Fallback to manual redirect
+            setTimeout(() => {
+              window.location.href = "/supervisor/dashboard"
+            }, 1500)
+          }
+        } catch (loginError) {
+          console.error("Force login failed:", loginError)
+          // Fallback to manual redirect
+          setTimeout(() => {
+            window.location.href = "/supervisor/dashboard"
+          }, 1500)
+        }
       } else {
         setError(data.error || "حدث خطأ في إنشاء الحساب")
       }

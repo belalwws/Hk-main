@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       name: result.user.name
     })
 
-    // Set cookie
+    // Set cookie and redirect
     const response = NextResponse.json({
       message: "تم قبول الدعوة بنجاح",
       user: {
@@ -128,14 +128,34 @@ export async function POST(request: NextRequest) {
         name: result.user.name,
         email: result.user.email,
         role: result.user.role
-      }
+      },
+      redirect: "/supervisor/dashboard"
     })
 
+    // Set cookie with multiple attempts for compatibility
     response.cookies.set("auth-token", authToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7 // 7 days
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+      domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined
+    })
+
+    // Also set a backup cookie for debugging
+    response.cookies.set("user-role", result.user.role, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/"
+    })
+
+    console.log('🍪 Setting cookies:', {
+      authToken: authToken.substring(0, 20) + '...',
+      userRole: result.user.role,
+      secure: process.env.NODE_ENV === "production",
+      domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined
     })
 
     return response
