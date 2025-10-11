@@ -282,67 +282,67 @@ export default function AdminSupervisors() {
                 دعوة مشرف جديد
               </Button>
             </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>دعوة مشرف جديد</DialogTitle>
-              <DialogDescription>
-                أرسل دعوة للانضمام كمشرف في النظام
-              </DialogDescription>
-            </DialogHeader>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>دعوة مشرف جديد</DialogTitle>
+                <DialogDescription>
+                  أرسل دعوة للانضمام كمشرف في النظام
+                </DialogDescription>
+              </DialogHeader>
 
-            {error && (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700">
-                  {error}
-                </AlertDescription>
-              </Alert>
-            )}
+              {error && (
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertDescription className="text-red-700">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
 
-            <form onSubmit={handleInvite} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleInvite} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">الاسم *</Label>
+                    <Input
+                      id="name"
+                      value={inviteData.name}
+                      onChange={(e) => setInviteData({...inviteData, name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">البريد الإلكتروني *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={inviteData.email}
+                      onChange={(e) => setInviteData({...inviteData, email: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="name">الاسم *</Label>
+                  <Label htmlFor="department">القسم</Label>
                   <Input
-                    id="name"
-                    value={inviteData.name}
-                    onChange={(e) => setInviteData({...inviteData, name: e.target.value})}
-                    required
+                    id="department"
+                    value={inviteData.department}
+                    onChange={(e) => setInviteData({...inviteData, department: e.target.value})}
+                    placeholder="مثل: التقنية، التصميم، التسويق..."
                   />
                 </div>
-                <div>
-                  <Label htmlFor="email">البريد الإلكتروني *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={inviteData.email}
-                    onChange={(e) => setInviteData({...inviteData, email: e.target.value})}
-                    required
-                  />
+
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                    إلغاء
+                  </Button>
+                  <Button type="submit" disabled={inviting}>
+                    {inviting ? "جاري الإرسال..." : "إرسال الدعوة"}
+                  </Button>
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="department">القسم</Label>
-                <Input
-                  id="department"
-                  value={inviteData.department}
-                  onChange={(e) => setInviteData({...inviteData, department: e.target.value})}
-                  placeholder="مثل: التقنية، التصميم، التسويق..."
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                  إلغاء
-                </Button>
-                <Button type="submit" disabled={inviting}>
-                  {inviting ? "جاري الإرسال..." : "إرسال الدعوة"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
 
       {success && (
         <Alert className="border-green-200 bg-green-50">
