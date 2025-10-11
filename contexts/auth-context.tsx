@@ -29,6 +29,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [initialized, setInitialized] = useState(false)
 	const router = useRouter()
 
+	// Check if current path is a supervisor invitation page
+	const isInvitationPage = () => {
+		if (typeof window === 'undefined') return false
+		const pathname = window.location.pathname
+		return pathname.includes('/supervisor/invitation/') ||
+		       pathname.startsWith('/supervisor/invitation/')
+	}
+
 	// Initialize auth state on mount
 	useEffect(() => {
 		if (initialized) return
@@ -39,6 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 				// Check if we're on the client side
 				if (typeof window === 'undefined') {
+					setLoading(false)
+					setInitialized(true)
+					return
+				}
+
+				// Skip auth check for invitation pages
+				if (isInvitationPage()) {
+					console.log('🔓 Skipping auth check for invitation page')
 					setLoading(false)
 					setInitialized(true)
 					return
