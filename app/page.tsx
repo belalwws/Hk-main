@@ -19,6 +19,9 @@ export default function HomePage() {
           case 'judge':
             router.push('/judge/dashboard')
             break
+          case 'supervisor':
+            router.push('/supervisor/dashboard')
+            break
           case 'participant':
             router.push('/participant/dashboard')
             break

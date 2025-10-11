@@ -67,7 +67,8 @@ export function SiteHeader() {
                         <div className="text-sm font-semibold text-[#01645e]">{user.name}</div>
                         <div className="text-xs text-[#8b7632]">
                           {user.role === 'admin' ? 'مدير النظام' :
-                           user.role === 'judge' ? 'محكم' : 'مشارك'}
+                           user.role === 'judge' ? 'محكم' :
+                           user.role === 'supervisor' ? 'مشرف' : 'مشارك'}
                         </div>
                       </div>
                       <ChevronDown className="w-4 h-4 text-[#01645e] transition-transform duration-200" />
@@ -83,7 +84,8 @@ export function SiteHeader() {
                     <div className="text-sm text-[#8b7632]">{user.email}</div>
                     <div className="text-xs text-[#3ab666] mt-1">
                       {user.role === 'admin' ? '🔧 مدير النظام' :
-                       user.role === 'judge' ? '⚖️ محكم معتمد' : '👨‍💻 مشارك'}
+                       user.role === 'judge' ? '⚖️ محكم معتمد' :
+                       user.role === 'supervisor' ? '👨‍🏫 مشرف' : '👨‍💻 مشارك'}
                     </div>
                   </div>
 
@@ -126,6 +128,20 @@ export function SiteHeader() {
                         <div>
                           <div className="font-medium text-[#01645e]">منطقة المحكم</div>
                           <div className="text-xs text-[#8b7632]">تقييم المشاريع والحلول</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  {user.role === 'supervisor' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/supervisor/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3ab666]/10 transition-colors">
+                        <div className="w-8 h-8 bg-gradient-to-r from-[#3ab666] to-[#01645e] rounded-lg flex items-center justify-center">
+                          <span className="text-white text-sm">👨‍🏫</span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-[#01645e]">لوحة المشرف</div>
+                          <div className="text-xs text-[#8b7632]">إدارة المشاركين والفرق</div>
                         </div>
                       </Link>
                     </DropdownMenuItem>
@@ -211,7 +227,8 @@ export function SiteHeader() {
                     <div className="font-semibold text-[#01645e]">{user.name}</div>
                     <div className="text-xs text-[#8b7632]">
                       {user.role === 'admin' ? 'مدير النظام' :
-                       user.role === 'judge' ? 'محكم' : 'مشارك'}
+                       user.role === 'judge' ? 'محكم' :
+                       user.role === 'supervisor' ? 'مشرف' : 'مشارك'}
                     </div>
                   </DropdownMenuLabel>
 
@@ -232,6 +249,15 @@ export function SiteHeader() {
                       <Link href="/judge" className="flex items-center gap-2 w-full">
                         <Settings className="w-4 h-4" />
                         منطقة التحكيم
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  {user.role === 'supervisor' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/supervisor/dashboard" className="flex items-center gap-2 w-full">
+                        <Settings className="w-4 h-4" />
+                        لوحة المشرف
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -297,7 +323,8 @@ export function SiteHeader() {
                       <div className="font-bold text-[#01645e] text-lg">{user.name}</div>
                       <div className="text-sm text-[#8b7632] font-medium">
                         {user.role === 'admin' ? '👑 مدير النظام' :
-                         user.role === 'judge' ? '⚖️ محكم' : '🚀 مشارك'}
+                         user.role === 'judge' ? '⚖️ محكم' :
+                         user.role === 'supervisor' ? '👨‍🏫 مشرف' : '🚀 مشارك'}
                       </div>
                       <div className="text-xs text-[#01645e]/70 mt-1">مرحباً بك في المنصة</div>
                     </div>
@@ -369,6 +396,17 @@ export function SiteHeader() {
                     >
                       <Settings className="w-5 h-5 flex-shrink-0" />
                       <span className="font-semibold">⚖️ منطقة التحكيم</span>
+                    </Link>
+                  )}
+
+                  {user.role === 'supervisor' && (
+                    <Link
+                      href="/supervisor/dashboard"
+                      className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md border border-[#01645e]/20"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Settings className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-semibold">👨‍🏫 لوحة المشرف</span>
                     </Link>
                   )}
 

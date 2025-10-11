@@ -31,6 +31,7 @@ export default function LoginPage() {
 			// Default redirect based on role
 			if (user.role === "admin") router.replace("/admin/dashboard")
 			else if (user.role === "judge") router.replace("/judge")
+			else if (user.role === "supervisor") router.replace("/supervisor/dashboard")
 			else if (user.role === "participant") router.replace("/participant/dashboard")
 			else router.replace("/hackathons")
 		}
