@@ -39,15 +39,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "انتهت صلاحية رابط الدعوة" }, { status: 400 })
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: invitation.email }
-    })
-
-    if (existingUser) {
-      return NextResponse.json({ error: "المستخدم موجود بالفعل" }, { status: 400 })
-    }
-
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
