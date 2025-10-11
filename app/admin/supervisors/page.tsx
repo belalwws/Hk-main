@@ -74,6 +74,7 @@ export default function AdminSupervisors() {
   })
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [fixing, setFixing] = useState(false)
 
   useEffect(() => {
     fetchSupervisors()
@@ -210,6 +211,35 @@ export default function AdminSupervisors() {
     }
   }
 
+  const fixSupervisorRoles = async () => {
+    if (!confirm("هل تريد إصلاح أدوار المشرفين؟ هذا سيحول جميع المستخدمين الذين قبلوا دعوات المشرفين إلى دور مشرف.")) {
+      return
+    }
+
+    setFixing(true)
+    setError("")
+    setSuccess("")
+
+    try {
+      const response = await fetch("/api/admin/fix-supervisor-role", {
+        method: "POST"
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(`تم إصلاح ${data.totalProcessed} مستخدم بنجاح`)
+        console.log("Fix results:", data.results)
+      } else {
+        setError(data.error || "حدث خطأ في إصلاح أدوار المشرفين")
+      }
+    } catch (error) {
+      setError("حدث خطأ في الاتصال بالخادم")
+    } finally {
+      setFixing(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -261,13 +291,23 @@ export default function AdminSupervisors() {
           <h1 className="text-2xl font-bold text-gray-900">إدارة المشرفين</h1>
           <p className="text-gray-600">دعوة وإدارة المشرفين في النظام</p>
         </div>
-        <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 ml-2" />
-              دعوة مشرف جديد
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={fixSupervisorRoles}
+            disabled={fixing}
+            className="text-orange-600 border-orange-600 hover:bg-orange-50"
+          >
+            <Settings className="w-4 h-4 ml-2" />
+            {fixing ? "جاري الإصلاح..." : "إصلاح أدوار المشرفين"}
+          </Button>
+          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 ml-2" />
+                دعوة مشرف جديد
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>دعوة مشرف جديد</DialogTitle>
