@@ -69,16 +69,40 @@ export async function GET(
       return NextResponse.json({ error: 'غير مصرح لعرض هذا الملف' }, { status: 403 })
     }
 
-    // Read and serve the file
+    // Check if this is a Cloudinary URL stored in database
+    if (filename.startsWith('http')) {
+      // This is a full URL (Cloudinary), redirect to it
+      return NextResponse.redirect(filename)
+    }
+
+    // Try to find the file in database first (for Cloudinary URLs)
+    try {
+      const team = await prisma.team.findFirst({
+        where: {
+          ideaFile: {
+            contains: filename
+          }
+        }
+      })
+
+      if (team && team.ideaFile && team.ideaFile.includes('cloudinary.com')) {
+        // Redirect to Cloudinary URL
+        return NextResponse.redirect(team.ideaFile)
+      }
+    } catch (dbError) {
+      console.log('Database lookup failed, trying local file')
+    }
+
+    // Read and serve the local file (fallback)
     const filePath = path.join(process.cwd(), 'public', 'uploads', filename)
-    
+
     try {
       const fileBuffer = await readFile(filePath)
-      
+
       // Determine content type based on file extension
       const ext = path.extname(filename).toLowerCase()
       let contentType = 'application/octet-stream'
-      
+
       switch (ext) {
         case '.pdf':
           contentType = 'application/pdf'

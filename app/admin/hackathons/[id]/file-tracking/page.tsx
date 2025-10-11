@@ -467,7 +467,8 @@ export default function FileTrackingPage() {
                                 variant="outline"
                                 onClick={() => {
                                   const link = document.createElement('a')
-                                  link.href = `/api/uploads/${team.ideaFile}`
+                                  // Use the new files endpoint that handles both Cloudinary and local files
+                                  link.href = `/api/files/${team.id}`
                                   link.target = '_blank'
                                   link.rel = 'noopener noreferrer'
                                   link.click()

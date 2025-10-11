@@ -71,17 +71,14 @@ export default function PresentationsPage() {
   const teamsWithPresentation = filteredTeams.filter(t => t.ideaFile)
   const teamsWithoutPresentation = filteredTeams.filter(t => !t.ideaFile)
 
-  const handleDownload = (fileUrl: string, teamName: string) => {
-    // For Cloudinary URLs, add fl_attachment flag to force download
-    let downloadUrl = fileUrl
+  const handleDownload = (teamId: string, teamName: string) => {
+    // Use the new files endpoint for consistent access
+    window.open(`/api/files/${teamId}`, '_blank')
+  }
 
-    if (fileUrl.includes('cloudinary.com')) {
-      // Insert fl_attachment before the file path
-      downloadUrl = fileUrl.replace('/upload/', '/upload/fl_attachment/')
-    }
-
-    // Open in new tab (will download due to fl_attachment flag)
-    window.open(downloadUrl, '_blank')
+  const handleView = (teamId: string) => {
+    // Use the new files endpoint for viewing
+    window.open(`/api/files/${teamId}`, '_blank')
   }
 
   const handleDelete = async (teamId: string, teamName: string) => {
@@ -256,7 +253,7 @@ export default function PresentationsPage() {
                       </div>
                       <div className="flex gap-2">
                         <Button
-                          onClick={() => window.open(team.ideaFile!, '_blank')}
+                          onClick={() => handleView(team.id)}
                           variant="outline"
                           size="sm"
                         >
@@ -264,7 +261,7 @@ export default function PresentationsPage() {
                           عرض
                         </Button>
                         <Button
-                          onClick={() => handleDownload(team.ideaFile!, team.name)}
+                          onClick={() => handleDownload(team.id, team.name)}
                           className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
                           size="sm"
                         >

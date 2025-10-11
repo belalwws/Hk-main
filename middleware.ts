@@ -71,6 +71,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/judge/apply/") ||
     pathname.startsWith("/supervisor/apply/") ||
     pathname.startsWith("/supervisor/invitation/") ||
+    pathname.startsWith("/api/supervisor/accept-invitation") ||
     pathname.startsWith("/feedback/")
   ) {
     return NextResponse.next()

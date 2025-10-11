@@ -374,7 +374,7 @@ export default function ParticipantDashboard() {
                             )}
                             <div className="flex items-center gap-4">
                               <a
-                                href={`/api/uploads/${currentParticipation.team.ideaFile}`}
+                                href={`/api/files/${currentParticipation.team.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-700 transition-colors"
