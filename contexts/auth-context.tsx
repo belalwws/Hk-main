@@ -177,28 +177,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			console.log('✅ Login successful for:', data.user.email, 'role:', data.user.role)
 			setUser(data.user as User)
 
-			// Store in localStorage as backup
+			// Store in localStorage as backup with timestamp
 			if (typeof window !== 'undefined') {
 				localStorage.setItem('auth-user', JSON.stringify(data.user))
+				localStorage.setItem('auth-last-verified', Date.now().toString())
 			}
 
-			// Redirect based on user role
-			switch (data.user.role) {
-				case 'admin':
-					router.push('/admin/dashboard')
-					break
-				case 'judge':
-					router.push('/judge/dashboard')
-					break
-				case 'supervisor':
-					router.push('/supervisor/dashboard')
-					break
-				case 'participant':
-					router.push('/participant/dashboard')
-					break
-				default:
-					router.push('/admin')
-			}
+			// Don't redirect here - let the login page handle it
+			// This prevents double redirect issues
 
 			return true
 		} catch (error) {

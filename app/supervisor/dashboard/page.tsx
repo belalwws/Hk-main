@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -54,6 +55,7 @@ interface SupervisorInfo {
 
 export default function SupervisorDashboard() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [stats, setStats] = useState<DashboardStats>({
     totalParticipants: 0,
     approvedParticipants: 0,
@@ -69,13 +71,34 @@ export default function SupervisorDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
+  // Auth check
   useEffect(() => {
+    if (authLoading) {
+      console.log('🔄 Auth still loading...')
+      return
+    }
+
+    if (!user) {
+      console.log('❌ No user found, redirecting to login')
+      router.push('/login?redirect=/supervisor/dashboard')
+      return
+    }
+
+    if (user.role !== 'supervisor') {
+      console.log('❌ User is not supervisor, redirecting')
+      router.push('/')
+      return
+    }
+
+    console.log('✅ User authenticated as supervisor:', user.email)
     fetchDashboardData()
-  }, [])
+  }, [user, authLoading, router])
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch("/api/supervisor/dashboard")
+      const response = await fetch("/api/supervisor/dashboard", {
+        credentials: 'include' // ✅ Include cookies
+      })
       const data = await response.json()
 
       if (response.ok) {
@@ -124,7 +147,8 @@ export default function SupervisorDashboard() {
     }
   }
 
-  if (loading) {
+  // Show loading while auth is loading OR data is loading
+  if (authLoading || loading) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -139,6 +163,11 @@ export default function SupervisorDashboard() {
         </div>
       </div>
     )
+  }
+
+  // Don't render if no user (will redirect)
+  if (!user || user.role !== 'supervisor') {
+    return null
   }
 
   return (
