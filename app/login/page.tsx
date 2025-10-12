@@ -50,7 +50,7 @@ export default function LoginPage() {
 
 		console.log('🔄 Login page: User detected, redirecting...', user.role)
 
-		// Add a small delay to prevent race conditions
+		// Add a longer delay to ensure auth state is fully settled
 		setTimeout(() => {
 			// Check for redirect URL in query params
 			const searchParams = new URLSearchParams(window.location.search)
@@ -70,7 +70,7 @@ export default function LoginPage() {
 				console.log('🔀 Redirecting to:', targetUrl)
 				router.replace(targetUrl)
 			}
-		}, 100)
+		}, 300) // Increased delay to 300ms
 	}, [user, loading, router]) // ✅ Include all dependencies
 
 	const handleLogin = async (e: React.FormEvent) => {
@@ -79,7 +79,15 @@ export default function LoginPage() {
 		setIsSubmitting(true)
 		try {
 			const success = await login(loginEmail, loginPassword)
-			if (!success) setLoginError("بيانات الدخول غير صحيحة")
+			if (!success) {
+				setLoginError("بيانات الدخول غير صحيحة")
+			} else {
+				console.log('✅ Login successful, clearing redirect flag')
+				// Clear the redirect flag to allow fresh redirect
+				if (typeof window !== 'undefined') {
+					sessionStorage.removeItem('login-redirected')
+				}
+			}
 		} catch (err) {
 			setLoginError("حدث خطأ أثناء تسجيل الدخول")
 		} finally {

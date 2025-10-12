@@ -19,6 +19,7 @@ interface AuthContextValue {
 	logout: () => void
 	refreshUser: () => Promise<any>
 	forceSetUser: (userData: User) => void
+	forceRefreshAuth: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -186,6 +187,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			if (!res.ok) return false
 
 			console.log('✅ Login successful for:', data.user.email, 'role:', data.user.role)
+
+			// Set user state immediately
 			setUser(data.user as User)
 
 			// Store in localStorage as backup with timestamp
@@ -194,6 +197,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				localStorage.setItem('auth-last-verified', Date.now().toString())
 				console.log('💾 Stored user in localStorage:', data.user.email, 'role:', data.user.role)
 			}
+
+			// Force a small delay to ensure state is updated
+			await new Promise(resolve => setTimeout(resolve, 50))
+
+			console.log('🔄 User state after login:', data.user.email, 'role:', data.user.role)
 
 			// Don't redirect here - let the login page handle it
 			// This prevents double redirect issues
@@ -286,10 +294,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		setUser(userData)
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('auth-user', JSON.stringify(userData))
+			localStorage.setItem('auth-last-verified', Date.now().toString())
 		}
 	}, [])
 
-	return <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, forceSetUser }}>{children}</AuthContext.Provider>
+	// Force refresh auth state (for login issues)
+	const forceRefreshAuth = useCallback(async () => {
+		console.log('🔄 Force refreshing auth state...')
+		setLoading(true)
+
+		try {
+			// First try localStorage
+			if (typeof window !== 'undefined') {
+				const storedUser = localStorage.getItem('auth-user')
+				if (storedUser) {
+					try {
+						const userData = JSON.parse(storedUser)
+						console.log('💾 Setting user from localStorage:', userData.email, 'role:', userData.role)
+						setUser(userData)
+					} catch (e) {
+						console.log('❌ Invalid localStorage data')
+					}
+				}
+			}
+
+			// Then verify with server
+			await refreshUser()
+		} finally {
+			setLoading(false)
+		}
+	}, [refreshUser])
+
+	return <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, forceSetUser, forceRefreshAuth }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

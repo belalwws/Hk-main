@@ -56,19 +56,40 @@ export default function SupervisorLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, logout, loading } = useAuth()
+  const { user, logout, loading, forceRefreshAuth } = useAuth()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "supervisor")) {
-      console.log('🔀 [SupervisorLayout] Redirecting to login, user:', user?.email, 'role:', user?.role)
-      // Add a small delay to prevent race conditions
-      setTimeout(() => {
-        router.push("/login?redirect=/supervisor/dashboard")
-      }, 100)
+    console.log('🔍 [SupervisorLayout] Auth state - loading:', loading, 'user:', user?.email, 'role:', user?.role)
+
+    // Don't redirect if still loading
+    if (loading) {
+      console.log('⏳ [SupervisorLayout] Still loading, waiting...')
+      return
     }
-  }, [user, loading, router])
+
+    // If no user but we're on supervisor route, try to refresh auth first
+    if (!user) {
+      console.log('🔄 [SupervisorLayout] No user found, trying to refresh auth...')
+      forceRefreshAuth().then(() => {
+        console.log('🔄 [SupervisorLayout] Auth refresh completed')
+      })
+      return
+    }
+
+    // Give a bit more time for auth to settle after login
+    const timer = setTimeout(() => {
+      if (!user || user.role !== "supervisor") {
+        console.log('🔀 [SupervisorLayout] Redirecting to login, user:', user?.email, 'role:', user?.role)
+        router.push("/login?redirect=/supervisor/dashboard")
+      } else {
+        console.log('✅ [SupervisorLayout] User authenticated as supervisor:', user.email)
+      }
+    }, 200) // Increased delay to 200ms
+
+    return () => clearTimeout(timer)
+  }, [user, loading, router, forceRefreshAuth])
 
   if (loading) {
     return (
