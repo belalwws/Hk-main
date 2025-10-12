@@ -70,16 +70,25 @@ export default function SupervisorDashboard() {
   const [supervisor, setSupervisor] = useState<SupervisorInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [authChecked, setAuthChecked] = useState(false)
 
   // Auth check
   useEffect(() => {
+    // Wait for auth to finish loading
     if (authLoading) {
       console.log('🔄 [Dashboard] Auth still loading...')
       return
     }
 
+    // Only check once
+    if (authChecked) {
+      return
+    }
+
+    setAuthChecked(true)
+
     if (!user) {
-      console.log('❌ [Dashboard] No user found, redirecting to login')
+      console.log('❌ [Dashboard] No user found after auth loaded, redirecting to login')
       router.push('/login?redirect=/supervisor/dashboard')
       return
     }
@@ -92,7 +101,7 @@ export default function SupervisorDashboard() {
 
     console.log('✅ [Dashboard] User authenticated as supervisor:', user.email)
     fetchDashboardData()
-  }, [user, authLoading]) // ✅ Remove router from dependencies
+  }, [user, authLoading, authChecked]) // ✅ Add authChecked to prevent multiple checks
 
   const fetchDashboardData = async () => {
     try {

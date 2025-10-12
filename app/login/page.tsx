@@ -15,17 +15,21 @@ export default function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false)
 	const [loginError, setLoginError] = useState("")
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [hasRedirected, setHasRedirected] = useState(false)
 	const { login, user } = useAuth()
 	const router = useRouter()
 
 	useEffect(() => {
-		if (!user) return
+		if (!user || hasRedirected) return
 
 		console.log('🔄 Login page: User detected, redirecting...', user.role)
 
 		// Check for redirect URL in query params
 		const searchParams = new URLSearchParams(window.location.search)
 		const redirectUrl = searchParams.get('redirect')
+
+		// Mark as redirected to prevent multiple redirects
+		setHasRedirected(true)
 
 		if (redirectUrl) {
 			console.log('🔀 Redirecting to:', redirectUrl)
@@ -41,7 +45,7 @@ export default function LoginPage() {
 			console.log('🔀 Redirecting to:', targetUrl)
 			router.replace(targetUrl)
 		}
-	}, [user]) // ✅ Remove router from dependencies
+	}, [user, hasRedirected]) // ✅ Add hasRedirected to prevent loop
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault()
