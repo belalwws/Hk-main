@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -70,41 +70,11 @@ export default function SupervisorDashboard() {
   const [supervisor, setSupervisor] = useState<SupervisorInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [authChecked, setAuthChecked] = useState(false)
 
-  // Auth check
-  useEffect(() => {
-    // Wait for auth to finish loading
-    if (authLoading) {
-      console.log('🔄 [Dashboard] Auth still loading...')
-      return
-    }
-
-    // Only check once
-    if (authChecked) {
-      return
-    }
-
-    setAuthChecked(true)
-
-    if (!user) {
-      console.log('❌ [Dashboard] No user found after auth loaded, redirecting to login')
-      router.push('/login?redirect=/supervisor/dashboard')
-      return
-    }
-
-    if (user.role !== 'supervisor') {
-      console.log('❌ [Dashboard] User is not supervisor, role:', user.role, 'redirecting to home')
-      router.push('/')
-      return
-    }
-
-    console.log('✅ [Dashboard] User authenticated as supervisor:', user.email)
-    fetchDashboardData()
-  }, [user, authLoading, authChecked]) // ✅ Add authChecked to prevent multiple checks
-
-  const fetchDashboardData = async () => {
+  // Define fetchDashboardData using useCallback
+  const fetchDashboardData = useCallback(async () => {
     try {
+      setLoading(true)
       const response = await fetch("/api/supervisor/dashboard", {
         credentials: 'include' // ✅ Include cookies
       })
@@ -128,7 +98,31 @@ export default function SupervisorDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, []) // Empty dependency array since it doesn't depend on any props/state
+
+  // Auth check
+  useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log('🔄 [Dashboard] Auth still loading...')
+      return
+    }
+
+    if (!user) {
+      console.log('❌ [Dashboard] No user found after auth loaded, redirecting to login')
+      router.push('/login?redirect=/supervisor/dashboard')
+      return
+    }
+
+    if (user.role !== 'supervisor') {
+      console.log('❌ [Dashboard] User is not supervisor, role:', user.role, 'redirecting to home')
+      router.push('/')
+      return
+    }
+
+    console.log('✅ [Dashboard] User authenticated as supervisor:', user.email)
+    fetchDashboardData()
+  }, [user, authLoading, router, fetchDashboardData]) // ✅ Include fetchDashboardData
 
   const getActivityIcon = (type: string) => {
     switch (type) {

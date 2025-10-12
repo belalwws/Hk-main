@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Users, Eye, EyeOff, Loader2, UserPlus } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
@@ -15,21 +15,38 @@ export default function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false)
 	const [loginError, setLoginError] = useState("")
 	const [isSubmitting, setIsSubmitting] = useState(false)
-	const [hasRedirected, setHasRedirected] = useState(false)
-	const { login, user } = useAuth()
+	const { login, user, loading } = useAuth()
 	const router = useRouter()
 
-	useEffect(() => {
-		if (!user || hasRedirected) return
+	// Use useRef to track if we've already redirected
+	const redirectedRef = useRef(false)
 
+	useEffect(() => {
+		// Wait for auth to finish loading
+		if (loading) {
+			console.log('🔄 Login page: Auth still loading...')
+			return
+		}
+
+		// If no user, we're good - stay on login page
+		if (!user) {
+			console.log('✅ Login page: No user, staying on login page')
+			return
+		}
+
+		// If we already redirected, don't do it again
+		if (redirectedRef.current) {
+			console.log('⏭️ Login page: Already redirected, skipping...')
+			return
+		}
+
+		// Mark as redirected
+		redirectedRef.current = true
 		console.log('🔄 Login page: User detected, redirecting...', user.role)
 
 		// Check for redirect URL in query params
 		const searchParams = new URLSearchParams(window.location.search)
 		const redirectUrl = searchParams.get('redirect')
-
-		// Mark as redirected to prevent multiple redirects
-		setHasRedirected(true)
 
 		if (redirectUrl) {
 			console.log('🔀 Redirecting to:', redirectUrl)
@@ -45,7 +62,7 @@ export default function LoginPage() {
 			console.log('🔀 Redirecting to:', targetUrl)
 			router.replace(targetUrl)
 		}
-	}, [user, hasRedirected]) // ✅ Add hasRedirected to prevent loop
+	}, [user, loading, router]) // ✅ Include all dependencies
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault()
