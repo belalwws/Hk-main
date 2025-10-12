@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Users,
   Trophy,
@@ -14,9 +14,9 @@ import {
   Clock,
   TrendingUp,
   AlertCircle,
-  Calendar,
   Activity,
-  UserCircle
+  UserCircle,
+  MessageSquare
 } from "lucide-react"
 
 interface DashboardStats {
@@ -223,6 +223,19 @@ export default function SupervisorDashboard() {
         )}
       </div>
 
+      {/* No Hackathon Alert */}
+      {supervisor && !supervisor.hackathon && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-800">مرحباً بك!</AlertTitle>
+          <AlertDescription className="text-blue-700">
+            لم يتم تعيينك لهاكاثون محدد بعد. يمكنك استخدام الأدوات العامة أو انتظار تعيينك من قبل الإدارة.
+            <br />
+            <strong>الأدوات المتاحة:</strong> إدارة المشاركين، إدارة الفرق، إرسال الرسائل، والتقارير.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow">
@@ -344,23 +357,35 @@ export default function SupervisorDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">
-                  <div className={`p-2 rounded-lg ${getStatusColor(activity.status)}`}>
-                    {getActivityIcon(activity.type)}
+            {recentActivity.length > 0 ? (
+              <div className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">
+                    <div className={`p-2 rounded-lg ${getStatusColor(activity.status)}`}>
+                      {getActivityIcon(activity.type)}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {activity.message}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {activity.timestamp}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      {activity.message}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {activity.timestamp}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p>لا توجد أنشطة حديثة</p>
+                {supervisor && !supervisor.hackathon && (
+                  <p className="text-sm mt-2">
+                    ستظهر الأنشطة هنا بعد تعيينك لهاكاثون
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -374,19 +399,35 @@ export default function SupervisorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button
+                variant="outline"
+                className="h-20 flex-col gap-2 hover:bg-blue-50 hover:border-blue-300"
+                onClick={() => router.push('/supervisor/participants')}
+              >
                 <Users className="w-6 h-6" />
                 <span className="text-sm">مراجعة المشاركين</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button
+                variant="outline"
+                className="h-20 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300"
+                onClick={() => router.push('/supervisor/teams')}
+              >
                 <Trophy className="w-6 h-6" />
                 <span className="text-sm">إدارة الفرق</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
-                <Calendar className="w-6 h-6" />
-                <span className="text-sm">جدولة الأحداث</span>
+              <Button
+                variant="outline"
+                className="h-20 flex-col gap-2 hover:bg-green-50 hover:border-green-300"
+                onClick={() => router.push('/supervisor/messages')}
+              >
+                <MessageSquare className="w-6 h-6" />
+                <span className="text-sm">إرسال رسائل</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button
+                variant="outline"
+                className="h-20 flex-col gap-2 hover:bg-orange-50 hover:border-orange-300"
+                onClick={() => router.push('/supervisor/reports')}
+              >
                 <Activity className="w-6 h-6" />
                 <span className="text-sm">عرض التقارير</span>
               </Button>

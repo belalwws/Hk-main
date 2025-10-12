@@ -39,20 +39,52 @@ export async function GET(request: NextRequest) {
     })
 
     if (!supervisor) {
-      return NextResponse.json({ 
-        error: "لم يتم العثور على بيانات المشرف",
+      console.log('⚠️ No supervisor found for user:', userId, 'Creating basic response')
+
+      // Get general stats for all hackathons if no specific supervisor record
+      const [
+        totalParticipants,
+        approvedParticipants,
+        pendingParticipants,
+        rejectedParticipants,
+        totalTeams,
+        activeTeams
+      ] = await Promise.all([
+        prisma.participant.count(),
+        prisma.participant.count({ where: { status: 'approved' } }),
+        prisma.participant.count({ where: { status: 'pending' } }),
+        prisma.participant.count({ where: { status: 'rejected' } }),
+        prisma.team.count(),
+        prisma.team.count({ where: { status: 'active' } })
+      ])
+
+      const completedProjects = await prisma.team.count({
+        where: { projectSubmitted: true }
+      })
+
+      return NextResponse.json({
         stats: {
-          totalParticipants: 0,
-          approvedParticipants: 0,
-          pendingParticipants: 0,
-          rejectedParticipants: 0,
-          totalTeams: 0,
-          activeTeams: 0,
-          completedProjects: 0
+          totalParticipants,
+          approvedParticipants,
+          pendingParticipants,
+          rejectedParticipants,
+          totalTeams,
+          activeTeams,
+          completedProjects
         },
         recentActivity: [],
-        supervisor: null
-      }, { status: 404 })
+        supervisor: {
+          id: 'temp',
+          name: 'مشرف',
+          email: '',
+          phone: null,
+          city: null,
+          department: null,
+          hackathon: null,
+          permissions: null,
+          isProfileComplete: false
+        }
+      })
     }
 
     // Build where clause based on supervisor's hackathon

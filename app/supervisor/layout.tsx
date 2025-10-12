@@ -26,6 +26,11 @@ const sidebarItems = [
     icon: Home
   },
   {
+    title: "الهاكاثونات",
+    href: "/supervisor/hackathons",
+    icon: Trophy
+  },
+  {
     title: "المشاركون",
     href: "/supervisor/participants",
     icon: Users
@@ -33,7 +38,7 @@ const sidebarItems = [
   {
     title: "الفرق",
     href: "/supervisor/teams",
-    icon: Trophy
+    icon: BarChart3
   },
   {
     title: "التقارير",
