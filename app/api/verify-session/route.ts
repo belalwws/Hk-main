@@ -140,17 +140,28 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ [VERIFY-SESSION] Session verification failed:', error)
-    console.error('❌ [VERIFY-SESSION] Error stack:', error.stack)
+    console.error('❌ [VERIFY-SESSION] Error stack:', error?.stack)
     console.error('❌ [VERIFY-SESSION] Error type:', typeof error)
-    console.error('❌ [VERIFY-SESSION] Error constructor:', error.constructor.name)
-    
-    return NextResponse.json({ 
+    console.error('❌ [VERIFY-SESSION] Error constructor:', error?.constructor?.name)
+
+    // Clear the invalid token cookie on error
+    const response = NextResponse.json({
       error: 'Session verification failed',
       details: error instanceof Error ? error.message : String(error),
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       type: typeof error,
-      constructor: error.constructor.name
+      constructor: error?.constructor?.name
     }, { status: 500 })
+
+    response.cookies.set("auth-token", "", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 0,
+    })
+
+    return response
   }
 }
 

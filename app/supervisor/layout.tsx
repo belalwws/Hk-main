@@ -62,7 +62,11 @@ export default function SupervisorLayout({
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "supervisor")) {
-      router.push("/login")
+      console.log('🔀 [SupervisorLayout] Redirecting to login, user:', user?.email, 'role:', user?.role)
+      // Add a small delay to prevent race conditions
+      setTimeout(() => {
+        router.push("/login?redirect=/supervisor/dashboard")
+      }, 100)
     }
   }, [user, loading, router])
 

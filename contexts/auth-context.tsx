@@ -115,14 +115,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					}
 				} else {
 					console.log('❌ Auth init failed, status:', response.status)
-					// If we have localStorage user and it's not too old, keep it
-					if (storedUser && lastVerified && (now - parseInt(lastVerified)) < 30 * 60 * 1000) {
-						console.log('⚠️ Server verification failed but keeping cached user')
-					} else {
+					// For 401 (unauthorized), clear everything
+					if (response.status === 401) {
+						console.log('🚪 Clearing user due to 401 unauthorized')
 						setUser(null)
 						if (typeof window !== 'undefined') {
 							localStorage.removeItem('auth-user')
 							localStorage.removeItem('auth-last-verified')
+						}
+					} else {
+						// For other errors (500, network issues), keep cached user if available and recent
+						if (storedUser && lastVerified && (now - parseInt(lastVerified)) < 30 * 60 * 1000) {
+							console.log('⚠️ Server verification failed but keeping cached user')
+							try {
+								const userData = JSON.parse(storedUser)
+								setUser(userData)
+							} catch (e) {
+								console.log('❌ Invalid cached user data')
+								setUser(null)
+							}
+						} else {
+							setUser(null)
+							if (typeof window !== 'undefined') {
+								localStorage.removeItem('auth-user')
+								localStorage.removeItem('auth-last-verified')
+							}
 						}
 					}
 				}

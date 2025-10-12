@@ -47,27 +47,30 @@ export default function LoginPage() {
 		if (typeof window !== 'undefined') {
 			sessionStorage.setItem('login-redirected', 'true')
 		}
-		
+
 		console.log('🔄 Login page: User detected, redirecting...', user.role)
 
-		// Check for redirect URL in query params
-		const searchParams = new URLSearchParams(window.location.search)
-		const redirectUrl = searchParams.get('redirect')
+		// Add a small delay to prevent race conditions
+		setTimeout(() => {
+			// Check for redirect URL in query params
+			const searchParams = new URLSearchParams(window.location.search)
+			const redirectUrl = searchParams.get('redirect')
 
-		if (redirectUrl) {
-			console.log('🔀 Redirecting to:', redirectUrl)
-			router.replace(redirectUrl)
-		} else {
-			// Default redirect based on role
-			let targetUrl = '/hackathons'
-			if (user.role === "admin") targetUrl = "/admin/dashboard"
-			else if (user.role === "judge") targetUrl = "/judge"
-			else if (user.role === "supervisor") targetUrl = "/supervisor/dashboard"
-			else if (user.role === "participant") targetUrl = "/participant/dashboard"
+			if (redirectUrl) {
+				console.log('🔀 Redirecting to:', redirectUrl)
+				router.replace(redirectUrl)
+			} else {
+				// Default redirect based on role
+				let targetUrl = '/hackathons'
+				if (user.role === "admin") targetUrl = "/admin/dashboard"
+				else if (user.role === "judge") targetUrl = "/judge"
+				else if (user.role === "supervisor") targetUrl = "/supervisor/dashboard"
+				else if (user.role === "participant") targetUrl = "/participant/dashboard"
 
-			console.log('🔀 Redirecting to:', targetUrl)
-			router.replace(targetUrl)
-		}
+				console.log('🔀 Redirecting to:', targetUrl)
+				router.replace(targetUrl)
+			}
+		}, 100)
 	}, [user, loading, router]) // ✅ Include all dependencies
 
 	const handleLogin = async (e: React.FormEvent) => {

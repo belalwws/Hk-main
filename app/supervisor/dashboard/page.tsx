@@ -125,13 +125,18 @@ export default function SupervisorDashboard() {
 
     if (!user) {
       console.log('❌ [Dashboard] No user found after auth loaded, redirecting to login')
-      router.push('/login?redirect=/supervisor/dashboard')
+      // Add a small delay to prevent immediate redirect loops
+      setTimeout(() => {
+        router.push('/login?redirect=/supervisor/dashboard')
+      }, 100)
       return
     }
 
     if (user.role !== 'supervisor') {
       console.log('❌ [Dashboard] User is not supervisor, role:', user.role, 'redirecting to home')
-      router.push('/')
+      setTimeout(() => {
+        router.push('/')
+      }, 100)
       return
     }
 
