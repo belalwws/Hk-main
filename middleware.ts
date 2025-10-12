@@ -178,12 +178,7 @@ export const config = {
     "/api/:path*",
     "/judge/:path*",
     "/admin/:path*",
-    "/supervisor/dashboard/:path*",
-    "/supervisor/participants/:path*",
-    "/supervisor/teams/:path*",
-    "/supervisor/reports/:path*",
-    "/supervisor/messages/:path*",
-    "/supervisor/profile/:path*",
+    "/supervisor/:path*",
     "/certificates/:path*"
   ],
 }

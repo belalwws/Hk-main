@@ -38,13 +38,25 @@ export async function POST(request: NextRequest) {
         token,
         user: { id: 'dev-admin', name: 'Dev Admin', email: DEV_ADMIN_EMAIL, role: 'admin', permissions: {}, activeHackathons: [] }
       })
-      response.cookies.set('auth-token', token, {
+
+      const cookieOptions: any = {
         httpOnly: true,
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
         path: '/',
         maxAge: 60 * 60 * 24 * 7, // 7 days to match JWT expiration
-      })
+      }
+
+      if (process.env.NODE_ENV === "production" && process.env.NEXTAUTH_URL) {
+        try {
+          const url = new URL(process.env.NEXTAUTH_URL)
+          cookieOptions.domain = url.hostname
+        } catch (e) {
+          console.log('⚠️ Could not parse NEXTAUTH_URL for domain')
+        }
+      }
+
+      response.cookies.set('auth-token', token, cookieOptions)
       return response
     }
 
@@ -160,14 +172,29 @@ export async function POST(request: NextRequest) {
       },
     })
     
-    response.cookies.set("auth-token", token, {
+    // Set cookie with proper settings for production
+    const cookieOptions: any = {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days to match JWT expiration
-    })
-    
+    }
+
+    // Add domain for production
+    if (process.env.NODE_ENV === "production" && process.env.NEXTAUTH_URL) {
+      try {
+        const url = new URL(process.env.NEXTAUTH_URL)
+        cookieOptions.domain = url.hostname
+        console.log('🍪 Setting cookie domain:', cookieOptions.domain)
+      } catch (e) {
+        console.log('⚠️ Could not parse NEXTAUTH_URL for domain')
+      }
+    }
+
+    response.cookies.set("auth-token", token, cookieOptions)
+    console.log('✅ Cookie set with options:', cookieOptions)
+
     return response
   } catch (error) {
     console.error("Login error:", error)
