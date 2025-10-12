@@ -56,9 +56,10 @@ export default function SupervisorLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, logout, loading, forceRefreshAuth } = useAuth()
+  const { user, logout, loading, refreshUser } = useAuth()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [allowAccess, setAllowAccess] = useState(false)
 
   useEffect(() => {
     console.log('🔍 [SupervisorLayout] Auth state - loading:', loading, 'user:', user?.email, 'role:', user?.role)
@@ -69,27 +70,45 @@ export default function SupervisorLayout({
       return
     }
 
-    // If no user but we're on supervisor route, try to refresh auth first
+    // If no user, check localStorage as fallback
     if (!user) {
-      console.log('🔄 [SupervisorLayout] No user found, trying to refresh auth...')
-      forceRefreshAuth().then(() => {
-        console.log('🔄 [SupervisorLayout] Auth refresh completed')
-      })
+      console.log('🔄 [SupervisorLayout] No user found, checking localStorage...')
+
+      if (typeof window !== 'undefined') {
+        const storedUser = localStorage.getItem('auth-user')
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser)
+            if (userData.role === 'supervisor') {
+              console.log('✅ [SupervisorLayout] Found supervisor in localStorage, allowing access')
+              setAllowAccess(true)
+              return // Don't redirect, user is valid
+            }
+          } catch (e) {
+            console.log('❌ [SupervisorLayout] Invalid localStorage data')
+          }
+        }
+      }
+
+      // If no valid user found, redirect after a delay
+      const timer = setTimeout(() => {
+        console.log('🔀 [SupervisorLayout] Redirecting to login - no valid user found')
+        router.push("/login?redirect=/supervisor/dashboard")
+      }, 1000) // Give more time for auth to load
+
+      return () => clearTimeout(timer)
+    }
+
+    // If user exists but wrong role
+    if (user.role !== "supervisor") {
+      console.log('🔀 [SupervisorLayout] Wrong role, redirecting to login')
+      router.push("/login?redirect=/supervisor/dashboard")
       return
     }
 
-    // Give a bit more time for auth to settle after login
-    const timer = setTimeout(() => {
-      if (!user || user.role !== "supervisor") {
-        console.log('🔀 [SupervisorLayout] Redirecting to login, user:', user?.email, 'role:', user?.role)
-        router.push("/login?redirect=/supervisor/dashboard")
-      } else {
-        console.log('✅ [SupervisorLayout] User authenticated as supervisor:', user.email)
-      }
-    }, 200) // Increased delay to 200ms
-
-    return () => clearTimeout(timer)
-  }, [user, loading, router, forceRefreshAuth])
+    console.log('✅ [SupervisorLayout] User authenticated as supervisor:', user.email)
+    setAllowAccess(true)
+  }, [user, loading, router])
 
   if (loading) {
     return (
@@ -102,7 +121,8 @@ export default function SupervisorLayout({
     )
   }
 
-  if (!user || user.role !== "supervisor") {
+  // Allow access if user is supervisor OR if localStorage indicates supervisor access
+  if (!allowAccess && (!user || user.role !== "supervisor")) {
     return null
   }
 
