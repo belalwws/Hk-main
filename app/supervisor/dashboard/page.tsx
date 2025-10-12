@@ -49,8 +49,17 @@ interface SupervisorInfo {
     title: string
     status: string
   }
+  hackathons?: Array<{
+    id: string
+    title: string
+    status: string
+    startDate: string
+    endDate: string
+  }>
   permissions?: any
   isProfileComplete: boolean
+  assignmentCount?: number
+  isGeneralSupervisor?: boolean
 }
 
 export default function SupervisorDashboard() {
@@ -216,24 +225,53 @@ export default function SupervisorDashboard() {
           مرحباً {supervisor?.name || 'بك'} في لوحة تحكم المشرف
         </h1>
         <p className="text-blue-100">
-          {supervisor?.hackathon ? `إدارة ${supervisor.hackathon.title}` : 'تابع أداء المشاركين والفرق'}
+          {supervisor?.hackathons && supervisor.hackathons.length > 0
+            ? `إدارة ${supervisor.hackathons.length} هاكاثون${supervisor.hackathons.length > 1 ? 'ات' : ''}`
+            : supervisor?.hackathon
+            ? `إدارة ${supervisor.hackathon.title}`
+            : 'تابع أداء المشاركين والفرق'
+          }
         </p>
         {supervisor?.department && (
           <Badge className="mt-2 bg-blue-500">{supervisor.department}</Badge>
         )}
       </div>
 
-      {/* No Hackathon Alert */}
-      {supervisor && !supervisor.hackathon && (
-        <Alert className="border-blue-200 bg-blue-50">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertTitle className="text-blue-800">مرحباً بك!</AlertTitle>
-          <AlertDescription className="text-blue-700">
-            لم يتم تعيينك لهاكاثون محدد بعد. يمكنك استخدام الأدوات العامة أو انتظار تعيينك من قبل الإدارة.
-            <br />
-            <strong>الأدوات المتاحة:</strong> إدارة المشاركين، إدارة الفرق، إرسال الرسائل، والتقارير.
-          </AlertDescription>
-        </Alert>
+      {/* Hackathon Assignment Info */}
+      {supervisor && (
+        <>
+          {supervisor.isGeneralSupervisor && (
+            <Alert className="border-green-200 bg-green-50">
+              <AlertCircle className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-800">مشرف عام</AlertTitle>
+              <AlertDescription className="text-green-700">
+                أنت مشرف عام على جميع الهاكاثونات. يمكنك الوصول لجميع البيانات والإحصائيات.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!supervisor.isGeneralSupervisor && supervisor.hackathons && supervisor.hackathons.length === 0 && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertTitle className="text-blue-800">مرحباً بك!</AlertTitle>
+              <AlertDescription className="text-blue-700">
+                لم يتم تعيينك لهاكاثون محدد بعد. يمكنك استخدام الأدوات العامة أو انتظار تعيينك من قبل الإدارة.
+                <br />
+                <strong>الأدوات المتاحة:</strong> إدارة المشاركين، إدارة الفرق، إرسال الرسائل، والتقارير.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!supervisor.isGeneralSupervisor && supervisor.hackathons && supervisor.hackathons.length > 0 && (
+            <Alert className="border-purple-200 bg-purple-50">
+              <AlertCircle className="h-4 w-4 text-purple-600" />
+              <AlertTitle className="text-purple-800">هاكاثوناتك المعينة</AlertTitle>
+              <AlertDescription className="text-purple-700">
+                أنت مشرف على {supervisor.hackathons.length} هاكاثون. يمكنك إدارة المشاركين والفرق في هذه الهاكاثونات.
+              </AlertDescription>
+            </Alert>
+          )}
+        </>
       )}
 
       {/* Stats Cards */}
@@ -344,6 +382,52 @@ export default function SupervisorDashboard() {
         </Card>
       </div>
 
+      {/* Assigned Hackathons */}
+      {supervisor && supervisor.hackathons && supervisor.hackathons.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-purple-600" />
+              الهاكاثونات المعينة ({supervisor.hackathons.length})
+            </CardTitle>
+            <CardDescription>
+              الهاكاثونات التي تشرف عليها حالياً
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {supervisor.hackathons.map((hackathon) => (
+                <div key={hackathon.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Trophy className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">{hackathon.title}</h4>
+                      <p className="text-sm text-gray-500">
+                        {new Date(hackathon.startDate).toLocaleDateString('ar-EG')} - {new Date(hackathon.endDate).toLocaleDateString('ar-EG')}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge
+                    className={
+                      hackathon.status === 'open' ? 'bg-green-100 text-green-800' :
+                      hackathon.status === 'closed' ? 'bg-red-100 text-red-800' :
+                      hackathon.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }
+                  >
+                    {hackathon.status === 'open' ? 'مفتوح' :
+                     hackathon.status === 'closed' ? 'مغلق' :
+                     hackathon.status === 'completed' ? 'مكتمل' : 'مسودة'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -379,7 +463,7 @@ export default function SupervisorDashboard() {
               <div className="text-center py-8 text-gray-500">
                 <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                 <p>لا توجد أنشطة حديثة</p>
-                {supervisor && !supervisor.hackathon && (
+                {supervisor && (!supervisor.hackathons || supervisor.hackathons.length === 0) && !supervisor.isGeneralSupervisor && (
                   <p className="text-sm mt-2">
                     ستظهر الأنشطة هنا بعد تعيينك لهاكاثون
                   </p>

@@ -6,14 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Trophy, 
-  Calendar, 
-  Users, 
-  MapPin, 
+import {
+  Trophy,
+  Calendar,
+  Users,
+  MapPin,
   Clock,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  UserCheck
 } from "lucide-react"
 
 interface Hackathon {
@@ -31,8 +32,10 @@ interface Hackathon {
 export default function SupervisorHackathons() {
   const { user } = useAuth()
   const [hackathons, setHackathons] = useState<Hackathon[]>([])
+  const [assignedHackathons, setAssignedHackathons] = useState<Hackathon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [activeTab, setActiveTab] = useState<'assigned' | 'all'>('assigned')
 
   useEffect(() => {
     fetchHackathons()
@@ -41,15 +44,25 @@ export default function SupervisorHackathons() {
   const fetchHackathons = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/hackathons/active", {
-        credentials: 'include'
-      })
-      const data = await response.json()
 
-      if (response.ok) {
-        setHackathons(data.hackathons || [])
+      // Fetch both assigned hackathons and all hackathons
+      const [dashboardRes, allHackathonsRes] = await Promise.all([
+        fetch("/api/supervisor/dashboard", { credentials: 'include' }),
+        fetch("/api/hackathons/active", { credentials: 'include' })
+      ])
+
+      if (dashboardRes.ok) {
+        const dashboardData = await dashboardRes.json()
+        if (dashboardData.supervisor?.hackathons) {
+          setAssignedHackathons(dashboardData.supervisor.hackathons)
+        }
+      }
+
+      if (allHackathonsRes.ok) {
+        const allData = await allHackathonsRes.json()
+        setHackathons(allData.hackathons || [])
       } else {
-        setError(data.error || "حدث خطأ في جلب البيانات")
+        setError("حدث خطأ في جلب البيانات")
       }
     } catch (error) {
       console.error("Error fetching hackathons:", error)
@@ -99,10 +112,30 @@ export default function SupervisorHackathons() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">الهاكاثونات المتاحة</h1>
+          <h1 className="text-3xl font-bold text-gray-900">إدارة الهاكاثونات</h1>
           <p className="text-gray-600 mt-2">
-            استعرض الهاكاثونات المتاحة للإشراف عليها
+            استعرض وأدر الهاكاثونات المعينة لك أو جميع الهاكاثونات المتاحة
           </p>
+        </div>
+
+        {/* Tab Buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant={activeTab === 'assigned' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('assigned')}
+            className="flex items-center gap-2"
+          >
+            <UserCheck className="w-4 h-4" />
+            هاكاثوناتي ({assignedHackathons.length})
+          </Button>
+          <Button
+            variant={activeTab === 'all' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('all')}
+            className="flex items-center gap-2"
+          >
+            <Trophy className="w-4 h-4" />
+            جميع الهاكاثونات ({hackathons.length})
+          </Button>
         </div>
       </div>
 
@@ -125,9 +158,9 @@ export default function SupervisorHackathons() {
       </Alert>
 
       {/* Hackathons Grid */}
-      {hackathons.length > 0 ? (
+      {(activeTab === 'assigned' ? assignedHackathons : hackathons).length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {hackathons.map((hackathon) => (
+          {(activeTab === 'assigned' ? assignedHackathons : hackathons).map((hackathon) => (
             <Card key={hackathon.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -165,14 +198,25 @@ export default function SupervisorHackathons() {
                 </div>
 
                 <div className="pt-4 border-t">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    disabled={hackathon.status !== 'open'}
-                  >
-                    <ExternalLink className="w-4 h-4 ml-2" />
-                    عرض التفاصيل
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      disabled={hackathon.status !== 'open'}
+                    >
+                      <ExternalLink className="w-4 h-4 ml-2" />
+                      عرض التفاصيل
+                    </Button>
+                    {activeTab === 'assigned' && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => window.location.href = `/supervisor/participants?hackathon=${hackathon.id}`}
+                      >
+                        إدارة
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -183,10 +227,16 @@ export default function SupervisorHackathons() {
           <CardContent className="text-center py-12">
             <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              لا توجد هاكاثونات متاحة حالياً
+              {activeTab === 'assigned'
+                ? "لم يتم تعيينك لأي هاكاثون بعد"
+                : "لا توجد هاكاثونات متاحة حالياً"
+              }
             </h3>
             <p className="text-gray-600">
-              سيتم عرض الهاكاثونات المتاحة هنا عند إضافتها
+              {activeTab === 'assigned'
+                ? "تواصل مع الإدارة للحصول على تعيين لهاكاثون معين"
+                : "سيتم عرض الهاكاثونات المتاحة هنا عند إضافتها"
+              }
             </p>
           </CardContent>
         </Card>

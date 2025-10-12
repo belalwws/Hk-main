@@ -157,6 +157,12 @@ export default function AdminDashboard() {
                 إدارة المشرفين
               </Button>
             </Link>
+            <Link href="/admin/supervisor-assignments">
+              <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white">
+                <Users className="w-5 h-5 ml-2" />
+                تعيينات المشرفين
+              </Button>
+            </Link>
             <Link href="/admin/simple-participants">
               <Button variant="outline">
                 <Users className="w-5 h-5 ml-2" />

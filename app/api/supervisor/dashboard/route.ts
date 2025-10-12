@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
 
     console.log('📊 Fetching supervisor dashboard data for user:', userId)
 
-    // Get supervisor data
-    const supervisor = await prisma.supervisor.findFirst({
+    // Get all supervisor assignments for this user
+    const supervisorAssignments = await prisma.supervisor.findMany({
       where: { userId: userId || '', isActive: true },
       include: {
         hackathon: {
@@ -38,7 +38,10 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    if (!supervisor) {
+    // Get the primary supervisor record (first one or general supervisor)
+    const supervisor = supervisorAssignments.find(s => s.hackathonId === null) || supervisorAssignments[0]
+
+    if (!supervisor || supervisorAssignments.length === 0) {
       console.log('⚠️ No supervisor found for user:', userId, 'Creating basic response')
 
       // Get general stats for all hackathons if no specific supervisor record
@@ -80,17 +83,21 @@ export async function GET(request: NextRequest) {
           phone: null,
           city: null,
           department: null,
-          hackathon: null,
+          hackathons: [],
           permissions: null,
           isProfileComplete: false
         }
       })
     }
 
-    // Build where clause based on supervisor's hackathon
+    // Build where clause based on supervisor's hackathons
+    const hackathonIds = supervisorAssignments
+      .map(s => s.hackathonId)
+      .filter(id => id !== null) as string[]
+
     const whereClause: any = {}
-    if (supervisor.hackathonId) {
-      whereClause.hackathonId = supervisor.hackathonId
+    if (hackathonIds.length > 0) {
+      whereClause.hackathonId = { in: hackathonIds }
     }
 
     // Get participants statistics
@@ -196,9 +203,12 @@ export async function GET(request: NextRequest) {
         phone: supervisor.user.phone,
         city: supervisor.user.city,
         department: supervisor.department,
-        hackathon: supervisor.hackathon,
+        hackathons: supervisorAssignments.map(s => s.hackathon).filter(h => h !== null),
+        hackathon: supervisor.hackathon, // Keep for backward compatibility
         permissions: supervisor.permissions,
-        isProfileComplete
+        isProfileComplete,
+        assignmentCount: supervisorAssignments.length,
+        isGeneralSupervisor: supervisorAssignments.some(s => s.hackathonId === null)
       }
     })
 
