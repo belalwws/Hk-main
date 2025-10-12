@@ -21,21 +21,27 @@ export default function LoginPage() {
 	useEffect(() => {
 		if (!user) return
 
+		console.log('🔄 Login page: User detected, redirecting...', user.role)
+
 		// Check for redirect URL in query params
 		const searchParams = new URLSearchParams(window.location.search)
 		const redirectUrl = searchParams.get('redirect')
 
 		if (redirectUrl) {
+			console.log('🔀 Redirecting to:', redirectUrl)
 			router.replace(redirectUrl)
 		} else {
 			// Default redirect based on role
-			if (user.role === "admin") router.replace("/admin/dashboard")
-			else if (user.role === "judge") router.replace("/judge")
-			else if (user.role === "supervisor") router.replace("/supervisor/dashboard")
-			else if (user.role === "participant") router.replace("/participant/dashboard")
-			else router.replace("/hackathons")
+			let targetUrl = '/hackathons'
+			if (user.role === "admin") targetUrl = "/admin/dashboard"
+			else if (user.role === "judge") targetUrl = "/judge"
+			else if (user.role === "supervisor") targetUrl = "/supervisor/dashboard"
+			else if (user.role === "participant") targetUrl = "/participant/dashboard"
+
+			console.log('🔀 Redirecting to:', targetUrl)
+			router.replace(targetUrl)
 		}
-	}, [user, router])
+	}, [user]) // ✅ Remove router from dependencies
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault()

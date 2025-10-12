@@ -74,25 +74,25 @@ export default function SupervisorDashboard() {
   // Auth check
   useEffect(() => {
     if (authLoading) {
-      console.log('🔄 Auth still loading...')
+      console.log('🔄 [Dashboard] Auth still loading...')
       return
     }
 
     if (!user) {
-      console.log('❌ No user found, redirecting to login')
+      console.log('❌ [Dashboard] No user found, redirecting to login')
       router.push('/login?redirect=/supervisor/dashboard')
       return
     }
 
     if (user.role !== 'supervisor') {
-      console.log('❌ User is not supervisor, redirecting')
+      console.log('❌ [Dashboard] User is not supervisor, role:', user.role, 'redirecting to home')
       router.push('/')
       return
     }
 
-    console.log('✅ User authenticated as supervisor:', user.email)
+    console.log('✅ [Dashboard] User authenticated as supervisor:', user.email)
     fetchDashboardData()
-  }, [user, authLoading, router])
+  }, [user, authLoading]) // ✅ Remove router from dependencies
 
   const fetchDashboardData = async () => {
     try {

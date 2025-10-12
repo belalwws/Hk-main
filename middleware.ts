@@ -106,6 +106,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  console.log('🔒 [Middleware] Protected route:', pathname, 'Required roles:', route.roles)
+
   // Get token from Authorization header or cookie
   let token = request.headers.get("authorization")?.replace("Bearer ", "")
 
@@ -114,6 +116,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!token) {
+    console.log('❌ [Middleware] No token found for:', pathname)
     // For API routes, return 401
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 401 })
@@ -121,6 +124,7 @@ export async function middleware(request: NextRequest) {
 
     // For pages, redirect to login page only
     if (!pathname.startsWith('/login')) {
+      console.log('🔀 [Middleware] Redirecting to login from:', pathname)
       return NextResponse.redirect(new URL("/login", request.url))
     }
     return NextResponse.next()
@@ -129,6 +133,7 @@ export async function middleware(request: NextRequest) {
   // Verify token - now async
   const payload = await verifyToken(token)
   if (!payload) {
+    console.log('❌ [Middleware] Invalid token for:', pathname)
     // For API routes, return 401
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "رمز المصادقة غير صالح" }, { status: 401 })
@@ -136,13 +141,17 @@ export async function middleware(request: NextRequest) {
 
     // For pages, redirect to login page
     if (!pathname.startsWith('/login')) {
+      console.log('🔀 [Middleware] Redirecting to login (invalid token) from:', pathname)
       return NextResponse.redirect(new URL("/login", request.url))
     }
     return NextResponse.next()
   }
 
+  console.log('✅ [Middleware] Token verified for:', pathname, 'User role:', payload.role)
+
   // Check if user has required role
   if (!route.roles.includes(payload.role)) {
+    console.log('❌ [Middleware] Insufficient permissions. User role:', payload.role, 'Required:', route.roles)
     // For API routes, return 403
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "غير مصرح بالوصول - صلاحيات غير كافية" }, { status: 403 })
@@ -153,8 +162,11 @@ export async function middleware(request: NextRequest) {
                        payload.role === "judge" ? "/judge" :
                        payload.role === "supervisor" ? "/supervisor/dashboard" :
                        "/participant/dashboard"
+    console.log('🔀 [Middleware] Redirecting to:', redirectUrl, 'from:', pathname)
     return NextResponse.redirect(new URL(redirectUrl, request.url))
   }
+
+  console.log('✅ [Middleware] Access granted to:', pathname)
 
   // Add user info to headers for API routes
   if (pathname.startsWith("/api/")) {
