@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Users, Eye, EyeOff, Loader2, UserPlus } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
@@ -18,9 +18,6 @@ export default function LoginPage() {
 	const { login, user, loading } = useAuth()
 	const router = useRouter()
 
-	// Use useRef to track if we've already redirected
-	const redirectedRef = useRef(false)
-
 	useEffect(() => {
 		// Wait for auth to finish loading
 		if (loading) {
@@ -28,20 +25,29 @@ export default function LoginPage() {
 			return
 		}
 
-		// If no user, we're good - stay on login page
+		// If no user, clear redirect flag and stay on login page
 		if (!user) {
 			console.log('✅ Login page: No user, staying on login page')
+			if (typeof window !== 'undefined') {
+				sessionStorage.removeItem('login-redirected')
+			}
 			return
 		}
 
-		// If we already redirected, don't do it again
-		if (redirectedRef.current) {
-			console.log('⏭️ Login page: Already redirected, skipping...')
-			return
+		// Check if we already redirected in this session
+		if (typeof window !== 'undefined') {
+			const hasRedirected = sessionStorage.getItem('login-redirected')
+			if (hasRedirected) {
+				console.log('⏭️ Login page: Already redirected in this session, skipping...')
+				return
+			}
 		}
 
-		// Mark as redirected
-		redirectedRef.current = true
+		// Mark as redirected in sessionStorage
+		if (typeof window !== 'undefined') {
+			sessionStorage.setItem('login-redirected', 'true')
+		}
+		
 		console.log('🔄 Login page: User detected, redirecting...', user.role)
 
 		// Check for redirect URL in query params

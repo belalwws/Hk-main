@@ -70,6 +70,7 @@ export default function SupervisorDashboard() {
   const [supervisor, setSupervisor] = useState<SupervisorInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [shouldCheckAuth, setShouldCheckAuth] = useState(false)
 
   // Define fetchDashboardData using useCallback
   const fetchDashboardData = useCallback(async () => {
@@ -100,8 +101,22 @@ export default function SupervisorDashboard() {
     }
   }, []) // Empty dependency array since it doesn't depend on any props/state
 
-  // Auth check
+  // Wait for initial auth load before checking
   useEffect(() => {
+    if (!authLoading) {
+      console.log('✅ [Dashboard] Auth finished loading, enabling auth check')
+      setShouldCheckAuth(true)
+    }
+  }, [authLoading])
+
+  // Auth check - only runs after auth has finished loading at least once
+  useEffect(() => {
+    // Don't check until auth has loaded at least once
+    if (!shouldCheckAuth) {
+      console.log('⏳ [Dashboard] Waiting for initial auth load...')
+      return
+    }
+
     // Wait for auth to finish loading
     if (authLoading) {
       console.log('🔄 [Dashboard] Auth still loading...')
@@ -122,7 +137,7 @@ export default function SupervisorDashboard() {
 
     console.log('✅ [Dashboard] User authenticated as supervisor:', user.email)
     fetchDashboardData()
-  }, [user, authLoading, router, fetchDashboardData]) // ✅ Include fetchDashboardData
+  }, [user, authLoading, router, fetchDashboardData, shouldCheckAuth]) // ✅ Include shouldCheckAuth
 
   const getActivityIcon = (type: string) => {
     switch (type) {
