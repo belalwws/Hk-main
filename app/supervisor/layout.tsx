@@ -1,10 +1,11 @@
 "use client"
 
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import ErrorBoundary from "@/components/ErrorBoundary"
 import { 
   Users, 
   Trophy, 
@@ -122,12 +123,15 @@ export default function SupervisorLayout({
   }
 
   // Allow access if user is supervisor OR if localStorage indicates supervisor access
-  if (!allowAccess && (!user || user.role !== "supervisor")) {
+  const shouldAllowAccess = allowAccess || (user && user.role === "supervisor")
+
+  if (!shouldAllowAccess) {
     return null
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50" dir="rtl">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -151,7 +155,7 @@ export default function SupervisorLayout({
                 </div>
                 <div>
                   <h2 className="font-bold text-blue-800">لوحة المشرف</h2>
-                  <p className="text-sm text-gray-600">{user.name}</p>
+                  <p className="text-sm text-gray-600">{user?.name || 'مشرف'}</p>
                 </div>
               </div>
               <Button
@@ -217,7 +221,7 @@ export default function SupervisorLayout({
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-sm text-gray-600">مرحباً،</p>
-                <p className="font-semibold text-gray-900">{user.name}</p>
+                <p className="font-semibold text-gray-900">{user?.name || 'مشرف'}</p>
               </div>
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
@@ -232,5 +236,6 @@ export default function SupervisorLayout({
         </main>
       </div>
     </div>
+    </ErrorBoundary>
   )
 }

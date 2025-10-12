@@ -100,6 +100,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 					if (data.user) {
 						console.log('✅ User verified from server:', data.user.email, 'role:', data.user.role)
+
+						// Check if this is the correct user (not admin fallback)
+						if (storedUser) {
+							try {
+								const storedUserData = JSON.parse(storedUser)
+								if (storedUserData.email !== data.user.email) {
+									console.log('⚠️ Server returned different user, keeping stored user')
+									setUser(storedUserData)
+									return
+								}
+							} catch (e) {
+								// Continue with server user
+							}
+						}
+
 						setUser(data.user)
 						// Store in localStorage as backup with timestamp
 						if (typeof window !== 'undefined') {
