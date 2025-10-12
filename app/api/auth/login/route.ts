@@ -47,16 +47,11 @@ export async function POST(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 7, // 7 days to match JWT expiration
       }
 
-      if (process.env.NODE_ENV === "production" && process.env.NEXTAUTH_URL) {
-        try {
-          const url = new URL(process.env.NEXTAUTH_URL)
-          cookieOptions.domain = url.hostname
-        } catch (e) {
-          console.log('⚠️ Could not parse NEXTAUTH_URL for domain')
-        }
-      }
+      // Don't set domain - let browser handle it automatically
+      // This works better with subdomains like .onrender.com
 
       response.cookies.set('auth-token', token, cookieOptions)
+      console.log('✅ Dev admin cookie set with options:', cookieOptions)
       return response
     }
 
@@ -181,19 +176,12 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days to match JWT expiration
     }
 
-    // Add domain for production
-    if (process.env.NODE_ENV === "production" && process.env.NEXTAUTH_URL) {
-      try {
-        const url = new URL(process.env.NEXTAUTH_URL)
-        cookieOptions.domain = url.hostname
-        console.log('🍪 Setting cookie domain:', cookieOptions.domain)
-      } catch (e) {
-        console.log('⚠️ Could not parse NEXTAUTH_URL for domain')
-      }
-    }
+    // Don't set domain - let browser handle it automatically
+    // Setting explicit domain can cause issues with subdomains like .onrender.com
 
     response.cookies.set("auth-token", token, cookieOptions)
-    console.log('✅ Cookie set with options:', cookieOptions)
+    console.log('✅ Cookie set with options:', JSON.stringify(cookieOptions))
+    console.log('🔑 Token length:', token.length, 'User:', email, 'Role:', role)
 
     return response
   } catch (error) {
