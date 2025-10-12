@@ -65,33 +65,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				const lastVerified = localStorage.getItem('auth-last-verified')
 				const now = Date.now()
 
-				// If we have a stored user and it was verified recently (within 5 minutes), use it
-				if (storedUser && lastVerified && (now - parseInt(lastVerified)) < 5 * 60 * 1000) {
+				// If we have a stored user and it was verified recently (within 2 minutes), use it temporarily
+				// But still verify with server in background
+				if (storedUser && lastVerified && (now - parseInt(lastVerified)) < 2 * 60 * 1000) {
 					try {
 						const userData = JSON.parse(storedUser)
-						console.log('💾 Using cached user from localStorage:', userData.email)
+						console.log('💾 Using cached user temporarily:', userData.email, 'role:', userData.role)
 						setUser(userData)
-						setLoading(false)
-						return
+						// Don't return - continue to verify with server
 					} catch (e) {
 						console.log('❌ Invalid localStorage data, clearing...')
 						if (typeof window !== 'undefined') {
 							localStorage.removeItem('auth-user')
 							localStorage.removeItem('auth-last-verified')
-						}
-					}
-				}
-
-				// Set user from localStorage first if available
-				if (storedUser) {
-					try {
-						const userData = JSON.parse(storedUser)
-						console.log('💾 Found user in localStorage:', userData.email)
-						setUser(userData)
-					} catch (e) {
-						console.log('❌ Invalid localStorage data, clearing...')
-						if (typeof window !== 'undefined') {
-							localStorage.removeItem('auth-user')
 						}
 					}
 				}
@@ -163,6 +149,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const login = useCallback(async (email: string, password: string) => {
 		try {
 			console.log('🔐 Attempting login for:', email)
+
+			// Clear any old user data first
+			if (typeof window !== 'undefined') {
+				localStorage.removeItem('auth-user')
+				localStorage.removeItem('auth-last-verified')
+				console.log('🧹 Cleared old localStorage data')
+			}
+
 			const res = await fetch("/api/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -170,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				body: JSON.stringify({ email, password }),
 			})
 			const data = await res.json()
-			console.log('📊 Login response:', { status: res.status, data })
+			console.log('📊 Login response:', { status: res.status, hasUser: !!data.user, role: data.user?.role })
 
 			if (!res.ok) return false
 
@@ -181,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			if (typeof window !== 'undefined') {
 				localStorage.setItem('auth-user', JSON.stringify(data.user))
 				localStorage.setItem('auth-last-verified', Date.now().toString())
+				console.log('💾 Stored user in localStorage:', data.user.email, 'role:', data.user.role)
 			}
 
 			// Don't redirect here - let the login page handle it

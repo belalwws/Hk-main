@@ -17,6 +17,8 @@ const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  console.log('🔍 [Middleware] Request to:', pathname)
+
   // Special handling for invitation endpoints - ALWAYS ALLOW (highest priority)
   if (pathname.startsWith('/invitation/') ||
       pathname.includes('/invitation/') ||
