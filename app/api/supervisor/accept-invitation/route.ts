@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Create user and supervisor in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       let user
 
       if (existingUser) {
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: "/",
-      domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined
+      domain: process.env.NODE_ENV === "production" ? ".ondigitalocean.app" : undefined
     })
 
     // Also set a backup cookie for debugging
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
       authToken: authToken.substring(0, 20) + '...',
       userRole: result.user.role,
       secure: process.env.NODE_ENV === "production",
-      domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined
+      domain: process.env.NODE_ENV === "production" ? ".ondigitalocean.app" : undefined
     })
 
     return response

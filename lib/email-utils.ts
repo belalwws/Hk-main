@@ -120,7 +120,7 @@ export function getRegistrationConfirmationEmail(
           </ul>
 
           <div style="text-align: center; margin: 35px 0;">
-            <a href="${process.env.NEXTAUTH_URL || 'https://hackathon-platform-601l.onrender.com'}/login" style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; transition: transform 0.3s;">
+            <a href="${process.env.NEXTAUTH_URL || 'https://clownfish-app-px9sc.ondigitalocean.app'}/login" style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; transition: transform 0.3s;">
               🏠 دخول المنصة
             </a>
           </div>

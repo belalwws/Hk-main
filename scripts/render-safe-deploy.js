@@ -54,7 +54,7 @@ if (missingVars.length > 0) {
   console.error('   DATABASE_URL: (automatically provided by Render)')
   console.error('   JWT_SECRET: your-super-secret-jwt-key')
   console.error('   EXTERNAL_API_KEY: hk_d1c2f0e305a0d02eb30b0dd7e4460ec1d6949ba01dd78021de2c9dd64d06c190')
-  console.error('   NEXTAUTH_URL: https://hackathon-platform-601l.onrender.com')
+  console.error('   NEXTAUTH_URL: https://clownfish-app-px9sc.ondigitalocean.app')
   console.error('   NEXTAUTH_SECRET: your-nextauth-secret')
   
   // Don't fail the build, just warn
@@ -106,7 +106,7 @@ console.log('✅ Database schema ready for PostgreSQL')
 
 console.log('')
 console.log('🔗 External API will be available at:')
-console.log('   https://hackathon-platform-601l.onrender.com/api/external/v1')
+console.log('   https://clownfish-app-px9sc.ondigitalocean.app/api/external/v1')
 
 console.log('')
 console.log('✅ Render Safe Deploy - Completed successfully!')

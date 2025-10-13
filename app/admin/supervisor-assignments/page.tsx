@@ -245,7 +245,7 @@ export default function SupervisorAssignments() {
                     <SelectValue placeholder="اختر الهاكاثون" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">مشرف عام (جميع الهاكاثونات)</SelectItem>
+                    <SelectItem value="general">مشرف عام (جميع الهاكاثونات)</SelectItem>
                     {hackathons.map((hackathon) => (
                       <SelectItem key={hackathon.id} value={hackathon.id}>
                         {hackathon.title}

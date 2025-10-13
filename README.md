@@ -251,7 +251,7 @@ npm run safe-deploy
 
 ### الرابط الأساسي
 ```
-https://hackathon-platform-601l.onrender.com/api/external/v1
+https://clownfish-app-px9sc.ondigitalocean.app/api/external/v1
 ```
 
 ### المصادقة
@@ -283,7 +283,7 @@ POST /hackathons/{id}/register
 
 ```javascript
 const API_KEY = 'your-api-key';
-const BASE_URL = 'https://hackathon-platform-601l.onrender.com/api/external/v1';
+const BASE_URL = 'https://clownfish-app-px9sc.ondigitalocean.app/api/external/v1';
 
 // جلب الهاكاثونات المفتوحة
 const response = await fetch(`${BASE_URL}/hackathons?status=open`, {

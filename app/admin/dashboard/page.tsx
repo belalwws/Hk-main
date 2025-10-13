@@ -119,78 +119,85 @@ export default function AdminDashboard() {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center mb-8"
+          className="mb-8"
         >
           <div>
             <h1 className="text-4xl font-bold text-[#01645e] mb-2">لوحة تحكم الإدارة</h1>
             <p className="text-[#8b7632] text-lg">مرحباً {user?.name}، إدارة شاملة لمنصة الهاكاثونات</p>
           </div>
           
-          <div className="flex space-x-4 rtl:space-x-reverse">
+          {/* Quick Actions - Grid Layout */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-6">
             <Link href="/admin/hackathons/create">
-              <Button className="bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52]">
-                <Plus className="w-5 h-5 ml-2" />
-                إنشاء هاكاثون جديد
+              <Button className="w-full bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52]">
+                <Plus className="w-4 h-4 ml-2" />
+                إنشاء هاكاثون
               </Button>
             </Link>
             <Link href="/admin/judges">
-              <Button className="bg-gradient-to-r from-[#8b7632] to-[#c3e956] hover:from-[#6d5a28] hover:to-[#a8c247]">
-                <Star className="w-5 h-5 ml-2" />
-                إدارة المحكمين
+              <Button className="w-full bg-gradient-to-r from-[#8b7632] to-[#c3e956] hover:from-[#6d5a28] hover:to-[#a8c247]">
+                <Star className="w-4 h-4 ml-2" />
+                المحكمين
               </Button>
             </Link>
             <Link href="/admin/hackathons">
-              <Button variant="outline">
-                <Trophy className="w-5 h-5 ml-2" />
-                إدارة الهاكاثونات
+              <Button variant="outline" className="w-full">
+                <Trophy className="w-4 h-4 ml-2" />
+                الهاكاثونات
               </Button>
             </Link>
             <Link href="/admin/users">
-              <Button variant="outline">
-                <Users className="w-5 h-5 ml-2" />
-                إدارة المستخدمين
+              <Button variant="outline" className="w-full">
+                <Users className="w-4 h-4 ml-2" />
+                المستخدمين
               </Button>
             </Link>
             <Link href="/admin/supervisors">
-              <Button variant="outline">
-                <Shield className="w-5 h-5 ml-2" />
-                إدارة المشرفين
+              <Button variant="outline" className="w-full">
+                <Shield className="w-4 h-4 ml-2" />
+                المشرفين
               </Button>
             </Link>
             <Link href="/admin/supervisor-assignments">
-              <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white">
-                <Users className="w-5 h-5 ml-2" />
-                تعيينات المشرفين
+              <Button variant="outline" className="w-full border-purple-500 text-purple-600 hover:bg-purple-50">
+                <Users className="w-4 h-4 ml-2" />
+                تعيينات
               </Button>
             </Link>
             <Link href="/admin/simple-participants">
-              <Button variant="outline">
-                <Users className="w-5 h-5 ml-2" />
-                المشاركون المبسطون
+              <Button variant="outline" className="w-full">
+                <Users className="w-4 h-4 ml-2" />
+                المشاركون
               </Button>
             </Link>
             <Link href="/admin/reports">
-              <Button variant="outline">
-                <BarChart3 className="w-5 h-5 ml-2" />
-                التقارير والإحصائيات
+              <Button variant="outline" className="w-full">
+                <BarChart3 className="w-4 h-4 ml-2" />
+                التقارير
               </Button>
             </Link>
             <Link href="/admin/presentations">
-              <Button variant="outline">
-                <FileText className="w-5 h-5 ml-2" />
-                متابعة العروض
+              <Button variant="outline" className="w-full">
+                <FileText className="w-4 h-4 ml-2" />
+                العروض
+              </Button>
+            </Link>
+            <Link href="/admin/forms">
+              <Button variant="outline" className="w-full border-orange-500 text-orange-600 hover:bg-orange-50">
+                <FileText className="w-4 h-4 ml-2" />
+                الفورمات
               </Button>
             </Link>
             <Link href="/admin/api-docs">
-              <Button variant="outline">
-                <Code className="w-5 h-5 ml-2" />
-                External API
+              <Button variant="outline" className="w-full">
+                <Code className="w-4 h-4 ml-2" />
+                API
               </Button>
             </Link>
             <Link href="/admin/import-excel">
-              <Button variant="outline">
-                <FileText className="w-5 h-5 ml-2" />
-                استيراد Excel
+              <Button variant="outline" className="w-full">
+                <FileText className="w-4 h-4 ml-2" />
+                استيراد
               </Button>
             </Link>
           </div>
