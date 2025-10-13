@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary"
 
 const prisma = new PrismaClient()
 
@@ -175,17 +176,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "حجم الملف كبير جداً. الحد الأقصى 5 ميجابايت" }, { status: 400 })
     }
 
-    // Convert file to base64 for storage (in production, use cloud storage)
+    // Get current user to check for existing profile picture
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId! },
+      select: { profilePicture: true }
+    })
+
+    // Delete old image from Cloudinary if exists
+    if (currentUser?.profilePicture && currentUser.profilePicture.includes('cloudinary')) {
+      try {
+        const publicIdMatch = currentUser.profilePicture.match(/\/supervisors\/([^/]+)\.[^.]+$/)
+        if (publicIdMatch) {
+          const publicId = `supervisors/${publicIdMatch[1]}`
+          await deleteFromCloudinary(publicId, 'image')
+        }
+      } catch (error) {
+        console.error("Error deleting old profile picture:", error)
+        // Continue with upload even if deletion fails
+      }
+    }
+
+    // Convert file to base64 for Cloudinary upload
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const base64 = buffer.toString('base64')
     const dataUrl = `data:${file.type};base64,${base64}`
 
-    // Update user profile picture
+    // Upload to Cloudinary
+    const uploadResult = await uploadToCloudinary(
+      dataUrl,
+      'supervisors', // folder name
+      `${userId}-${Date.now()}` // unique filename
+    )
+
+    // Update user profile picture with Cloudinary URL
     const updatedUser = await prisma.user.update({
       where: { id: userId! },
       data: {
-        profilePicture: dataUrl,
+        profilePicture: uploadResult.url,
         updatedAt: new Date()
       },
       select: {

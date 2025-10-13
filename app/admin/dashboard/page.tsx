@@ -152,16 +152,10 @@ export default function AdminDashboard() {
                 المستخدمين
               </Button>
             </Link>
-            <Link href="/admin/supervisors">
-              <Button variant="outline" className="w-full">
+            <Link href="/admin/supervisors-management">
+              <Button variant="outline" className="w-full border-purple-500 text-purple-600 hover:bg-purple-50">
                 <Shield className="w-4 h-4 ml-2" />
                 المشرفين
-              </Button>
-            </Link>
-            <Link href="/admin/supervisor-assignments">
-              <Button variant="outline" className="w-full border-purple-500 text-purple-600 hover:bg-purple-50">
-                <Users className="w-4 h-4 ml-2" />
-                تعيينات
               </Button>
             </Link>
             <Link href="/admin/simple-participants">

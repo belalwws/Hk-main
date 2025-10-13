@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             phone: true,
-            city: true
+            city: true,
+            profilePicture: true
           }
         },
         hackathon: {
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Group by user
-    const supervisorsByUser = supervisors.reduce((acc, supervisor) => {
+    const supervisorsByUser = supervisors.reduce((acc: Record<string, any>, supervisor: any) => {
       const userId = supervisor.userId
       if (!acc[userId]) {
         acc[userId] = {
