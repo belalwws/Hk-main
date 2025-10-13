@@ -13,9 +13,7 @@ import {
   Mail, 
   Phone, 
   MapPin, 
-  Github, 
   Linkedin, 
-  Globe,
   Camera,
   Save,
   Eye,
@@ -32,9 +30,7 @@ interface SupervisorProfile {
   phone?: string
   city?: string
   bio?: string
-  github?: string
   linkedin?: string
-  portfolio?: string
   skills?: string
   experience?: string
   profilePicture?: string
@@ -68,9 +64,7 @@ export default function SupervisorProfile() {
     phone: "",
     city: "",
     bio: "",
-    github: "",
     linkedin: "",
-    portfolio: "",
     skills: "",
     experience: "",
     currentPassword: "",
@@ -93,9 +87,7 @@ export default function SupervisorProfile() {
           phone: data.profile.phone || "",
           city: data.profile.city || "",
           bio: data.profile.bio || "",
-          github: data.profile.github || "",
           linkedin: data.profile.linkedin || "",
-          portfolio: data.profile.portfolio || "",
           skills: data.profile.skills || "",
           experience: data.profile.experience || "",
           currentPassword: "",
@@ -379,34 +371,21 @@ export default function SupervisorProfile() {
                 </div>
 
                 {/* Social Links */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="github">GitHub</Label>
-                    <Input
-                      id="github"
-                      value={formData.github}
-                      onChange={(e) => setFormData({...formData, github: e.target.value})}
-                      placeholder="https://github.com/username"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="linkedin">LinkedIn</Label>
-                    <Input
-                      id="linkedin"
-                      value={formData.linkedin}
-                      onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
-                      placeholder="https://linkedin.com/in/username"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="portfolio">الموقع الشخصي</Label>
-                    <Input
-                      id="portfolio"
-                      value={formData.portfolio}
-                      onChange={(e) => setFormData({...formData, portfolio: e.target.value})}
-                      placeholder="https://yourwebsite.com"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin" className="flex items-center gap-2">
+                    <Linkedin className="w-4 h-4 text-blue-600" />
+                    حساب LinkedIn
+                  </Label>
+                  <Input
+                    id="linkedin"
+                    value={formData.linkedin}
+                    onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
+                    placeholder="https://linkedin.com/in/username"
+                    className="border-blue-200 focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500">
+                    🌟 أضف رابط حسابك على LinkedIn لزيادة مصداقيتك المهنية
+                  </p>
                 </div>
 
                 {/* Password Change */}

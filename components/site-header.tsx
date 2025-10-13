@@ -18,15 +18,12 @@ export function SiteHeader() {
         <div className="flex justify-between items-center h-16 md:h-20">
           {/* Logo - Enhanced with hover effect */}
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
-            <Link href="/" className="flex items-center space-x-4 rtl:space-x-reverse hover:opacity-80 transition-all duration-300 group">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                <span className="text-white font-bold text-xl sm:text-2xl">ه</span>
-              </div>
+            <Link href="/" className="flex items-center space-x-3 rtl:space-x-reverse hover:opacity-80 transition-all duration-300 group">
               <div className="hidden sm:block">
                 <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#01645e] to-[#3ab666] bg-clip-text text-transparent group-hover:from-[#3ab666] group-hover:to-[#01645e] transition-all duration-300">
-                  هاكاثون الابتكار
+                  نظام إدارة الهاكاثون
                 </h1>
-                <p className="text-xs sm:text-sm text-[#8b7632] group-hover:text-[#01645e] transition-colors duration-300">منصة الهاكاثونات التقنية</p>
+                <p className="text-xs sm:text-sm text-[#8b7632] group-hover:text-[#01645e] transition-colors duration-300">منصة متكاملة لإدارة الهاكاثونات</p>
               </div>
             </Link>
           </motion.div>
@@ -79,13 +76,18 @@ export function SiteHeader() {
                   align="end"
                   className="w-64 bg-white/95 backdrop-blur-md border border-[#01645e]/20 shadow-xl rounded-xl p-2"
                 >
-                  <div className="px-3 py-2 bg-gradient-to-r from-[#01645e]/5 to-[#3ab666]/5 rounded-lg mb-2">
-                    <div className="font-semibold text-[#01645e]">{user.name}</div>
-                    <div className="text-sm text-[#8b7632]">{user.email}</div>
-                    <div className="text-xs text-[#3ab666] mt-1">
-                      {user.role === 'admin' ? '🔧 مدير النظام' :
-                       user.role === 'judge' ? '⚖️ محكم معتمد' :
-                       user.role === 'supervisor' ? '👨‍🏫 مشرف' : '👨‍💻 مشارك'}
+                  <div className="px-3 py-2 bg-gradient-to-r from-[#01645e]/5 to-[#3ab666]/5 rounded-lg mb-2 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-[#01645e]">{user.name}</div>
+                      <div className="text-sm text-[#8b7632]">{user.email}</div>
+                      <div className="text-xs text-[#3ab666] mt-1">
+                        {user.role === 'admin' ? '🔧 مدير النظام' :
+                         user.role === 'judge' ? '⚖️ محكم معتمد' :
+                         user.role === 'supervisor' ? '👨‍🏫 مشرف' : '👨‍💻 مشارك'}
+                      </div>
                     </div>
                   </div>
 
@@ -164,7 +166,10 @@ export function SiteHeader() {
                   <DropdownMenuSeparator className="bg-[#01645e]/10 my-2" />
 
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3ab666]/10 transition-colors">
+                    <Link 
+                      href={user.role === 'supervisor' ? '/supervisor/profile' : '/profile'} 
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3ab666]/10 transition-colors"
+                    >
                       <div className="w-8 h-8 bg-gradient-to-r from-[#3ab666] to-[#c3e956] rounded-lg flex items-center justify-center">
                         <span className="text-white text-sm">👤</span>
                       </div>

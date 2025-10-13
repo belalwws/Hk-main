@@ -95,9 +95,21 @@ export default function SupervisorDashboard() {
         setRecentActivity(data.recentActivity)
         setSupervisor(data.supervisor)
 
-        // Check if profile is complete
+        // Calculate profile completion percentage
         if (data.supervisor && !data.supervisor.isProfileComplete) {
-          setError("يرجى إكمال بياناتك الشخصية للوصول الكامل للنظام")
+          const fields = {
+            name: !!data.supervisor.name,
+            email: !!data.supervisor.email,
+            phone: !!data.supervisor.phone,
+            city: !!data.supervisor.city,
+            department: !!data.supervisor.department,
+            linkedIn: !!data.supervisor.linkedIn,
+          }
+          const completedFields = Object.values(fields).filter(Boolean).length
+          const totalFields = Object.keys(fields).length
+          const completionPercentage = Math.round((completedFields / totalFields) * 100)
+          
+          setError(`أكملت ${completionPercentage}% من ملفك الشخصي. أكمل البيانات المتبقية للاستفادة الكاملة من النظام! 🚀`)
         }
       } else {
         setError(data.error || "حدث خطأ في جلب البيانات")
@@ -220,21 +232,35 @@ export default function SupervisorDashboard() {
       )}
 
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">
-          مرحباً {supervisor?.name || 'بك'} في لوحة تحكم المشرف
-        </h1>
-        <p className="text-blue-100">
-          {supervisor?.hackathons && supervisor.hackathons.length > 0
-            ? `إدارة ${supervisor.hackathons.length} هاكاثون${supervisor.hackathons.length > 1 ? 'ات' : ''}`
-            : supervisor?.hackathon
-            ? `إدارة ${supervisor.hackathon.title}`
-            : 'تابع أداء المشاركين والفرق'
-          }
-        </p>
-        {supervisor?.department && (
-          <Badge className="mt-2 bg-blue-500">{supervisor.department}</Badge>
-        )}
+      <div className="bg-gradient-to-br from-[#01645e] via-[#3ab666] to-[#c3e956] rounded-xl p-8 text-white shadow-lg">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-2xl border-2 border-white/30">
+            {supervisor?.name?.charAt(0).toUpperCase() || 'م'}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold mb-1">
+              مرحباً {supervisor?.name || 'بك'} 👋
+            </h1>
+            <p className="text-white/90 text-lg">
+              {supervisor?.hackathons && supervisor.hackathons.length > 0
+                ? `إدارة ${supervisor.hackathons.length} هاكاثون${supervisor.hackathons.length > 1 ? 'ات' : ''}`
+                : supervisor?.hackathon
+                ? `إدارة ${supervisor.hackathon.title}`
+                : 'تابع أداء المشاركين والفرق'
+              }
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-4">
+          {supervisor?.department && (
+            <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white px-3 py-1">
+              📍 {supervisor.department}
+            </Badge>
+          )}
+          <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white px-3 py-1">
+            👨‍🏫 مشرف معتمد
+          </Badge>
+        </div>
       </div>
 
       {/* Hackathon Assignment Info */}
@@ -275,107 +301,77 @@ export default function SupervisorDashboard() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="hover:shadow-lg transition-shadow">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="hover:shadow-lg transition-all hover:scale-105 border-l-4 border-l-blue-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">إجمالي المشاركين</p>
-                <p className="text-3xl font-bold text-blue-600">{stats.totalParticipants}</p>
-                <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-4 h-4" />
-                  +12% من الأسبوع الماضي
-                </p>
+                <p className="text-sm text-gray-600 mb-1 font-medium">إجمالي المشاركين</p>
+                <p className="text-4xl font-bold text-blue-600 mb-2">{stats.totalParticipants}</p>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-100 text-blue-800 text-xs">
+                    {stats.approvedParticipants} معتمد
+                  </Badge>
+                  <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                    {stats.pendingParticipants} قيد المراجعة
+                  </Badge>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Users className="w-7 h-7 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-all hover:scale-105 border-l-4 border-l-green-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">المشاركين المعتمدين</p>
-                <p className="text-3xl font-bold text-green-600">{stats.approvedParticipants}</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  {stats.pendingParticipants} في انتظار المراجعة
+                <p className="text-sm text-gray-600 mb-1 font-medium">المعتمدين</p>
+                <p className="text-4xl font-bold text-green-600 mb-2">{stats.approvedParticipants}</p>
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  جاهزون للمشاركة
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <CheckCircle className="w-7 h-7 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-all hover:scale-105 border-l-4 border-l-purple-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">إجمالي الفرق</p>
-                <p className="text-3xl font-bold text-purple-600">{stats.totalTeams}</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-600 mb-1 font-medium">إجمالي الفرق</p>
+                <p className="text-4xl font-bold text-purple-600 mb-2">{stats.totalTeams}</p>
+                <p className="text-sm text-gray-500">
                   {stats.activeTeams} فريق نشط
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-purple-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Trophy className="w-7 h-7 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-all hover:scale-105 border-l-4 border-l-orange-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">الطلبات المعلقة</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats.pendingParticipants}</p>
-                <p className="text-sm text-yellow-600 mt-1">
-                  تحتاج مراجعة
+                <p className="text-sm text-gray-600 mb-1 font-medium">مشاريع مكتملة</p>
+                <p className="text-4xl font-bold text-orange-600 mb-2">{stats.completedProjects}</p>
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <TrendingUp className="w-4 h-4 text-orange-600" />
+                  تم التسليم
                 </p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">المشاريع المكتملة</p>
-                <p className="text-3xl font-bold text-indigo-600">{stats.completedProjects}</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  من {stats.totalTeams} فريق
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <Activity className="w-6 h-6 text-indigo-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">معدل الإنجاز</p>
-                <p className="text-3xl font-bold text-emerald-600">
-                  {Math.round((stats.completedProjects / stats.totalTeams) * 100)}%
-                </p>
-                <p className="text-sm text-emerald-600 mt-1">
-                  أداء ممتاز
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-emerald-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                <CheckCircle className="w-7 h-7 text-white" />
               </div>
             </div>
           </CardContent>
