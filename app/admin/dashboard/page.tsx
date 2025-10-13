@@ -182,6 +182,18 @@ export default function AdminDashboard() {
                 الفورمات
               </Button>
             </Link>
+            <Link href="/admin/certificates-management">
+              <Button variant="outline" className="w-full border-purple-500 text-purple-600 hover:bg-purple-50">
+                <Star className="w-4 h-4 ml-2" />
+                الشهادات
+              </Button>
+            </Link>
+            <Link href="/admin/email-management">
+              <Button variant="outline" className="w-full border-blue-500 text-blue-600 hover:bg-blue-50">
+                <Mail className="w-4 h-4 ml-2" />
+                إدارة الإيميلات
+              </Button>
+            </Link>
             <Link href="/admin/api-docs">
               <Button variant="outline" className="w-full">
                 <Code className="w-4 h-4 ml-2" />

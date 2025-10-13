@@ -190,11 +190,14 @@ enum ParticipantStatus {
 
 // Judge model - Links users to hackathons as judges
 model Judge {
-  id          String   @id @default(cuid())
-  userId      String
-  hackathonId String
-  isActive    Boolean  @default(true)
-  assignedAt  DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  hackathonId     String
+  isActive        Boolean  @default(true)
+  assignedAt      DateTime @default(now())
+  certificateUrl  String?  // URL to certificate file
+  certificateSent Boolean  @default(false)
+  certificateSentAt DateTime?
 
   // Relations
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -228,16 +231,19 @@ model Admin {
 
 // Supervisor model - Links users to hackathons as supervisors
 model Supervisor {
-  id          String   @id @default(cuid())
-  userId      String
-  hackathonId String?  // null means general supervisor
-  permissions Json?    // Store supervisor permissions
-  department  String?  // Department or area of responsibility
-  isActive    Boolean  @default(true)
-  lastLogin   DateTime?
-  assignedAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String
+  hackathonId     String?  // null means general supervisor
+  permissions     Json?    // Store supervisor permissions
+  department      String?  // Department or area of responsibility
+  isActive        Boolean  @default(true)
+  lastLogin       DateTime?
+  assignedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  certificateUrl  String?  // URL to certificate file
+  certificateSent Boolean  @default(false)
+  certificateSentAt DateTime?
 
   // Relations
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -676,4 +682,25 @@ model SupervisorInvitation {
   updatedAt      DateTime @updatedAt
 
   @@map("supervisor_invitations")
+}
+
+// Email Templates - قوالب الإيميلات القابلة للتعديل
+model EmailTemplate {
+  id            String   @id @default(cuid())
+  templateKey   String   @unique // registration_confirmation, acceptance, team_assignment, etc.
+  nameAr        String   // الاسم بالعربي
+  nameEn        String   // الاسم بالانجليزي
+  subject       String   // عنوان الإيميل
+  bodyHtml      String   @db.Text // محتوى HTML
+  bodyText      String?  @db.Text // محتوى نصي (اختياري)
+  category      String   // participant, judge, supervisor, team, general
+  variables     Json?    // المتغيرات المتاحة {name: description}
+  isActive      Boolean  @default(true)
+  isSystem      Boolean  @default(false) // هل القالب أساسي (لا يمكن حذفه)
+  description   String?  // وصف القالب
+  lastEditedBy  String?  // Admin ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("email_templates")
 }

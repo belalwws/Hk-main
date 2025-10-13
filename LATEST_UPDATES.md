@@ -1,150 +1,84 @@
-# التحديثات الأخيرة - 13 أكتوبر 2025
+# آخر التحديثات - نظام الشهادات + صلاحيات المشرف الكاملة
 
-## 🔧 الإصلاحات المنفذة
-
-### 1. ✅ إصلاح مشكلة Select.Item
-**المشكلة:** خطأ في صفحة `/admin/supervisor-assignments`
-```
-A <Select.Item /> must have a value prop that is not an empty string
-```
-
-**الحل:** تم تغيير `value=""` إلى `value="general"` في اختيار "مشرف عام"
-
-**الملف:** `app/admin/supervisor-assignments/page.tsx`
+## 📅 تاريخ: 13 أكتوبر 2025
 
 ---
 
-### 2. 🎨 تحسين UI لوحة التحكم
-**المشكلة:** الأزرار في Dashboard كانت على سطر واحد وصعبة الاستخدام
+## ✅ 1. نظام الشهادات للمحكمين والمشرفين 🏆
 
-**الحل:** 
-- تم تحويل الأزرار إلى Grid Layout
-- 6 أعمدة على الشاشات الكبيرة
-- 4 أعمدة على المتوسطة
-- عمودين على الموبايل
-- نص أقصر للأزرار للوضوح
+### قاعدة البيانات:
+```prisma
+model Judge {
+  certificateUrl     String?    // رابط الشهادة
+  certificateSent    Boolean    @default(false)
+  certificateSentAt  DateTime?
+}
 
-**الملف:** `app/admin/dashboard/page.tsx`
+model Supervisor {
+  certificateUrl     String?    // رابط الشهادة
+  certificateSent    Boolean    @default(false)
+  certificateSentAt  DateTime?
+}
+```
 
-**التحسينات:**
-- ✅ تصميم responsive
-- ✅ سهولة الوصول للوظائف
-- ✅ تنظيم أفضل
-- ✅ إضافة زر "الفورمات" للوصول السريع
+### الصفحة الجديدة:
+**`/admin/certificates-management`**
+
+**الميزات**:
+- ✅ رفع شهادات على Cloudinary (صور/PDF)
+- ✅ إرسال عبر الإيميل برسالة احترافية
+- ✅ تتبع حالة الإرسال
+- ✅ تغيير أو حذف الشهادات
+- ✅ بحث وإحصائيات
 
 ---
 
-### 3. 🔗 تحديث روابط External API
-**التغيير:** من Render إلى DigitalOcean
+## ✅ 2. صلاحيات المشرف الكاملة 👨‍💼
 
-**الروابط القديمة:**
-```
-https://hackathon-platform-601l.onrender.com
-.onrender.com
-```
+### الصفحات:
+1. **`/supervisor/hackathons/[id]`** - تفاصيل الهاكاثون
+2. **`/supervisor/hackathons/[id]/participants`** - إدارة المشاركين
 
-**الروابط الجديدة:**
-```
-https://clownfish-app-px9sc.ondigitalocean.app
-.ondigitalocean.app
-```
-
-**الملفات المعدلة:**
-- ✅ `README.md` - External API documentation
-- ✅ `lib/email-utils.ts` - Login link in emails
-- ✅ `scripts/render-safe-deploy.js` - Deployment messages
-- ✅ `app/api/supervisor/accept-invitation/route.ts` - Cookie domain
-- ✅ `test-invitation-link.html` - Test links (لم يتم تحديثها بعد)
-- ✅ `render.yaml` - Render config (لم يتم تحديثها - قد لا نحتاجها)
+### الميزات:
+- ✅ **قبول/رفض المشاركين**
+- ✅ **التكوين التلقائي للفرق**
+- ✅ إحصائيات شاملة
+- ✅ التحقق من الصلاحيات
 
 ---
 
-### 4. 🐛 إصلاح TypeScript Error
-**المشكلة:** 
-```
-Parameter 'tx' implicitly has an 'any' type
-```
+## 📊 الملخص
 
-**الحل:** إضافة type annotation
-```typescript
-async (tx: any) => {
-```
+### APIs الجديدة (8):
+1. `GET /api/admin/certificates/judges`
+2. `GET /api/admin/certificates/supervisors`
+3. `POST /api/admin/certificates/upload`
+4. `POST /api/admin/certificates/send`
+5. `DELETE /api/admin/certificates/delete`
+6. `GET /api/supervisor/hackathons/[id]/stats`
+7. `PATCH /api/supervisor/participants/[id]/status`
+8. `POST /api/supervisor/hackathons/[id]/teams/auto-create`
 
-**الملف:** `app/api/supervisor/accept-invitation/route.ts`
-
----
-
-## 📋 الملفات المعدلة
-
-```
-app/
-├── admin/
-│   ├── dashboard/page.tsx (محسّن)
-│   └── supervisor-assignments/page.tsx (مصلح)
-├── api/
-│   └── supervisor/
-│       └── accept-invitation/route.ts (مصلح + محدث)
-lib/
-└── email-utils.ts (محدث)
-scripts/
-└── render-safe-deploy.js (محدث)
-README.md (محدث)
-```
+### الملفات المعدلة:
+- ✅ schema.prisma (حقول جديدة)
+- ✅ 3 صفحات جديدة
+- ✅ 8 APIs جديدة
+- ✅ تحديث Dashboard الأدمن
 
 ---
 
-## 🚀 الخطوات التالية
+## 🚀 الاستخدام
 
-### للنشر على DigitalOcean:
-```bash
-git add .
-git commit -m "Fix supervisor UI, update API links to DigitalOcean"
-git push origin اخير
-```
+### الشهادات:
+1. Dashboard → "الشهادات"
+2. اختر المحكمين/المشرفين
+3. رفع الشهادة
+4. إرسال عبر الإيميل
 
-سيتم Deploy تلقائياً على DigitalOcean.
-
-### التحقق من العمل:
-1. ✅ زيارة: `https://clownfish-app-px9sc.ondigitalocean.app/admin/dashboard`
-2. ✅ التأكد من ظهور الأزرار بشكل منظم
-3. ✅ زيارة: `https://clownfish-app-px9sc.ondigitalocean.app/admin/supervisor-assignments`
-4. ✅ التأكد من عدم وجود أخطاء في Console
-5. ✅ اختبار External API: `https://clownfish-app-px9sc.ondigitalocean.app/api/external/v1`
-
----
-
-## 📊 External API الجديد
-
-### Base URL:
-```
-https://clownfish-app-px9sc.ondigitalocean.app/api/external/v1
-```
-
-### Authentication:
-```bash
-X-API-Key: hackathon-api-key-2025
-```
-
-### مثال:
-```javascript
-const response = await fetch('https://clownfish-app-px9sc.ondigitalocean.app/api/external/v1/hackathons', {
-  headers: {
-    'X-API-Key': 'hackathon-api-key-2025'
-  }
-})
-```
-
----
-
-## ✨ المميزات الجديدة السابقة
-
-### نظام Form Maker للإشراف (تم اليوم)
-- ✅ إضافة جداول قاعدة البيانات
-- ✅ APIs كاملة مع Cloudinary
-- ✅ صفحة Form Builder
-- ✅ صفحة عرض النماذج
-- ✅ صفحة إدارة الطلبات
-- ✅ تكامل في صفحة Forms
+### المشرف:
+1. الهاكاثونات → إدارة
+2. إدارة المشاركين → قبول/رفض
+3. تكوين تلقائي للفرق
 
 ---
 
