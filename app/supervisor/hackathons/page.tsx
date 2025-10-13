@@ -149,13 +149,25 @@ export default function SupervisorHackathons() {
         </Alert>
       )}
 
-      {/* Info Alert */}
-      <Alert className="border-blue-200 bg-blue-50">
-        <AlertCircle className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700">
-          للحصول على صلاحيات الإشراف على هاكاثون معين، يرجى التواصل مع الإدارة.
-        </AlertDescription>
-      </Alert>
+      {/* Assigned Hackathons Alert */}
+      {activeTab === 'assigned' && assignedHackathons.length > 0 && (
+        <Alert className="border-green-200 bg-green-50">
+          <UserCheck className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-700">
+            لديك صلاحيات كاملة لإدارة الهاكاثونات المعينة لك بما في ذلك: قبول المشاركين، إدارة الفرق، التكوين التلقائي للفرق، ونقل الأعضاء.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Info Alert for All Tab */}
+      {activeTab === 'all' && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-700">
+            للحصول على صلاحيات الإشراف على هاكاثون معين، يرجى التواصل مع الإدارة.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Hackathons Grid */}
       {(activeTab === 'assigned' ? assignedHackathons : hackathons).length > 0 ? (
@@ -199,21 +211,22 @@ export default function SupervisorHackathons() {
 
                 <div className="pt-4 border-t">
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      disabled={hackathon.status !== 'open'}
-                    >
-                      <ExternalLink className="w-4 h-4 ml-2" />
-                      عرض التفاصيل
-                    </Button>
-                    {activeTab === 'assigned' && (
+                    {activeTab === 'assigned' ? (
                       <Button
                         variant="default"
-                        size="sm"
-                        onClick={() => window.location.href = `/supervisor/participants?hackathon=${hackathon.id}`}
+                        className="flex-1"
+                        onClick={() => window.location.href = `/supervisor/hackathons/${hackathon.id}`}
                       >
-                        إدارة
+                        إدارة الهاكاثون
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        disabled={hackathon.status !== 'open'}
+                      >
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                        عرض التفاصيل
                       </Button>
                     )}
                   </div>
