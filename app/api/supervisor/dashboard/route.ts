@@ -42,38 +42,17 @@ export async function GET(request: NextRequest) {
     const supervisor = supervisorAssignments.find(s => s.hackathonId === null) || supervisorAssignments[0]
 
     if (!supervisor || supervisorAssignments.length === 0) {
-      console.log('⚠️ No supervisor found for user:', userId, 'Creating basic response')
-
-      // Get general stats for all hackathons if no specific supervisor record
-      const [
-        totalParticipants,
-        approvedParticipants,
-        pendingParticipants,
-        rejectedParticipants,
-        totalTeams,
-        activeTeams
-      ] = await Promise.all([
-        prisma.participant.count(),
-        prisma.participant.count({ where: { status: 'approved' } }),
-        prisma.participant.count({ where: { status: 'pending' } }),
-        prisma.participant.count({ where: { status: 'rejected' } }),
-        prisma.team.count(),
-        prisma.team.count({ where: { status: 'active' } })
-      ])
-
-      const completedProjects = await prisma.team.count({
-        where: { projectSubmitted: true }
-      })
+      console.log('⚠️ No supervisor found for user:', userId)
 
       return NextResponse.json({
         stats: {
-          totalParticipants,
-          approvedParticipants,
-          pendingParticipants,
-          rejectedParticipants,
-          totalTeams,
-          activeTeams,
-          completedProjects
+          totalParticipants: 0,
+          approvedParticipants: 0,
+          pendingParticipants: 0,
+          rejectedParticipants: 0,
+          totalTeams: 0,
+          activeTeams: 0,
+          completedProjects: 0
         },
         recentActivity: [],
         supervisor: {
@@ -86,7 +65,8 @@ export async function GET(request: NextRequest) {
           hackathons: [],
           permissions: null,
           isProfileComplete: false
-        }
+        },
+        message: 'لم يتم تعيينك كمشرف على أي هاكاثون بعد'
       })
     }
 

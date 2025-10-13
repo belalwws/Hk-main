@@ -44,25 +44,33 @@ export default function SupervisorHackathons() {
   const fetchHackathons = async () => {
     try {
       setLoading(true)
+      setError("")
 
-      // Fetch both assigned hackathons and all hackathons
-      const [dashboardRes, allHackathonsRes] = await Promise.all([
-        fetch("/api/supervisor/dashboard", { credentials: 'include' }),
-        fetch("/api/hackathons/active", { credentials: 'include' })
-      ])
-
+      // Fetch dashboard to get assigned hackathons
+      const dashboardRes = await fetch("/api/supervisor/dashboard", { credentials: 'include' })
+      
       if (dashboardRes.ok) {
         const dashboardData = await dashboardRes.json()
-        if (dashboardData.supervisor?.hackathons) {
+        console.log("Dashboard data:", dashboardData)
+        
+        if (dashboardData.supervisor?.hackathons && dashboardData.supervisor.hackathons.length > 0) {
           setAssignedHackathons(dashboardData.supervisor.hackathons)
+        } else {
+          // No assigned hackathons - show message
+          setAssignedHackathons([])
+          console.log("No assigned hackathons")
         }
+      } else {
+        const errorData = await dashboardRes.json()
+        console.error("Dashboard error:", errorData)
       }
 
+      // Fetch all hackathons
+      const allHackathonsRes = await fetch("/api/hackathons/active", { credentials: 'include' })
+      
       if (allHackathonsRes.ok) {
         const allData = await allHackathonsRes.json()
         setHackathons(allData.hackathons || [])
-      } else {
-        setError("حدث خطأ في جلب البيانات")
       }
     } catch (error) {
       console.error("Error fetching hackathons:", error)

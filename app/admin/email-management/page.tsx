@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { 
   Mail, 
   Send, 
@@ -22,7 +23,8 @@ import {
   CheckCircle2,
   XCircle,
   Filter,
-  Search
+  Search,
+  AlertCircle
 } from "lucide-react"
 
 interface EmailTemplate {
@@ -662,6 +664,14 @@ export default function EmailManagementPage() {
         {/* Templates List */}
         {activeTab !== 'custom' && (
           <TabsContent value={activeTab} className="space-y-4">
+            {filteredTemplates.length === 0 && !loading && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  لا توجد قوالب. اضغط على "إعادة تحميل القوالب" لتهيئة القوالب الافتراضية.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredTemplates.map((template) => (
                 <Card 
