@@ -39,13 +39,19 @@ export async function GET(
       )
     }
 
-    // Check if supervisor is assigned to this hackathon
-    if (supervisor.supervisorAssignments.length === 0) {
-      return NextResponse.json(
-        { error: "أنت غير مسؤول عن هذا الهاكاثون" },
-        { status: 403 }
-      )
+    // Check permissions - if supervisor is assigned, check if permissions are disabled
+    // Otherwise, grant full access by default (like admin)
+    if (supervisor.supervisorAssignments.length > 0) {
+      const assignment = supervisor.supervisorAssignments[0]
+      // Check if explicitly disabled
+      if (assignment.canViewDetails === false) {
+        return NextResponse.json(
+          { error: "ليس لديك صلاحية عرض الفرق" },
+          { status: 403 }
+        )
+      }
     }
+    // If not assigned, still allow access (full permissions by default)
 
     // Get hackathon
     const hackathon = await prisma.hackathon.findUnique({

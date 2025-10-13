@@ -39,14 +39,6 @@ export async function GET(
       )
     }
 
-    // Check if supervisor is assigned to this hackathon
-    if (supervisor.supervisorAssignments.length === 0) {
-      return NextResponse.json(
-        { error: "أنت غير مسؤول عن هذا الهاكاثون" },
-        { status: 403 }
-      )
-    }
-
     // Get hackathon
     const hackathon = await prisma.hackathon.findUnique({
       where: { id: params.id }
@@ -59,15 +51,27 @@ export async function GET(
       )
     }
 
-    const supervisorAssignment = supervisor.supervisorAssignments[0]
+    // Get permissions - Default to full access (like admin)
+    // Only restrict if explicitly disabled by admin
+    let permissions = {
+      canApprove: true,
+      canReject: true,
+      canMessage: true,
+      canViewDetails: true,
+      canExportData: true
+    }
 
-    // Get permissions from supervisor assignment
-    const permissions = {
-      canApprove: supervisorAssignment.canApprove || true,
-      canReject: supervisorAssignment.canReject || true,
-      canMessage: supervisorAssignment.canMessage || true,
-      canViewDetails: supervisorAssignment.canViewDetails || true,
-      canExportData: supervisorAssignment.canExportData || false
+    // If supervisor has specific assignment, check for explicit restrictions
+    if (supervisor.supervisorAssignments.length > 0) {
+      const assignment = supervisor.supervisorAssignments[0]
+      // Only override if explicitly set to false
+      permissions = {
+        canApprove: assignment.canApprove !== false,
+        canReject: assignment.canReject !== false,
+        canMessage: assignment.canMessage !== false,
+        canViewDetails: assignment.canViewDetails !== false,
+        canExportData: assignment.canExportData !== false
+      }
     }
 
     // Get notification preferences (stored in user preferences or separate table)
@@ -118,14 +122,7 @@ export async function PATCH(
 
     // Get supervisor
     const supervisor = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        supervisorAssignments: {
-          where: {
-            hackathonId: params.id
-          }
-        }
-      }
+      where: { id: userId }
     })
 
     if (!supervisor || supervisor.role !== 'supervisor') {
@@ -135,12 +132,7 @@ export async function PATCH(
       )
     }
 
-    if (supervisor.supervisorAssignments.length === 0) {
-      return NextResponse.json(
-        { error: "أنت غير مسؤول عن هذا الهاكاثون" },
-        { status: 403 }
-      )
-    }
+    // Supervisors have full access by default, no need to check assignment
 
     const body = await request.json()
     const { notifications } = body

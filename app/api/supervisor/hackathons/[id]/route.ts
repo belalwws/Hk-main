@@ -15,7 +15,8 @@ export async function GET(
 
     const hackathonId = params.id
 
-    // التحقق من صلاحية المشرف للهاكاثون
+    // المشرفون لديهم صلاحية كاملة افتراضياً (مثل الأدمن)
+    // التحقق من التعطيل الصريح فقط إذا كان موجود
     if (userRole === "supervisor") {
       const supervisor = await prisma.supervisor.findFirst({
         where: {
@@ -25,11 +26,13 @@ export async function GET(
         }
       })
 
-      if (!supervisor) {
+      // فقط نمنع الوصول إذا كان معطل صراحة (isActive = false)
+      if (supervisor && supervisor.isActive === false) {
         return NextResponse.json({ 
-          error: "ليس لديك صلاحية الوصول لهذا الهاكاثون" 
+          error: "تم تعطيل صلاحيتك لهذا الهاكاثون من قبل الإدارة" 
         }, { status: 403 })
       }
+      // إذا لم يكن موجود في جدول المشرفين، نسمح بالوصول (صلاحيات كاملة افتراضية)
     }
 
     // جلب بيانات الهاكاثون
@@ -58,9 +61,9 @@ export async function GET(
     // حساب الإحصائيات
     const stats = {
       totalParticipants: hackathon.participants.length,
-      pendingParticipants: hackathon.participants.filter(p => p.status === 'pending').length,
-      approvedParticipants: hackathon.participants.filter(p => p.status === 'approved').length,
-      rejectedParticipants: hackathon.participants.filter(p => p.status === 'rejected').length
+      pendingParticipants: hackathon.participants.filter((p: any) => p.status === 'pending').length,
+      approvedParticipants: hackathon.participants.filter((p: any) => p.status === 'approved').length,
+      rejectedParticipants: hackathon.participants.filter((p: any) => p.status === 'rejected').length
     }
 
     return NextResponse.json({
