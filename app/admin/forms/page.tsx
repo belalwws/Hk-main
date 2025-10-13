@@ -139,10 +139,14 @@ export default function FormsManagement() {
             transition={{ delay: 0.2 }}
           >
             <Tabs defaultValue="judges" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
                 <TabsTrigger value="judges">
                   <Award className="w-4 h-4 ml-2" />
                   فورم المحكمين
+                </TabsTrigger>
+                <TabsTrigger value="supervision">
+                  <UserCheck className="w-4 h-4 ml-2" />
+                  فورم الإشراف
                 </TabsTrigger>
                 <TabsTrigger value="feedback">
                   <MessageSquare className="w-4 h-4 ml-2" />
@@ -235,6 +239,71 @@ export default function FormsManagement() {
                           <p className="font-medium mb-1">📧 نظام الدعوات</p>
                           <p className="text-xs">يمكنك إرسال دعوات مخصصة للمحكمين مع روابط تسجيل فريدة</p>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Supervision Forms Tab */}
+              <TabsContent value="supervision">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Supervision Application Form */}
+                  <Card className="hover:shadow-xl transition-shadow border-2 border-purple-200">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+                      <div className="flex items-center justify-between">
+                        <UserCheck className="w-8 h-8 text-purple-600" />
+                        <Badge className="bg-purple-600 text-white">إشراف</Badge>
+                      </div>
+                      <CardTitle className="text-xl text-purple-900 mt-4">
+                        فورم طلب الانضمام للإشراف
+                      </CardTitle>
+                      <CardDescription>
+                        فورم ديناميكي لاستقبال طلبات الإشراف - أضف الحقول والصور التي تريدها
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Link href={`/admin/supervision-form-builder/${selectedHackathon}`}>
+                          <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+                            <Settings className="w-4 h-4 ml-2" />
+                            بناء الفورم
+                          </Button>
+                        </Link>
+                        
+                        <Button
+                          variant="outline"
+                          className="w-full border-purple-500 text-purple-600 hover:bg-purple-50"
+                          onClick={() => window.open(`/supervision/${selectedHackathon}`, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                          معاينة الفورم
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => copyLink(`${window.location.origin}/supervision/${selectedHackathon}`, 'فورم الإشراف')}
+                        >
+                          <Copy className="w-4 h-4 ml-2" />
+                          نسخ الرابط
+                        </Button>
+
+                        <Link href={`/admin/supervision-submissions/${selectedHackathon}`}>
+                          <Button variant="outline" className="w-full border-purple-300">
+                            <Users className="w-4 h-4 ml-2" />
+                            إدارة الطلبات
+                          </Button>
+                        </Link>
+                      </div>
+                      
+                      <div className="bg-purple-50 p-3 rounded-lg text-sm text-purple-800 mt-4">
+                        <p className="font-medium mb-1">✨ مميزات الفورم</p>
+                        <ul className="text-xs space-y-1">
+                          <li>• رفع صور الغلاف على Cloudinary</li>
+                          <li>• حقول ديناميكية قابلة للتخصيص</li>
+                          <li>• دعم المرفقات والملفات</li>
+                        </ul>
                       </div>
                     </CardContent>
                   </Card>
