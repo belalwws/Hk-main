@@ -43,8 +43,9 @@ export async function GET(
     // Otherwise, grant full access by default (like admin)
     if (supervisor.supervisorAssignments.length > 0) {
       const assignment = supervisor.supervisorAssignments[0]
+      const permissions = assignment.permissions as any
       // Check if explicitly disabled
-      if (assignment.canViewDetails === false) {
+      if (permissions && permissions.canManageTeams === false) {
         return NextResponse.json(
           { error: "ليس لديك صلاحية عرض الفرق" },
           { status: 403 }
@@ -71,7 +72,7 @@ export async function GET(
         hackathonId: params.id
       },
       include: {
-        members: {
+        participants: {
           include: {
             user: {
               select: {
@@ -99,12 +100,12 @@ export async function GET(
       demoUrl: team.demoUrl,
       githubUrl: team.githubUrl,
       createdAt: team.createdAt,
-      members: team.members.map((member: any) => ({
-        id: member.user.id,
-        name: member.user.name,
-        email: member.user.email,
-        phone: member.user.phone,
-        role: member.role
+      members: team.participants.map((participant: any) => ({
+        id: participant.user.id,
+        name: participant.user.name,
+        email: participant.user.email,
+        phone: participant.user.phone,
+        participantId: participant.id
       }))
     }))
 

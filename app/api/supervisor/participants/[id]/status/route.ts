@@ -49,6 +49,22 @@ export async function PATCH(
       if (!assignment) {
         return NextResponse.json({ error: "غير مصرح - لست مشرفاً على هذا الهاكاثون" }, { status: 403 })
       }
+
+      // Check permissions
+      const permissions = assignment.permissions as any
+      if (permissions) {
+        if (!permissions.canManageParticipants) {
+          return NextResponse.json({ error: "ليس لديك صلاحية إدارة المشاركين" }, { status: 403 })
+        }
+
+        if (status === 'approved' && permissions.canApproveParticipants === false) {
+          return NextResponse.json({ error: "ليس لديك صلاحية قبول المشاركين" }, { status: 403 })
+        }
+
+        if (status === 'rejected' && permissions.canRejectParticipants === false) {
+          return NextResponse.json({ error: "ليس لديك صلاحية رفض المشاركين" }, { status: 403 })
+        }
+      }
     }
 
     // Update participant status

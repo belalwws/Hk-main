@@ -11,9 +11,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { 
-  Send, 
-  Users, 
+import {
+  Send,
+  Users,
   Mail,
   Eye,
   MessageSquare,
@@ -21,7 +21,7 @@ import {
   Clock,
   Search,
   Filter,
-  Template
+  FileText
 } from "lucide-react"
 
 interface MessageTemplate {
@@ -289,7 +289,7 @@ export default function SupervisorMessages() {
                     {templates.map((template) => (
                       <SelectItem key={template.id} value={template.id}>
                         <div className="flex items-center gap-2">
-                          <Template className="w-4 h-4" />
+                          <FileText className="w-4 h-4" />
                           {template.title}
                         </div>
                       </SelectItem>

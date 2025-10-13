@@ -29,7 +29,8 @@ import {
   Trophy,
   Edit,
   Image as ImageIcon,
-  UserCircle
+  UserCircle,
+  FileText
 } from "lucide-react"
 
 interface SupervisorUser {
@@ -85,8 +86,22 @@ export default function SupervisorsManagement() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
-  
+  const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false)
+
   const [selectedSupervisor, setSelectedSupervisor] = useState<SupervisorUser | null>(null)
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
+
+  const [permissions, setPermissions] = useState({
+    canManageParticipants: true,
+    canApproveParticipants: true,
+    canRejectParticipants: true,
+    canManageTeams: true,
+    canMoveMembers: true,
+    canRemoveMembers: true,
+    canViewReports: true,
+    canExportData: true,
+    canSendMessages: true
+  })
   
   const [inviteData, setInviteData] = useState({
     email: "",
@@ -236,6 +251,70 @@ export default function SupervisorsManagement() {
       } else {
         const data = await response.json()
         setError(data.error || "حدث خطأ في حذف الدعوة")
+      }
+    } catch (error) {
+      setError("حدث خطأ في الاتصال بالخادم")
+    }
+  }
+
+  const openPermissionsDialog = (assignment: Assignment) => {
+    setSelectedAssignment(assignment)
+    const currentPermissions = assignment.permissions as any || {}
+    setPermissions({
+      canManageParticipants: currentPermissions.canManageParticipants !== false,
+      canApproveParticipants: currentPermissions.canApproveParticipants !== false,
+      canRejectParticipants: currentPermissions.canRejectParticipants !== false,
+      canManageTeams: currentPermissions.canManageTeams !== false,
+      canMoveMembers: currentPermissions.canMoveMembers !== false,
+      canRemoveMembers: currentPermissions.canRemoveMembers !== false,
+      canViewReports: currentPermissions.canViewReports !== false,
+      canExportData: currentPermissions.canExportData !== false,
+      canSendMessages: currentPermissions.canSendMessages !== false
+    })
+    setPermissionsDialogOpen(true)
+  }
+
+  const updatePermissions = async () => {
+    if (!selectedAssignment) return
+
+    try {
+      const response = await fetch(`/api/admin/supervisor-assignments/${selectedAssignment.id}/permissions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ permissions })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess("تم تحديث الصلاحيات بنجاح")
+        setPermissionsDialogOpen(false)
+        fetchData()
+      } else {
+        setError(data.error || "حدث خطأ في تحديث الصلاحيات")
+      }
+    } catch (error) {
+      setError("حدث خطأ في الاتصال بالخادم")
+    }
+  }
+
+  const toggleAssignmentStatus = async (assignmentId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/supervisor-assignments/${assignmentId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ isActive: !currentStatus })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(`تم ${!currentStatus ? 'تفعيل' : 'تعطيل'} المشرف بنجاح`)
+        fetchData()
+      } else {
+        setError(data.error || "حدث خطأ في تحديث الحالة")
       }
     } catch (error) {
       setError("حدث خطأ في الاتصال بالخادم")
@@ -597,6 +676,26 @@ export default function SupervisorsManagement() {
                         </div>
                         <div className="flex items-center gap-2">
                           {assignment.hackathon && getHackathonStatusBadge(assignment.hackathon.status)}
+                          <Badge className={assignment.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                            {assignment.isActive ? "مفعل" : "معطل"}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openPermissionsDialog(assignment)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Settings className="w-4 h-4 ml-1" />
+                            الصلاحيات
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleAssignmentStatus(assignment.id, assignment.isActive)}
+                            className={assignment.isActive ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
+                          >
+                            {assignment.isActive ? "تعطيل" : "تفعيل"}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -683,6 +782,150 @@ export default function SupervisorsManagement() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Permissions Dialog */}
+      <Dialog open={permissionsDialogOpen} onOpenChange={setPermissionsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>إدارة صلاحيات المشرف</DialogTitle>
+            <DialogDescription>
+              قم بتخصيص الصلاحيات المتاحة للمشرف في هذا الهاكاثون
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Participants Management */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                إدارة المشاركين
+              </h3>
+              <div className="space-y-2 pr-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canManageParticipants}
+                    onChange={(e) => setPermissions({...permissions, canManageParticipants: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">عرض وإدارة المشاركين</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canApproveParticipants}
+                    onChange={(e) => setPermissions({...permissions, canApproveParticipants: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">قبول المشاركين</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canRejectParticipants}
+                    onChange={(e) => setPermissions({...permissions, canRejectParticipants: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">رفض المشاركين</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Teams Management */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                إدارة الفرق
+              </h3>
+              <div className="space-y-2 pr-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canManageTeams}
+                    onChange={(e) => setPermissions({...permissions, canManageTeams: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">عرض وإدارة الفرق</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canMoveMembers}
+                    onChange={(e) => setPermissions({...permissions, canMoveMembers: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">نقل الأعضاء بين الفرق</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canRemoveMembers}
+                    onChange={(e) => setPermissions({...permissions, canRemoveMembers: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">إزالة الأعضاء من الفرق</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Reports & Data */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                التقارير والبيانات
+              </h3>
+              <div className="space-y-2 pr-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canViewReports}
+                    onChange={(e) => setPermissions({...permissions, canViewReports: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">عرض التقارير</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canExportData}
+                    onChange={(e) => setPermissions({...permissions, canExportData: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">تصدير البيانات</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Communication */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                التواصل
+              </h3>
+              <div className="space-y-2 pr-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.canSendMessages}
+                    onChange={(e) => setPermissions({...permissions, canSendMessages: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">إرسال الرسائل للمشاركين</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 justify-end mt-6">
+            <Button variant="outline" onClick={() => setPermissionsDialogOpen(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={updatePermissions} className="bg-blue-600 hover:bg-blue-700">
+              حفظ الصلاحيات
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

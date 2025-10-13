@@ -64,13 +64,16 @@ export async function GET(
     // If supervisor has specific assignment, check for explicit restrictions
     if (supervisor.supervisorAssignments.length > 0) {
       const assignment = supervisor.supervisorAssignments[0]
+      const assignmentPermissions = assignment.permissions as any
       // Only override if explicitly set to false
-      permissions = {
-        canApprove: assignment.canApprove !== false,
-        canReject: assignment.canReject !== false,
-        canMessage: assignment.canMessage !== false,
-        canViewDetails: assignment.canViewDetails !== false,
-        canExportData: assignment.canExportData !== false
+      if (assignmentPermissions) {
+        permissions = {
+          canApprove: assignmentPermissions.canApproveParticipants !== false,
+          canReject: assignmentPermissions.canRejectParticipants !== false,
+          canMessage: assignmentPermissions.canSendMessages !== false,
+          canViewDetails: assignmentPermissions.canManageTeams !== false,
+          canExportData: assignmentPermissions.canExportData !== false
+        }
       }
     }
 

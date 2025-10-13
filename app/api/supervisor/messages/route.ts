@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import { sendEmail } from "@/lib/mailer"
+import { sendMail } from "@/lib/mailer"
 
 const prisma = new PrismaClient()
 
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
             })
           }
 
-          await sendEmail({
+          await sendMail({
             to: participant.email,
             subject: subject,
             html: `
