@@ -99,11 +99,11 @@ export async function GET(request: NextRequest) {
       prisma.team.count({ where: { ...whereClause, status: 'active' } })
     ])
 
-    // Get completed projects (teams with submitted projects)
+    // Get completed projects (teams with project submissions)
     const completedProjects = await prisma.team.count({
       where: {
         ...whereClause,
-        projectSubmitted: true
+        submissionUrl: { not: null }
       }
     })
 
