@@ -108,6 +108,10 @@ npm prune --production
 
 ## 🐛 حل المشاكل الشائعة
 
+### **مشكلة: "Module not found: Can't resolve '@/components/ui/...'"**
+**السبب:** Digital Ocean buildpack بيحذف `devDependencies` قبل الـ build
+**الحل:** ✅ **تم الحل!** نقلنا TypeScript و @types إلى `dependencies`
+
 ### **مشكلة: "Prisma Client not generated"**
 **الحل:**
 ```bash
@@ -126,6 +130,10 @@ NODE_OPTIONS=--max-old-space-size=4096
 # Build في خطوتين
 npx prisma generate && npm run build
 ```
+
+### **مشكلة: "devDependencies محذوفة قبل الـ build"**
+**السبب:** Heroku/Digital Ocean buildpack بيعمل `npm prune --production` قبل custom build command
+**الحل:** حط أي dependency محتاجها في الـ build في `dependencies` مش `devDependencies`
 
 ---
 
