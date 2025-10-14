@@ -64,14 +64,15 @@ interface Team {
 }
 
 interface SupervisorPermissions {
-  canViewParticipants: boolean
   canManageParticipants: boolean
-  canViewTeams: boolean
+  canApproveParticipants: boolean
+  canRejectParticipants: boolean
   canManageTeams: boolean
-  canSendMessages: boolean
+  canMoveMembers: boolean
+  canRemoveMembers: boolean
   canViewReports: boolean
-  canManageSettings: boolean
   canExportData: boolean
+  canSendMessages: boolean
 }
 
 export default function SupervisorHackathonManagementPage() {
@@ -79,14 +80,15 @@ export default function SupervisorHackathonManagementPage() {
   const router = useRouter()
   const [hackathon, setHackathon] = useState<Hackathon | null>(null)
   const [permissions, setPermissions] = useState<SupervisorPermissions>({
-    canViewParticipants: false,
-    canManageParticipants: false,
-    canViewTeams: false,
-    canManageTeams: false,
-    canSendMessages: false,
-    canViewReports: false,
-    canManageSettings: false,
-    canExportData: false
+    canManageParticipants: true,
+    canApproveParticipants: true,
+    canRejectParticipants: true,
+    canManageTeams: true,
+    canMoveMembers: true,
+    canRemoveMembers: true,
+    canViewReports: true,
+    canExportData: true,
+    canSendMessages: true
   })
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
@@ -353,20 +355,20 @@ export default function SupervisorHackathonManagementPage() {
         {/* Tabs */}
         <Tabs defaultValue="participants" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="participants" disabled={!permissions.canViewParticipants}>
+            <TabsTrigger value="participants" disabled={!permissions.canManageParticipants}>
               المتقدمين
             </TabsTrigger>
-            <TabsTrigger value="teams" disabled={!permissions.canViewTeams}>
+            <TabsTrigger value="teams" disabled={!permissions.canManageTeams}>
               الفرق
             </TabsTrigger>
-            <TabsTrigger value="settings" disabled={!permissions.canManageSettings}>
+            <TabsTrigger value="settings">
               الإعدادات
             </TabsTrigger>
           </TabsList>
 
           {/* Participants Tab */}
           <TabsContent value="participants" className="space-y-6">
-            {!permissions.canViewParticipants ? (
+            {!permissions.canManageParticipants ? (
               <Alert className="border-red-200 bg-red-50">
                 <AlertCircle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-700">
@@ -449,7 +451,7 @@ export default function SupervisorHackathonManagementPage() {
                   </div>
 
                   {/* Bulk Actions */}
-                  {permissions.canManageParticipants && filteredParticipants.filter(p => p.status === 'pending').length > 0 && (
+                  {(permissions.canApproveParticipants || permissions.canRejectParticipants) && filteredParticipants.filter(p => p.status === 'pending').length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -562,7 +564,7 @@ export default function SupervisorHackathonManagementPage() {
 
           {/* Teams Tab */}
           <TabsContent value="teams" className="space-y-6">
-            {!permissions.canViewTeams ? (
+            {!permissions.canManageTeams ? (
               <Alert className="border-red-200 bg-red-50">
                 <AlertCircle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-700">
@@ -624,91 +626,87 @@ export default function SupervisorHackathonManagementPage() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            {!permissions.canManageSettings ? (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-700">
-                  ليس لديك صلاحية الوصول للإعدادات
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl text-[#01645e]">إعدادات الهاكاثون</CardTitle>
-                  <CardDescription>إدارة إعدادات الهاكاثون</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Quick Actions */}
-                  <div className="border rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-[#01645e] mb-4 flex items-center gap-2">
-                      <Settings className="w-5 h-5" />
-                      إجراءات سريعة
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl text-[#01645e]">إعدادات الهاكاثون</CardTitle>
+                <CardDescription>إدارة إعدادات الهاكاثون</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Quick Actions */}
+                <div className="border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-[#01645e] mb-4 flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    إجراءات سريعة
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {permissions.canManageParticipants && (
                       <Link href={`/supervisor/hackathons/${params.id}/participants`}>
                         <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                           <Users className="w-4 h-4 ml-2" />
                           إدارة المشاركين
                         </Button>
                       </Link>
+                    )}
+                    {permissions.canManageTeams && (
                       <Link href={`/supervisor/hackathons/${params.id}/teams`}>
                         <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
                           <Trophy className="w-4 h-4 ml-2" />
                           إدارة الفرق
                         </Button>
                       </Link>
-                      {permissions.canSendMessages && (
-                        <Link href={`/supervisor/messages`}>
-                          <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                            <Mail className="w-4 h-4 ml-2" />
-                            إرسال رسائل
-                          </Button>
-                        </Link>
-                      )}
-                      {permissions.canViewReports && (
-                        <Link href={`/supervisor/reports`}>
-                          <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
-                            <BarChart3 className="w-4 h-4 ml-2" />
-                            التقارير
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
+                    )}
+                    {permissions.canSendMessages && (
+                      <Link href={`/supervisor/messages`}>
+                        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                          <Mail className="w-4 h-4 ml-2" />
+                          إرسال رسائل
+                        </Button>
+                      </Link>
+                    )}
+                    {permissions.canViewReports && (
+                      <Link href={`/supervisor/reports`}>
+                        <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                          <BarChart3 className="w-4 h-4 ml-2" />
+                          التقارير
+                        </Button>
+                      </Link>
+                    )}
                   </div>
+                </div>
 
-                  {/* Permissions Info */}
-                  <div className="border rounded-lg p-6 bg-blue-50">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
-                      <Shield className="w-5 h-5" />
-                      صلاحياتك
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {[
-                        { label: 'عرض المشاركين', value: permissions.canViewParticipants },
-                        { label: 'إدارة المشاركين', value: permissions.canManageParticipants },
-                        { label: 'عرض الفرق', value: permissions.canViewTeams },
-                        { label: 'إدارة الفرق', value: permissions.canManageTeams },
-                        { label: 'إرسال رسائل', value: permissions.canSendMessages },
-                        { label: 'عرض التقارير', value: permissions.canViewReports },
-                        { label: 'إدارة الإعدادات', value: permissions.canManageSettings },
-                        { label: 'تصدير البيانات', value: permissions.canExportData }
-                      ].map((perm, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          {perm.value ? (
-                            <UserCheck className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <UserX className="w-4 h-4 text-red-600" />
-                          )}
-                          <span className={`text-sm ${perm.value ? 'text-green-700' : 'text-red-700'}`}>
-                            {perm.label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                {/* Permissions Info */}
+                <div className="border rounded-lg p-6 bg-blue-50">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    صلاحياتك
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      { label: 'إدارة المشاركين', value: permissions.canManageParticipants },
+                      { label: 'قبول المشاركين', value: permissions.canApproveParticipants },
+                      { label: 'رفض المشاركين', value: permissions.canRejectParticipants },
+                      { label: 'إدارة الفرق', value: permissions.canManageTeams },
+                      { label: 'نقل الأعضاء', value: permissions.canMoveMembers },
+                      { label: 'إزالة الأعضاء', value: permissions.canRemoveMembers },
+                      { label: 'إرسال رسائل', value: permissions.canSendMessages },
+                      { label: 'عرض التقارير', value: permissions.canViewReports },
+                      { label: 'تصدير البيانات', value: permissions.canExportData }
+                    ].map((perm, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        {perm.value ? (
+                          <UserCheck className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <UserX className="w-4 h-4 text-red-600" />
+                        )}
+                        <span className={`text-sm ${perm.value ? 'text-green-700' : 'text-red-700'}`}>
+                          {perm.label}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
