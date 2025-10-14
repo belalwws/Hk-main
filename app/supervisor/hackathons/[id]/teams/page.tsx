@@ -7,24 +7,24 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   DndContext,
   DragOverlay,
   closestCorners,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
 } from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { useDroppable } from '@dnd-kit/core'
 import {
   Users,
   ArrowLeft,
@@ -38,7 +38,10 @@ import {
   Mail,
   GripVertical,
   Trash2,
-  MoveRight
+  Eye,
+  Phone,
+  MapPin,
+  User
 } from "lucide-react"
 
 interface TeamMember {
@@ -47,6 +50,10 @@ interface TeamMember {
   email: string
   phone?: string
   participantId: string
+  user?: {
+    city?: string
+    nationality?: string
+  }
 }
 
 interface Team {
@@ -59,6 +66,7 @@ interface Team {
   githubUrl?: string
   createdAt: string
   members: TeamMember[]
+  participants?: any[]
 }
 
 interface Hackathon {
@@ -68,39 +76,32 @@ interface Hackathon {
 }
 
 // Draggable Member Component
-function DraggableMember({ member, teamId }: { member: TeamMember; teamId: string }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: `${teamId}-${member.participantId}`,
-    data: {
-      type: 'member',
-      member,
-      teamId
-    }
-  })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
+function DraggableMember({
+  member,
+  teamId,
+  onViewDetails,
+  onRemove
+}: {
+  member: TeamMember
+  teamId: string
+  onViewDetails: (member: TeamMember) => void
+  onRemove: (teamId: string, participantId: string, name: string) => void
+}) {
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-move"
-      {...attributes}
-      {...listeners}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move'
+        e.dataTransfer.setData('application/json', JSON.stringify({
+          participantId: member.participantId,
+          sourceTeamId: teamId,
+          memberName: member.name
+        }))
+      }}
+      className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-move border border-transparent hover:border-blue-300 transition-all"
     >
-      <GripVertical className="w-4 h-4 text-gray-400" />
-      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+      <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
+      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
         {member.name.charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
@@ -109,15 +110,45 @@ function DraggableMember({ member, teamId }: { member: TeamMember; teamId: strin
         </div>
         <div className="text-xs text-gray-500 truncate">{member.email}</div>
       </div>
+      <div className="flex gap-1 flex-shrink-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation()
+            onViewDetails(member)
+          }}
+          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove(teamId, member.participantId, member.name)
+          }}
+          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   )
 }
 
 // Droppable Team Component
-function DroppableTeam({ team, children }: { team: Team; children: React.ReactNode }) {
-  const {
-    setNodeRef,
-  } = useSortable({
+function DroppableTeam({
+  team,
+  children,
+  onDrop
+}: {
+  team: Team
+  children: React.ReactNode
+  onDrop: (teamId: string, data: any) => void
+}) {
+  const { setNodeRef, isOver } = useDroppable({
     id: team.id,
     data: {
       type: 'team',
@@ -126,7 +157,21 @@ function DroppableTeam({ team, children }: { team: Team; children: React.ReactNo
   })
 
   return (
-    <div ref={setNodeRef} className="min-h-[100px]">
+    <div
+      ref={setNodeRef}
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        const data = e.dataTransfer.getData('application/json')
+        if (data) {
+          onDrop(team.id, JSON.parse(data))
+        }
+      }}
+      className={`min-h-[200px] transition-all ${isOver ? 'ring-2 ring-blue-400 bg-blue-50' : ''}`}
+    >
       {children}
     </div>
   )
@@ -142,16 +187,14 @@ export default function SupervisorTeamsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
       },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
     })
   )
 
@@ -179,34 +222,17 @@ export default function SupervisorTeamsPage() {
     }
   }
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string)
+  const handleDrop = async (targetTeamId: string, data: any) => {
+    const { participantId, sourceTeamId, memberName } = data
+
+    // Don't do anything if dropping on the same team
+    if (sourceTeamId === targetTeamId) return
+
+    // Move member between teams
+    await moveMemberToTeam(participantId, sourceTeamId, targetTeamId, memberName)
   }
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveId(null)
-
-    if (!over) return
-
-    const activeData = active.data.current
-    const overData = over.data.current
-
-    // Check if we're dragging a member over a team
-    if (activeData?.type === 'member' && overData?.type === 'team') {
-      const sourceMember = activeData.member as TeamMember
-      const sourceTeamId = activeData.teamId as string
-      const targetTeamId = overData.team.id as string
-
-      // Don't do anything if dropping on the same team
-      if (sourceTeamId === targetTeamId) return
-
-      // Move member between teams
-      await moveMemberToTeam(sourceMember.participantId, sourceTeamId, targetTeamId)
-    }
-  }
-
-  const moveMemberToTeam = async (participantId: string, sourceTeamId: string, targetTeamId: string) => {
+  const moveMemberToTeam = async (participantId: string, sourceTeamId: string, targetTeamId: string, memberName?: string) => {
     try {
       setSuccess("")
       setError("")
@@ -366,72 +392,56 @@ export default function SupervisorTeamsPage() {
       </div>
 
       {/* Teams List with Drag and Drop */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={teams.map(t => t.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="grid gap-4">
-            {teams.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">لا توجد فرق في هذا الهاكاثون</p>
-                </CardContent>
-              </Card>
-            ) : (
-              teams.map((team) => (
-                <DroppableTeam key={team.id} team={team}>
-                  <Card className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                            <Users className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-xl">{team.name}</CardTitle>
-                            <p className="text-sm text-gray-500">
-                              {team.members.length} عضو
-                            </p>
-                          </div>
-                        </div>
-                        {getStatusBadge(team.status)}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        {teams.length === 0 ? (
+          <Card className="col-span-full">
+            <CardContent className="p-12 text-center">
+              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">لا توجد فرق في هذا الهاكاثون</p>
+            </CardContent>
+          </Card>
+        ) : (
+          teams.map((team) => (
+            <DroppableTeam key={team.id} team={team} onDrop={handleDrop}>
+              <Card className="hover:shadow-lg transition-shadow h-full">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Users className="w-6 h-6 text-white" />
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Team Members - Draggable */}
-                      <div>
-                        <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-2">
-                          <GripVertical className="w-4 h-4 text-gray-400" />
-                          أعضاء الفريق (اسحب لنقل الأعضاء)
-                        </h4>
-                        <SortableContext
-                          items={team.members.map(m => `${team.id}-${m.participantId}`)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {team.members.map((member) => (
-                              <div key={member.participantId} className="flex items-center gap-1">
-                                <DraggableMember member={member} teamId={team.id} />
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeMemberFromTeam(team.id, member.participantId, member.name)}
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </SortableContext>
+                      <div className="min-w-0">
+                        <CardTitle className="text-lg truncate">{team.name}</CardTitle>
+                        <p className="text-sm text-gray-500">
+                          {team.members.length} عضو
+                        </p>
                       </div>
+                    </div>
+                    {getStatusBadge(team.status)}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Team Members - Draggable */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-2">
+                      <GripVertical className="w-4 h-4 text-gray-400" />
+                      أعضاء الفريق
+                    </h4>
+                    <div className="space-y-2">
+                      {team.members.map((member) => (
+                        <DraggableMember
+                          key={member.participantId}
+                          member={member}
+                          teamId={team.id}
+                          onViewDetails={(m) => {
+                            setSelectedMember(m)
+                            setDetailsDialogOpen(true)
+                          }}
+                          onRemove={removeMemberFromTeam}
+                        />
+                      ))}
+                    </div>
+                  </div>
 
                 {/* Project Links */}
                 {(team.submissionUrl || team.githubUrl || team.presentationUrl || team.demoUrl) && (
@@ -498,22 +508,85 @@ export default function SupervisorTeamsPage() {
                   </div>
                 )}
 
-                      {/* Created Date */}
-                      <div className="text-xs text-gray-500">
-                        تم الإنشاء: {new Date(team.createdAt).toLocaleDateString('ar-EG', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </DroppableTeam>
-              ))
-            )}
-          </div>
-        </SortableContext>
-      </DndContext>
+                  {/* Created Date */}
+                  <div className="text-xs text-gray-500">
+                    تم الإنشاء: {new Date(team.createdAt).toLocaleDateString('ar-EG', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </DroppableTeam>
+          ))
+        )}
+      </div>
+
+      {/* Member Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تفاصيل المشارك</DialogTitle>
+            <DialogDescription>
+              معلومات تفصيلية عن المشارك
+            </DialogDescription>
+          </DialogHeader>
+          {selectedMember && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                  {selectedMember.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">{selectedMember.name}</h3>
+                  <p className="text-sm text-gray-500">مشارك</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">البريد الإلكتروني</p>
+                    <p className="text-sm font-medium">{selectedMember.email}</p>
+                  </div>
+                </div>
+
+                {selectedMember.phone && (
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">رقم الهاتف</p>
+                      <p className="text-sm font-medium">{selectedMember.phone}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedMember.user?.city && (
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">المدينة</p>
+                      <p className="text-sm font-medium">{selectedMember.user.city}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedMember.user?.nationality && (
+                  <div className="flex items-center gap-3">
+                    <User className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">الجنسية</p>
+                      <p className="text-sm font-medium">{selectedMember.user.nationality}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

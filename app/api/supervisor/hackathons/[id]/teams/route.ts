@@ -71,7 +71,9 @@ export async function GET(
                 id: true,
                 name: true,
                 email: true,
-                phone: true
+                phone: true,
+                city: true,
+                nationality: true
               }
             }
           }
@@ -97,7 +99,11 @@ export async function GET(
         name: participant.user.name,
         email: participant.user.email,
         phone: participant.user.phone,
-        participantId: participant.id
+        participantId: participant.id,
+        user: {
+          city: participant.user.city,
+          nationality: participant.user.nationality
+        }
       }))
     }))
 
