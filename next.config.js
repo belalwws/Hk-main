@@ -31,16 +31,39 @@ const nextConfig = {
         path: false,
       }
     }
+
+    // Optimize webpack for faster builds (only in production)
+    if (process.env.NODE_ENV === 'production') {
+      config.optimization = {
+        ...config.optimization,
+        moduleIds: 'deterministic',
+      }
+    }
+
     return config
   },
   // Optimize for production
   experimental: {
     // optimizeCss: true, // Temporarily disabled for deployment
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
   // Fix chunk loading issues
   output: 'standalone',
   // Ensure proper asset loading
   assetPrefix: process.env.NODE_ENV === 'production' ? undefined : '',
+  // Compiler optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+  // Reduce build output
+  productionBrowserSourceMaps: false,
+  // Optimize page data
+  generateBuildId: async () => {
+    // Use a consistent build ID to enable better caching
+    return process.env.BUILD_ID || 'build-' + Date.now()
+  },
 }
 
 module.exports = nextConfig
