@@ -7,6 +7,25 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
   Users,
   ArrowLeft,
   ExternalLink,
@@ -16,7 +35,10 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Mail
+  Mail,
+  GripVertical,
+  Trash2,
+  MoveRight
 } from "lucide-react"
 
 interface TeamMember {
@@ -24,7 +46,7 @@ interface TeamMember {
   name: string
   email: string
   phone?: string
-  role: string
+  participantId: string
 }
 
 interface Team {
@@ -45,6 +67,71 @@ interface Hackathon {
   status: string
 }
 
+// Draggable Member Component
+function DraggableMember({ member, teamId }: { member: TeamMember; teamId: string }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `${teamId}-${member.participantId}`,
+    data: {
+      type: 'member',
+      member,
+      teamId
+    }
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-move"
+      {...attributes}
+      {...listeners}
+    >
+      <GripVertical className="w-4 h-4 text-gray-400" />
+      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+        {member.name.charAt(0).toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-gray-900 truncate">
+          {member.name}
+        </div>
+        <div className="text-xs text-gray-500 truncate">{member.email}</div>
+      </div>
+    </div>
+  )
+}
+
+// Droppable Team Component
+function DroppableTeam({ team, children }: { team: Team; children: React.ReactNode }) {
+  const {
+    setNodeRef,
+  } = useSortable({
+    id: team.id,
+    data: {
+      type: 'team',
+      team
+    }
+  })
+
+  return (
+    <div ref={setNodeRef} className="min-h-[100px]">
+      {children}
+    </div>
+  )
+}
+
 export default function SupervisorTeamsPage() {
   const params = useParams()
   const router = useRouter()
@@ -54,6 +141,19 @@ export default function SupervisorTeamsPage() {
   const [hackathon, setHackathon] = useState<Hackathon | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   useEffect(() => {
     fetchTeams()
@@ -76,6 +176,91 @@ export default function SupervisorTeamsPage() {
       setError("حدث خطأ في الاتصال بالخادم")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveId(null)
+
+    if (!over) return
+
+    const activeData = active.data.current
+    const overData = over.data.current
+
+    // Check if we're dragging a member over a team
+    if (activeData?.type === 'member' && overData?.type === 'team') {
+      const sourceMember = activeData.member as TeamMember
+      const sourceTeamId = activeData.teamId as string
+      const targetTeamId = overData.team.id as string
+
+      // Don't do anything if dropping on the same team
+      if (sourceTeamId === targetTeamId) return
+
+      // Move member between teams
+      await moveMemberToTeam(sourceMember.participantId, sourceTeamId, targetTeamId)
+    }
+  }
+
+  const moveMemberToTeam = async (participantId: string, sourceTeamId: string, targetTeamId: string) => {
+    try {
+      setSuccess("")
+      setError("")
+
+      const response = await fetch(
+        `/api/supervisor/hackathons/${hackathonId}/teams/${sourceTeamId}/members/${participantId}/move`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetTeamId })
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess("تم نقل العضو بنجاح")
+        fetchTeams() // Refresh teams
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError(data.error || "حدث خطأ في نقل العضو")
+      }
+    } catch (error) {
+      console.error("Error moving member:", error)
+      setError("حدث خطأ في الاتصال بالخادم")
+    }
+  }
+
+  const removeMemberFromTeam = async (teamId: string, participantId: string, memberName: string) => {
+    if (!confirm(`هل أنت متأكد من إزالة ${memberName} من الفريق؟`)) return
+
+    try {
+      setSuccess("")
+      setError("")
+
+      const response = await fetch(
+        `/api/supervisor/hackathons/${hackathonId}/teams/${teamId}/members/${participantId}`,
+        {
+          method: 'DELETE'
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess("تم إزالة العضو بنجاح")
+        fetchTeams()
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError(data.error || "حدث خطأ في إزالة العضو")
+      }
+    } catch (error) {
+      console.error("Error removing member:", error)
+      setError("حدث خطأ في الاتصال بالخادم")
     }
   }
 
@@ -134,6 +319,18 @@ export default function SupervisorTeamsPage() {
         </Alert>
       )}
 
+      {success && (
+        <Alert className="border-green-200 bg-green-50">
+          <AlertDescription className="text-green-800">{success}</AlertDescription>
+        </Alert>
+      )}
+
+      <Alert className="border-blue-200 bg-blue-50">
+        <AlertDescription className="text-blue-800">
+          💡 يمكنك سحب الأعضاء وإفلاتهم بين الفرق لنقلهم
+        </AlertDescription>
+      </Alert>
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -168,60 +365,73 @@ export default function SupervisorTeamsPage() {
         </Card>
       </div>
 
-      {/* Teams List */}
-      <div className="grid gap-4">
-        {teams.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">لا توجد فرق في هذا الهاكاثون</p>
-            </CardContent>
-          </Card>
-        ) : (
-          teams.map((team) => (
-            <Card key={team.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                      <Users className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl">{team.name}</CardTitle>
-                      <p className="text-sm text-gray-500">
-                        {team.members.length} عضو
-                      </p>
-                    </div>
-                  </div>
-                  {getStatusBadge(team.status)}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Team Members */}
-                <div>
-                  <h4 className="font-semibold text-sm text-gray-700 mb-2">أعضاء الفريق</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {team.members.map((member) => (
-                      <div
-                        key={member.id}
-                        className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
-                      >
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          {member.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {member.name}
+      {/* Teams List with Drag and Drop */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={teams.map(t => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="grid gap-4">
+            {teams.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">لا توجد فرق في هذا الهاكاثون</p>
+                </CardContent>
+              </Card>
+            ) : (
+              teams.map((team) => (
+                <DroppableTeam key={team.id} team={team}>
+                  <Card className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                            <Users className="w-6 h-6 text-white" />
                           </div>
-                          <div className="text-xs text-gray-500 truncate">{member.email}</div>
+                          <div>
+                            <CardTitle className="text-xl">{team.name}</CardTitle>
+                            <p className="text-sm text-gray-500">
+                              {team.members.length} عضو
+                            </p>
+                          </div>
                         </div>
-                        {member.role === 'leader' && (
-                          <Badge className="bg-yellow-100 text-yellow-800 text-xs">قائد</Badge>
-                        )}
+                        {getStatusBadge(team.status)}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Team Members - Draggable */}
+                      <div>
+                        <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-2">
+                          <GripVertical className="w-4 h-4 text-gray-400" />
+                          أعضاء الفريق (اسحب لنقل الأعضاء)
+                        </h4>
+                        <SortableContext
+                          items={team.members.map(m => `${team.id}-${m.participantId}`)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {team.members.map((member) => (
+                              <div key={member.participantId} className="flex items-center gap-1">
+                                <DraggableMember member={member} teamId={team.id} />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeMemberFromTeam(team.id, member.participantId, member.name)}
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </div>
 
                 {/* Project Links */}
                 {(team.submissionUrl || team.githubUrl || team.presentationUrl || team.demoUrl) && (
@@ -288,19 +498,22 @@ export default function SupervisorTeamsPage() {
                   </div>
                 )}
 
-                {/* Created Date */}
-                <div className="text-xs text-gray-500">
-                  تم الإنشاء: {new Date(team.createdAt).toLocaleDateString('ar-EG', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+                      {/* Created Date */}
+                      <div className="text-xs text-gray-500">
+                        تم الإنشاء: {new Date(team.createdAt).toLocaleDateString('ar-EG', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </DroppableTeam>
+              ))
+            )}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }

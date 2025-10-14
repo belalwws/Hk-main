@@ -1,38 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { cookies } from "next/headers"
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('session')
-    
-    if (!sessionCookie) {
-      return NextResponse.json(
-        { error: "غير مصرح لك بالوصول" },
-        { status: 401 }
-      )
-    }
+    const userRole = request.headers.get("x-user-role")
+    const userId = request.headers.get("x-user-id")
 
-    const session = JSON.parse(sessionCookie.value)
-    const userId = session.userId
-
-    // Get supervisor with assignment
-    const supervisor = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        supervisorAssignments: {
-          where: {
-            hackathonId: params.id
-          }
-        }
-      }
-    })
-
-    if (!supervisor || supervisor.role !== 'supervisor') {
+    if (!["supervisor", "admin"].includes(userRole || "")) {
       return NextResponse.json(
         { error: "غير مصرح لك بالوصول" },
         { status: 403 }
@@ -61,11 +38,27 @@ export async function GET(
       canExportData: true
     }
 
-    // If supervisor has specific assignment, check for explicit restrictions
-    if (supervisor.supervisorAssignments.length > 0) {
-      const assignment = supervisor.supervisorAssignments[0]
-      const assignmentPermissions = assignment.permissions as any
-      // Only override if explicitly set to false
+    // Check supervisor permissions
+    if (userRole === "supervisor") {
+      const supervisor = await prisma.supervisor.findFirst({
+        where: {
+          userId: userId!,
+          OR: [
+            { hackathonId: params.id },
+            { hackathonId: null }
+          ],
+          isActive: true
+        }
+      })
+
+      if (!supervisor) {
+        return NextResponse.json(
+          { error: "لست مشرفاً على هذا الهاكاثون" },
+          { status: 403 }
+        )
+      }
+
+      const assignmentPermissions = supervisor.permissions as any
       if (assignmentPermissions) {
         permissions = {
           canApprove: assignmentPermissions.canApproveParticipants !== false,
@@ -110,35 +103,17 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('session')
-    
-    if (!sessionCookie) {
-      return NextResponse.json(
-        { error: "غير مصرح لك بالوصول" },
-        { status: 401 }
-      )
-    }
+    const userRole = request.headers.get("x-user-role")
+    const userId = request.headers.get("x-user-id")
 
-    const session = JSON.parse(sessionCookie.value)
-    const userId = session.userId
-
-    // Get supervisor
-    const supervisor = await prisma.user.findUnique({
-      where: { id: userId }
-    })
-
-    if (!supervisor || supervisor.role !== 'supervisor') {
+    if (!["supervisor", "admin"].includes(userRole || "")) {
       return NextResponse.json(
         { error: "غير مصرح لك بالوصول" },
         { status: 403 }
       )
     }
 
-    // Supervisors have full access by default, no need to check assignment
-
     const body = await request.json()
-    const { notifications } = body
 
     // In a real implementation, save notifications to database
     // For now, just return success
@@ -146,7 +121,9 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      message: "تم حفظ الإعدادات بنجاح"
+      message: "تم حفظ الإعدادات بنجاح",
+      hackathonId: params.id,
+      userId: userId
     })
 
   } catch (error) {
