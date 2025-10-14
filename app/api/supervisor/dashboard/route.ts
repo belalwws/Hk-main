@@ -32,7 +32,12 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             phone: true,
-            city: true
+            city: true,
+            profilePicture: true,
+            bio: true,
+            linkedin: true,
+            skills: true,
+            experience: true
           }
         }
       }
@@ -156,14 +161,22 @@ export async function GET(request: NextRequest) {
       return 0 // Already sorted by createdAt desc
     }).slice(0, 10)
 
-    // Check if profile is complete
-    const isProfileComplete = !!(
-      supervisor.user.name &&
-      supervisor.user.email &&
-      supervisor.user.phone &&
-      supervisor.user.city &&
-      supervisor.department
-    )
+    // Check if profile is complete - all fields must be filled
+    const profileFields = {
+      name: supervisor.user.name,
+      email: supervisor.user.email,
+      phone: supervisor.user.phone,
+      city: supervisor.user.city,
+      bio: supervisor.user.bio,
+      linkedin: supervisor.user.linkedin,
+      skills: supervisor.user.skills,
+      experience: supervisor.user.experience
+    }
+
+    const completedFields = Object.values(profileFields).filter(v => v && v.toString().trim() !== '').length
+    const totalFields = Object.keys(profileFields).length
+    const completionPercentage = Math.round((completedFields / totalFields) * 100)
+    const isProfileComplete = completionPercentage === 100
 
     return NextResponse.json({
       stats: {
@@ -183,10 +196,16 @@ export async function GET(request: NextRequest) {
         phone: supervisor.user.phone,
         city: supervisor.user.city,
         department: supervisor.department,
+        profilePicture: supervisor.user.profilePicture,
+        bio: supervisor.user.bio,
+        linkedin: supervisor.user.linkedin,
+        skills: supervisor.user.skills,
+        experience: supervisor.user.experience,
         hackathons: supervisorAssignments.map(s => s.hackathon).filter(h => h !== null),
         hackathon: supervisor.hackathon, // Keep for backward compatibility
         permissions: supervisor.permissions,
         isProfileComplete,
+        completionPercentage,
         assignmentCount: supervisorAssignments.length,
         isGeneralSupervisor: supervisorAssignments.some(s => s.hackathonId === null)
       }

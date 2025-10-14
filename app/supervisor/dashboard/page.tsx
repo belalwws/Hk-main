@@ -11,13 +11,19 @@ import {
   Users,
   Trophy,
   CheckCircle,
-  Clock,
   TrendingUp,
   AlertCircle,
   Activity,
   UserCircle,
   MessageSquare
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface DashboardStats {
   totalParticipants: number
@@ -44,6 +50,11 @@ interface SupervisorInfo {
   phone?: string
   city?: string
   department?: string
+  profilePicture?: string
+  bio?: string
+  linkedin?: string
+  skills?: string
+  experience?: string
   hackathon?: {
     id: string
     title: string
@@ -58,6 +69,7 @@ interface SupervisorInfo {
   }>
   permissions?: any
   isProfileComplete: boolean
+  completionPercentage?: number
   assignmentCount?: number
   isGeneralSupervisor?: boolean
 }
@@ -78,8 +90,9 @@ export default function SupervisorDashboard() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [supervisor, setSupervisor] = useState<SupervisorInfo | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
   const [shouldCheckAuth, setShouldCheckAuth] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [profileDismissed, setProfileDismissed] = useState(false)
 
   // Define fetchDashboardData using useCallback
   const fetchDashboardData = useCallback(async () => {
@@ -95,28 +108,19 @@ export default function SupervisorDashboard() {
         setRecentActivity(data.recentActivity)
         setSupervisor(data.supervisor)
 
-        // Calculate profile completion percentage
+        // Show profile completion modal if profile is not complete
         if (data.supervisor && !data.supervisor.isProfileComplete) {
-          const fields = {
-            name: !!data.supervisor.name,
-            email: !!data.supervisor.email,
-            phone: !!data.supervisor.phone,
-            city: !!data.supervisor.city,
-            department: !!data.supervisor.department,
-            linkedIn: !!data.supervisor.linkedIn,
+          // Check if user dismissed the modal in this session
+          const dismissed = sessionStorage.getItem('profile-modal-dismissed')
+          if (!dismissed) {
+            setShowProfileModal(true)
           }
-          const completedFields = Object.values(fields).filter(Boolean).length
-          const totalFields = Object.keys(fields).length
-          const completionPercentage = Math.round((completedFields / totalFields) * 100)
-          
-          setError(`أكملت ${completionPercentage}% من ملفك الشخصي. أكمل البيانات المتبقية للاستفادة الكاملة من النظام! 🚀`)
         }
       } else {
-        setError(data.error || "حدث خطأ في جلب البيانات")
+        console.error("Error response:", data.error || "حدث خطأ في جلب البيانات")
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
-      setError("حدث خطأ في الاتصال بالخادم")
     } finally {
       setLoading(false)
     }
@@ -209,6 +213,24 @@ export default function SupervisorDashboard() {
     )
   }
 
+  const handleDismissModal = () => {
+    setShowProfileModal(false)
+    setProfileDismissed(true)
+    sessionStorage.setItem('profile-modal-dismissed', 'true')
+  }
+
+  const getMissingFields = () => {
+    if (!supervisor) return []
+    const fields = []
+    if (!supervisor.phone) fields.push('رقم الهاتف')
+    if (!supervisor.city) fields.push('المدينة')
+    if (!supervisor.bio) fields.push('نبذة شخصية')
+    if (!supervisor.linkedin) fields.push('حساب LinkedIn')
+    if (!supervisor.skills) fields.push('المهارات')
+    if (!supervisor.experience) fields.push('الخبرة')
+    return fields
+  }
+
   // Don't render if no user (will redirect)
   if (!user || user.role !== 'supervisor') {
     return null
@@ -216,20 +238,71 @@ export default function SupervisorDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Profile Incomplete Warning */}
-      {supervisor && !supervisor.isProfileComplete && (
-        <Alert className="border-orange-200 bg-orange-50">
-          <UserCircle className="w-4 h-4 text-orange-600" />
-          <AlertDescription className="text-orange-800">
-            <div className="flex items-center justify-between">
-              <span>{error}</span>
-              <Button size="sm" onClick={() => router.push('/supervisor/profile')} className="bg-orange-600 hover:bg-orange-700">
-                إكمال البيانات
+      {/* Profile Completion Modal */}
+      <Dialog open={showProfileModal} onOpenChange={setShowProfileModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <UserCircle className="w-6 h-6 text-orange-600" />
+              أكمل ملفك الشخصي
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              لتحسين تجربتك والاستفادة الكاملة من النظام
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-gray-700">نسبة الاكتمال</span>
+                <span className="font-bold text-blue-600">{supervisor?.completionPercentage || 0}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${supervisor?.completionPercentage || 0}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Missing Fields */}
+            {getMissingFields().length > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <p className="font-medium text-orange-900 mb-2">الحقول المطلوبة:</p>
+                <ul className="space-y-1">
+                  {getMissingFields().map((field, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm text-orange-800">
+                      <div className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
+                      {field}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={() => {
+                  handleDismissModal()
+                  router.push('/supervisor/profile')
+                }}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+              >
+                إكمال الآن
+              </Button>
+              <Button
+                onClick={handleDismissModal}
+                variant="outline"
+                className="flex-1"
+              >
+                لاحقاً
               </Button>
             </div>
-          </AlertDescription>
-        </Alert>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Welcome Section */}
       <div className="bg-gradient-to-br from-[#01645e] via-[#3ab666] to-[#c3e956] rounded-xl p-8 text-white shadow-lg">

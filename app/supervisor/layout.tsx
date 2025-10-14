@@ -84,6 +84,7 @@ export default function SupervisorLayout({
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [allowAccess, setAllowAccess] = useState(false)
+  const [profilePicture, setProfilePicture] = useState<string | null>(null)
 
   useEffect(() => {
     console.log('🔍 [SupervisorLayout] Auth state - loading:', loading, 'user:', user?.email, 'role:', user?.role)
@@ -106,6 +107,7 @@ export default function SupervisorLayout({
             if (userData.role === 'supervisor') {
               console.log('✅ [SupervisorLayout] Found supervisor in localStorage, allowing access')
               setAllowAccess(true)
+              setProfilePicture(userData.profilePicture || null)
               return // Don't redirect, user is valid
             }
           } catch (e) {
@@ -132,6 +134,7 @@ export default function SupervisorLayout({
 
     console.log('✅ [SupervisorLayout] User authenticated as supervisor:', user.email)
     setAllowAccess(true)
+    setProfilePicture(user.profilePicture || null)
   }, [user, loading, router])
 
   if (loading) {
@@ -246,9 +249,17 @@ export default function SupervisorLayout({
                 <p className="text-sm text-gray-600">مرحباً،</p>
                 <p className="font-semibold text-gray-900">{user?.name || 'مشرف'}</p>
               </div>
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
+              {profilePicture ? (
+                <img
+                  src={profilePicture}
+                  alt={user?.name || 'مشرف'}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-200"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+              )}
             </div>
           </div>
         </header>
