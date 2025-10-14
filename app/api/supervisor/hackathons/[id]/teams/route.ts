@@ -1,50 +1,43 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { cookies } from "next/headers"
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('session')
-    
-    if (!sessionCookie) {
-      return NextResponse.json(
-        { error: "غير مصرح لك بالوصول" },
-        { status: 401 }
-      )
-    }
+    const userRole = request.headers.get("x-user-role")
+    const userId = request.headers.get("x-user-id")
 
-    const session = JSON.parse(sessionCookie.value)
-    const userId = session.userId
-
-    // Get supervisor
-    const supervisor = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        supervisorAssignments: {
-          where: {
-            hackathonId: params.id
-          }
-        }
-      }
-    })
-
-    if (!supervisor || supervisor.role !== 'supervisor') {
+    if (!["supervisor", "admin"].includes(userRole || "")) {
       return NextResponse.json(
         { error: "غير مصرح لك بالوصول" },
         { status: 403 }
       )
     }
 
-    // Check permissions - if supervisor is assigned, check if permissions are disabled
-    // Otherwise, grant full access by default (like admin)
-    if (supervisor.supervisorAssignments.length > 0) {
-      const assignment = supervisor.supervisorAssignments[0]
-      const permissions = assignment.permissions as any
-      // Check if explicitly disabled
+    // Check supervisor permissions
+    if (userRole === "supervisor") {
+      const supervisor = await prisma.supervisor.findFirst({
+        where: {
+          userId: userId!,
+          OR: [
+            { hackathonId: params.id },
+            { hackathonId: null } // General supervisor
+          ],
+          isActive: true
+        }
+      })
+
+      if (!supervisor) {
+        return NextResponse.json(
+          { error: "لست مشرفاً على هذا الهاكاثون" },
+          { status: 403 }
+        )
+      }
+
+      // Check permissions
+      const permissions = supervisor.permissions as any
       if (permissions && permissions.canManageTeams === false) {
         return NextResponse.json(
           { error: "ليس لديك صلاحية عرض الفرق" },
@@ -52,7 +45,6 @@ export async function GET(
         )
       }
     }
-    // If not assigned, still allow access (full permissions by default)
 
     // Get hackathon
     const hackathon = await prisma.hackathon.findUnique({
