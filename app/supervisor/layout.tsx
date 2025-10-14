@@ -233,7 +233,7 @@ export default function SupervisorLayout({
       {/* Main content */}
       <div className="lg:mr-64">
         {/* Top bar */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
+        <header className="sticky top-0 z-20 bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
             <Button
               variant="ghost"
