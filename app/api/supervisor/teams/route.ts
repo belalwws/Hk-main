@@ -6,6 +6,7 @@ const prisma = new PrismaClient()
 export async function GET(request: NextRequest) {
   try {
     const userRole = request.headers.get("x-user-role")
+    const userId = request.headers.get("x-user-id")
 
     if (!["supervisor", "admin"].includes(userRole || "")) {
       return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 403 })
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "10")
+    const limit = parseInt(searchParams.get("limit") || "10000") // Get all teams for presentations page
     const search = searchParams.get("search")
     const status = searchParams.get("status")
 
@@ -21,7 +22,41 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {}
-    
+
+    // If supervisor, only get teams from their assigned hackathons
+    if (userRole === "supervisor" && userId) {
+      const supervisorAssignments = await prisma.supervisor.findMany({
+        where: {
+          userId: userId,
+          isActive: true
+        },
+        select: {
+          hackathonId: true
+        }
+      })
+
+      const hackathonIds = supervisorAssignments
+        .map(s => s.hackathonId)
+        .filter((id): id is string => id !== null)
+
+      if (hackathonIds.length > 0) {
+        where.hackathonId = { in: hackathonIds }
+      } else {
+        // No hackathons assigned, return empty
+        return NextResponse.json({
+          teams: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false
+          }
+        })
+      }
+    }
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -94,8 +129,8 @@ export async function GET(request: NextRequest) {
     const formattedTeams = teams.map(team => ({
       ...team,
       memberCount: team.participants.length,
-      averageScore: team.scores.length > 0 
-        ? team.scores.reduce((sum, score) => sum + score.score, 0) / team.scores.length 
+      averageScore: team.scores.length > 0
+        ? team.scores.reduce((sum, score) => sum + score.score, 0) / team.scores.length
         : null,
       evaluationCount: team.scores.length
     }))

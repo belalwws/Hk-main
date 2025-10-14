@@ -6,17 +6,20 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import ErrorBoundary from "@/components/ErrorBoundary"
-import { 
-  Users, 
-  Trophy, 
-  BarChart3, 
-  MessageSquare, 
-  User, 
-  LogOut, 
+import {
+  Users,
+  Trophy,
+  BarChart3,
+  MessageSquare,
+  User,
+  LogOut,
   Menu,
   X,
   Home,
-  Settings
+  Settings,
+  FileText,
+  ClipboardList,
+  Award
 } from "lucide-react"
 
 const sidebarItems = [
@@ -39,6 +42,21 @@ const sidebarItems = [
     title: "الفرق",
     href: "/supervisor/teams",
     icon: BarChart3
+  },
+  {
+    title: "العروض التقديمية",
+    href: "/supervisor/presentations",
+    icon: FileText
+  },
+  {
+    title: "الفورمات",
+    href: "/supervisor/forms",
+    icon: ClipboardList
+  },
+  {
+    title: "الشهادات",
+    href: "/supervisor/certificates",
+    icon: Award
   },
   {
     title: "التقارير",
@@ -147,7 +165,7 @@ export default function SupervisorLayout({
 
       {/* Sidebar */}
       <div className={`
-        fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-50
+        fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-30 lg:z-10
         ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex flex-col h-full">
