@@ -2,29 +2,20 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
-import {
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragStartEvent,
-  DragEndEvent,
-  DragOverEvent,
-} from '@dnd-kit/core'
-import { useDroppable } from '@dnd-kit/core'
 import {
   Users,
   ArrowLeft,
@@ -32,16 +23,19 @@ import {
   Github,
   FileText,
   Video,
-  CheckCircle,
-  XCircle,
-  Clock,
   Mail,
   GripVertical,
   Trash2,
   Eye,
   Phone,
   MapPin,
-  User
+  User,
+  Save,
+  Plus,
+  Send,
+  AlertCircle,
+  Crown,
+  RefreshCw
 } from "lucide-react"
 
 interface TeamMember {
@@ -75,108 +69,6 @@ interface Hackathon {
   status: string
 }
 
-// Draggable Member Component
-function DraggableMember({
-  member,
-  teamId,
-  onViewDetails,
-  onRemove
-}: {
-  member: TeamMember
-  teamId: string
-  onViewDetails: (member: TeamMember) => void
-  onRemove: (teamId: string, participantId: string, name: string) => void
-}) {
-  return (
-    <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move'
-        e.dataTransfer.setData('application/json', JSON.stringify({
-          participantId: member.participantId,
-          sourceTeamId: teamId,
-          memberName: member.name
-        }))
-      }}
-      className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-move border border-transparent hover:border-blue-300 transition-all"
-    >
-      <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
-      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-        {member.name.charAt(0).toUpperCase()}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-gray-900 truncate">
-          {member.name}
-        </div>
-        <div className="text-xs text-gray-500 truncate">{member.email}</div>
-      </div>
-      <div className="flex gap-1 flex-shrink-0">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation()
-            onViewDetails(member)
-          }}
-          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation()
-            onRemove(teamId, member.participantId, member.name)
-          }}
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-    </div>
-  )
-}
-
-// Droppable Team Component
-function DroppableTeam({
-  team,
-  children,
-  onDrop
-}: {
-  team: Team
-  children: React.ReactNode
-  onDrop: (teamId: string, data: any) => void
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: team.id,
-    data: {
-      type: 'team',
-      team
-    }
-  })
-
-  return (
-    <div
-      ref={setNodeRef}
-      onDragOver={(e) => {
-        e.preventDefault()
-        e.dataTransfer.dropEffect = 'move'
-      }}
-      onDrop={(e) => {
-        e.preventDefault()
-        const data = e.dataTransfer.getData('application/json')
-        if (data) {
-          onDrop(team.id, JSON.parse(data))
-        }
-      }}
-      className={`min-h-[200px] transition-all ${isOver ? 'ring-2 ring-blue-400 bg-blue-50' : ''}`}
-    >
-      {children}
-    </div>
-  )
-}
-
 export default function SupervisorTeamsPage() {
   const params = useParams()
   const router = useRouter()
@@ -189,14 +81,11 @@ export default function SupervisorTeamsPage() {
   const [success, setSuccess] = useState("")
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  )
+  const [draggedMember, setDraggedMember] = useState<{ participantId: string; sourceTeamId: string; memberName: string } | null>(null)
+  const [newTeamDialogOpen, setNewTeamDialogOpen] = useState(false)
+  const [newTeamName, setNewTeamName] = useState("")
+  const [creatingTeam, setCreatingTeam] = useState(false)
+  const [autoCreating, setAutoCreating] = useState(false)
 
   useEffect(() => {
     fetchTeams()
@@ -222,14 +111,37 @@ export default function SupervisorTeamsPage() {
     }
   }
 
-  const handleDrop = async (targetTeamId: string, data: any) => {
-    const { participantId, sourceTeamId, memberName } = data
+  const handleDragStart = (e: React.DragEvent, participantId: string, sourceTeamId: string, memberName: string) => {
+    setDraggedMember({ participantId, sourceTeamId, memberName })
+    e.dataTransfer.effectAllowed = 'move'
+  }
 
-    // Don't do anything if dropping on the same team
-    if (sourceTeamId === targetTeamId) return
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
 
-    // Move member between teams
-    await moveMemberToTeam(participantId, sourceTeamId, targetTeamId, memberName)
+  const handleDrop = async (e: React.DragEvent, targetTeamId: string) => {
+    e.preventDefault()
+    
+    if (!draggedMember || draggedMember.sourceTeamId === targetTeamId) {
+      setDraggedMember(null)
+      return
+    }
+
+    const targetTeam = teams.find(team => team.id === targetTeamId)
+    const sourceTeam = teams.find(team => team.id === draggedMember.sourceTeamId)
+    
+    if (confirm(`هل تريد نقل ${draggedMember.memberName} من ${sourceTeam?.name} إلى ${targetTeam?.name}؟`)) {
+      await moveMemberToTeam(
+        draggedMember.participantId,
+        draggedMember.sourceTeamId,
+        targetTeamId,
+        draggedMember.memberName
+      )
+    }
+    
+    setDraggedMember(null)
   }
 
   const moveMemberToTeam = async (participantId: string, sourceTeamId: string, targetTeamId: string, memberName?: string) => {
@@ -249,9 +161,9 @@ export default function SupervisorTeamsPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setSuccess("تم نقل العضو بنجاح")
+        setSuccess(data.message || "تم نقل العضو بنجاح وإرسال الإيميلات")
         fetchTeams() // Refresh teams
-        setTimeout(() => setSuccess(""), 3000)
+        setTimeout(() => setSuccess(""), 5000)
       } else {
         setError(data.error || "حدث خطأ في نقل العضو")
       }
@@ -290,6 +202,134 @@ export default function SupervisorTeamsPage() {
     }
   }
 
+  const deleteTeam = async (teamId: string, teamName: string) => {
+    if (!confirm(`هل أنت متأكد من حذف ${teamName}؟\n\nسيتم إلغاء تعيين جميع الأعضاء من الفريق.`)) return
+
+    try {
+      setSuccess("")
+      setError("")
+
+      const response = await fetch(
+        `/api/supervisor/hackathons/${hackathonId}/teams/${teamId}`,
+        {
+          method: 'DELETE'
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(`تم حذف ${teamName} بنجاح`)
+        fetchTeams()
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError(data.error || "حدث خطأ في حذف الفريق")
+      }
+    } catch (error) {
+      console.error("Error deleting team:", error)
+      setError("حدث خطأ في حذف الفريق")
+    }
+  }
+
+  const sendTeamEmails = async (teamId: string, teamName: string) => {
+    if (!confirm(`هل تريد إرسال إيميلات لجميع أعضاء ${teamName}؟`)) return
+
+    try {
+      setSuccess("")
+      setError("")
+
+      const response = await fetch(
+        `/api/supervisor/hackathons/${hackathonId}/teams/${teamId}/send-emails`,
+        {
+          method: 'POST'
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(`تم إرسال الإيميلات بنجاح!\n\nتم إرسال: ${data.emailsSent} إيميل`)
+        setTimeout(() => setSuccess(""), 5000)
+      } else {
+        setError(data.error || "حدث خطأ في إرسال الإيميلات")
+      }
+    } catch (error) {
+      console.error("Error sending emails:", error)
+      setError("حدث خطأ في إرسال الإيميلات")
+    }
+  }
+
+  const createNewTeam = async () => {
+    if (!newTeamName.trim()) {
+      setError("يرجى إدخال اسم الفريق")
+      return
+    }
+
+    try {
+      setCreatingTeam(true)
+      setSuccess("")
+      setError("")
+
+      const response = await fetch(
+        `/api/supervisor/hackathons/${hackathonId}/teams`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newTeamName })
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(`تم إنشاء ${newTeamName} بنجاح`)
+        setNewTeamName("")
+        setNewTeamDialogOpen(false)
+        fetchTeams()
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError(data.error || "حدث خطأ في إنشاء الفريق")
+      }
+    } catch (error) {
+      console.error("Error creating team:", error)
+      setError("حدث خطأ في إنشاء الفريق")
+    } finally {
+      setCreatingTeam(false)
+    }
+  }
+
+  const autoCreateTeams = async () => {
+    if (!confirm("هل تريد تكوين الفرق تلقائياً؟\n\nسيتم توزيع المشاركين المقبولين على فرق بشكل تلقائي.")) return
+
+    try {
+      setAutoCreating(true)
+      setSuccess("")
+      setError("")
+
+      const response = await fetch(
+        `/api/supervisor/hackathons/${hackathonId}/teams/auto-create`,
+        {
+          method: 'POST'
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(`تم تكوين ${data.teamsCreated} فريق بنجاح`)
+        fetchTeams()
+        setTimeout(() => setSuccess(""), 5000)
+      } else {
+        setError(data.error || "حدث خطأ في تكوين الفرق")
+      }
+    } catch (error) {
+      console.error("Error auto-creating teams:", error)
+      setError("حدث خطأ في تكوين الفرق")
+    } finally {
+      setAutoCreating(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       active: { label: "نشط", className: "bg-green-100 text-green-800" },
@@ -320,7 +360,7 @@ export default function SupervisorTeamsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -331,29 +371,53 @@ export default function SupervisorTeamsPage() {
             رجوع
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">فرق الهاكاثون</h1>
+            <h1 className="text-3xl font-bold text-gray-900">إدارة الفرق</h1>
             {hackathon && (
               <p className="text-gray-600">{hackathon.title}</p>
             )}
           </div>
         </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setNewTeamDialogOpen(true)}
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4" />
+            إنشاء فريق جديد
+          </Button>
+          <Button
+            onClick={autoCreateTeams}
+            disabled={autoCreating}
+            className="gap-2 bg-green-600 hover:bg-green-700"
+          >
+            {autoCreating ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Users className="w-4 h-4" />
+            )}
+            تكوين تلقائي
+          </Button>
+        </div>
       </div>
 
       {error && (
         <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="w-4 h-4 text-red-600" />
           <AlertDescription className="text-red-800">{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
         <Alert className="border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">{success}</AlertDescription>
+          <AlertCircle className="w-4 h-4 text-green-600" />
+          <AlertDescription className="text-green-800 whitespace-pre-line">{success}</AlertDescription>
         </Alert>
       )}
 
       <Alert className="border-blue-200 bg-blue-50">
+        <AlertCircle className="w-4 h-4 text-blue-600" />
         <AlertDescription className="text-blue-800">
-          💡 يمكنك سحب الأعضاء وإفلاتهم بين الفرق لنقلهم
+          💡 يمكنك سحب الأعضاء وإفلاتهم بين الفرق لنقلهم. سيتم إرسال إيميلات تلقائياً للمشاركين.
         </AlertDescription>
       </Alert>
 
@@ -383,9 +447,9 @@ export default function SupervisorTeamsPage() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">مشاريع مكتملة</div>
+            <div className="text-sm text-gray-600">إجمالي الأعضاء</div>
             <div className="text-2xl font-bold text-indigo-600">
-              {teams.filter(t => t.status === 'completed').length}
+              {teams.reduce((total, team) => total + team.members.length, 0)}
             </div>
           </CardContent>
         </Card>
@@ -397,20 +461,33 @@ export default function SupervisorTeamsPage() {
           <Card className="col-span-full">
             <CardContent className="p-12 text-center">
               <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">لا توجد فرق في هذا الهاكاثون</p>
+              <p className="text-gray-500 mb-4">لا توجد فرق في هذا الهاكاثون</p>
+              <Button onClick={autoCreateTeams} className="gap-2">
+                <Users className="w-4 h-4" />
+                تكوين الفرق تلقائياً
+              </Button>
             </CardContent>
           </Card>
         ) : (
           teams.map((team) => (
-            <DroppableTeam key={team.id} team={team} onDrop={handleDrop}>
+            <div
+              key={team.id}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, team.id)}
+              className={`transition-all ${
+                draggedMember && draggedMember.sourceTeamId !== team.id 
+                  ? 'ring-2 ring-blue-400 bg-blue-50 rounded-lg' 
+                  : ''
+              }`}
+            >
               <Card className="hover:shadow-lg transition-shadow h-full">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Users className="w-6 h-6 text-white" />
+                        <Crown className="w-6 h-6 text-white" />
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <CardTitle className="text-lg truncate">{team.name}</CardTitle>
                         <p className="text-sm text-gray-500">
                           {team.members.length} عضو
@@ -419,8 +496,37 @@ export default function SupervisorTeamsPage() {
                     </div>
                     {getStatusBadge(team.status)}
                   </div>
+                  <CardDescription>
+                    تم الإنشاء: {new Date(team.createdAt).toLocaleDateString('ar-EG', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Team Actions */}
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => sendTeamEmails(team.id, team.name)}
+                      className="gap-2 flex-1"
+                    >
+                      <Send className="w-4 h-4" />
+                      إرسال إيميلات
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteTeam(team.id, team.name)}
+                      className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      حذف الفريق
+                    </Button>
+                  </div>
+
                   {/* Team Members - Draggable */}
                   <div>
                     <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-2">
@@ -428,100 +534,180 @@ export default function SupervisorTeamsPage() {
                       أعضاء الفريق
                     </h4>
                     <div className="space-y-2">
-                      {team.members.map((member) => (
-                        <DraggableMember
-                          key={member.participantId}
-                          member={member}
-                          teamId={team.id}
-                          onViewDetails={(m) => {
-                            setSelectedMember(m)
-                            setDetailsDialogOpen(true)
-                          }}
-                          onRemove={removeMemberFromTeam}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                {/* Project Links */}
-                {(team.submissionUrl || team.githubUrl || team.presentationUrl || team.demoUrl) && (
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-700 mb-2">روابط المشروع</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {team.submissionUrl && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          className="gap-2"
-                        >
-                          <a href={team.submissionUrl} target="_blank" rel="noopener noreferrer">
-                            <FileText className="w-4 h-4" />
-                            رابط المشروع
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </Button>
-                      )}
-                      {team.githubUrl && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          className="gap-2"
-                        >
-                          <a href={team.githubUrl} target="_blank" rel="noopener noreferrer">
-                            <Github className="w-4 h-4" />
-                            GitHub
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </Button>
-                      )}
-                      {team.presentationUrl && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          className="gap-2"
-                        >
-                          <a href={team.presentationUrl} target="_blank" rel="noopener noreferrer">
-                            <FileText className="w-4 h-4" />
-                            العرض التقديمي
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </Button>
-                      )}
-                      {team.demoUrl && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          className="gap-2"
-                        >
-                          <a href={team.demoUrl} target="_blank" rel="noopener noreferrer">
-                            <Video className="w-4 h-4" />
-                            فيديو توضيحي
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </Button>
+                      {team.members.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4">لا يوجد أعضاء في هذا الفريق</p>
+                      ) : (
+                        team.members.map((member) => (
+                          <div
+                            key={member.participantId}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, member.participantId, team.id, member.name)}
+                            className={`flex items-center gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-move border border-transparent hover:border-blue-300 transition-all ${
+                              draggedMember?.participantId === member.participantId ? 'opacity-50' : ''
+                            }`}
+                          >
+                            <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-900 truncate">
+                                {member.name}
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">{member.email}</div>
+                            </div>
+                            <div className="flex gap-1 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedMember(member)
+                                  setDetailsDialogOpen(true)
+                                }}
+                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  removeMemberFromTeam(team.id, member.participantId, member.name)
+                                }}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
                       )}
                     </div>
                   </div>
-                )}
 
-                  {/* Created Date */}
-                  <div className="text-xs text-gray-500">
-                    تم الإنشاء: {new Date(team.createdAt).toLocaleDateString('ar-EG', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </div>
+                  {/* Project Links */}
+                  {(team.submissionUrl || team.githubUrl || team.presentationUrl || team.demoUrl) && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">روابط المشروع</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {team.submissionUrl && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="gap-2"
+                          >
+                            <a href={team.submissionUrl} target="_blank" rel="noopener noreferrer">
+                              <FileText className="w-4 h-4" />
+                              المشروع
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </Button>
+                        )}
+                        {team.githubUrl && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="gap-2"
+                          >
+                            <a href={team.githubUrl} target="_blank" rel="noopener noreferrer">
+                              <Github className="w-4 h-4" />
+                              GitHub
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </Button>
+                        )}
+                        {team.presentationUrl && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="gap-2"
+                          >
+                            <a href={team.presentationUrl} target="_blank" rel="noopener noreferrer">
+                              <FileText className="w-4 h-4" />
+                              العرض
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </Button>
+                        )}
+                        {team.demoUrl && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="gap-2"
+                          >
+                            <a href={team.demoUrl} target="_blank" rel="noopener noreferrer">
+                              <Video className="w-4 h-4" />
+                              فيديو
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            </DroppableTeam>
+            </div>
           ))
         )}
       </div>
+
+      {/* Create New Team Dialog */}
+      <Dialog open={newTeamDialogOpen} onOpenChange={setNewTeamDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>إنشاء فريق جديد</DialogTitle>
+            <DialogDescription>
+              أدخل اسم الفريق الجديد
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="teamName">اسم الفريق</Label>
+              <Input
+                id="teamName"
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                placeholder="مثال: فريق الابتكار"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    createNewTeam()
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setNewTeamDialogOpen(false)
+                setNewTeamName("")
+              }}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={createNewTeam}
+              disabled={creatingTeam || !newTeamName.trim()}
+              className="gap-2"
+            >
+              {creatingTeam ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
+              إنشاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Member Details Dialog */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
@@ -590,3 +776,4 @@ export default function SupervisorTeamsPage() {
     </div>
   )
 }
+
