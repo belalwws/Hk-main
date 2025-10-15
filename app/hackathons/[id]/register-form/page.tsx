@@ -19,7 +19,7 @@ import { useParams, useRouter } from 'next/navigation'
 
 interface FormField {
   id: string
-  type: 'text' | 'email' | 'phone' | 'idNumber' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'file'
+  type: 'text' | 'email' | 'phone' | 'idNumber' | 'textarea' | 'paragraph' | 'select' | 'checkbox' | 'radio' | 'date' | 'file'
   label: string
   placeholder?: string
   required: boolean
@@ -293,6 +293,33 @@ export default function HackathonRegisterFormPage() {
           </div>
         )
 
+      case 'paragraph':
+        return (
+          <div key={field.id}>
+            <Label htmlFor={field.id} className="text-base font-medium text-gray-700 mb-3 block">
+              {field.label} {field.required && <span className="text-red-500">*</span>}
+            </Label>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6">
+              <Textarea
+                id={field.id}
+                value={formData[field.id] || ''}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                placeholder={field.placeholder || 'اكتب نبذة تفصيلية...'}
+                rows={6}
+                className={`text-base bg-white shadow-sm ${error ? 'border-red-500' : 'border-blue-300'}`}
+                dir="rtl"
+              />
+              <p className="text-xs text-blue-700 mt-2 flex items-center gap-1">
+                💡 يمكنك كتابة نص طويل ومفصل هنا
+              </p>
+            </div>
+            {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </p>}
+          </div>
+        )
+
       case 'select':
         return (
           <div key={field.id}>
@@ -547,7 +574,7 @@ export default function HackathonRegisterFormPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {form.fields.filter(field => shouldShowField(field)).map((field, index) => {
                   // Full width fields
-                  if (field.type === 'textarea' || field.type === 'checkbox' || field.type === 'radio') {
+                  if (field.type === 'textarea' || field.type === 'paragraph' || field.type === 'checkbox' || field.type === 'radio') {
                     return (
                       <motion.div 
                         key={field.id} 

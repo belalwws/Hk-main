@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, Eye, Users, BarChart3, ExternalLink, MessageSquare, Award, UserCheck } from 'lucide-react'
+import { FileText, Eye, Users, BarChart3, ExternalLink, MessageSquare, Award, UserCheck, Palette, Settings, Download, Mail, Copy, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -47,6 +47,39 @@ export default function SupervisorFormsManagement() {
     }
   }
 
+  const copyLink = async (url: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(url)
+      alert(`تم نسخ رابط ${label} بنجاح!`)
+    } catch (error) {
+      console.error('Error copying link:', error)
+      alert('حدث خطأ في نسخ الرابط')
+    }
+  }
+
+  const downloadSubmissions = async (formType: string, formTitle: string) => {
+    try {
+      const response = await fetch(`/api/supervisor/forms/export?hackathonId=${selectedHackathon}&formType=${formType}`)
+      
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${formTitle}_${new Date().toLocaleDateString('ar-EG')}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      } else {
+        alert('حدث خطأ في تحميل الملف')
+      }
+    } catch (error) {
+      console.error('Error downloading submissions:', error)
+      alert('حدث خطأ في تحميل الملف')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -64,10 +97,10 @@ export default function SupervisorFormsManagement() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
           <FileText className="w-8 h-8" />
-          متابعة الفورمات
+          إدارة الفورمات
         </h1>
         <p className="text-gray-600">
-          متابعة جميع فورمات الهاكاثون والطلبات المرسلة
+          متابعة جميع فورمات الهاكاثون والردود المرسلة
         </p>
       </div>
 
@@ -132,7 +165,7 @@ export default function SupervisorFormsManagement() {
 
             {/* Judge Forms Tab */}
             <TabsContent value="judges">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="hover:shadow-lg transition-shadow border-2 border-orange-200">
                   <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
                     <div className="flex items-center justify-between">
@@ -143,7 +176,7 @@ export default function SupervisorFormsManagement() {
                       فورم طلب الانضمام كمحكم
                     </CardTitle>
                     <CardDescription>
-                      متابعة طلبات المحكمين المرسلة
+                      متابعة طلبات المحكمين وتحميل البيانات
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
@@ -157,10 +190,29 @@ export default function SupervisorFormsManagement() {
                         معاينة الفورم
                       </Button>
 
-                      <div className="bg-orange-50 p-3 rounded-lg text-sm text-orange-800">
-                        <p className="font-medium">📋 للمتابعة فقط</p>
-                        <p className="text-xs mt-1">يمكنك معاينة الفورم ومتابعة الطلبات</p>
-                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => copyLink(`${window.location.origin}/judge/apply/${selectedHackathon}`, 'فورم المحكمين')}
+                      >
+                        <Copy className="w-4 h-4 ml-2" />
+                        نسخ الرابط
+                      </Button>
+
+                      <Link href="/supervisor/judges">
+                        <Button variant="outline" className="w-full border-orange-300">
+                          <Users className="w-4 h-4 ml-2" />
+                          متابعة الردود
+                        </Button>
+                      </Link>
+
+                      <Button
+                        className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600"
+                        onClick={() => downloadSubmissions('judges', 'طلبات_المحكمين')}
+                      >
+                        <Download className="w-4 h-4 ml-2" />
+                        تحميل Excel
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -169,7 +221,7 @@ export default function SupervisorFormsManagement() {
 
             {/* Supervision Forms Tab */}
             <TabsContent value="supervision">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="hover:shadow-lg transition-shadow border-2 border-purple-200">
                   <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
                     <div className="flex items-center justify-between">
@@ -180,7 +232,7 @@ export default function SupervisorFormsManagement() {
                       فورم طلب الانضمام للإشراف
                     </CardTitle>
                     <CardDescription>
-                      متابعة طلبات الإشراف المرسلة
+                      متابعة طلبات الإشراف وتحميل البيانات
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
@@ -194,10 +246,29 @@ export default function SupervisorFormsManagement() {
                         معاينة الفورم
                       </Button>
 
-                      <div className="bg-purple-50 p-3 rounded-lg text-sm text-purple-800">
-                        <p className="font-medium">📋 للمتابعة فقط</p>
-                        <p className="text-xs mt-1">يمكنك معاينة الفورم ومتابعة الطلبات</p>
-                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => copyLink(`${window.location.origin}/supervision/${selectedHackathon}`, 'فورم الإشراف')}
+                      >
+                        <Copy className="w-4 h-4 ml-2" />
+                        نسخ الرابط
+                      </Button>
+
+                      <Link href={`/supervisor/supervision-submissions/${selectedHackathon}`}>
+                        <Button variant="outline" className="w-full border-purple-300">
+                          <Users className="w-4 h-4 ml-2" />
+                          متابعة الردود
+                        </Button>
+                      </Link>
+
+                      <Button
+                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                        onClick={() => downloadSubmissions('supervision', 'طلبات_الإشراف')}
+                      >
+                        <Download className="w-4 h-4 ml-2" />
+                        تحميل Excel
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -206,7 +277,7 @@ export default function SupervisorFormsManagement() {
 
             {/* Feedback Forms Tab */}
             <TabsContent value="feedback">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="hover:shadow-lg transition-shadow border-2 border-green-200">
                   <CardHeader className="bg-gradient-to-r from-green-50 to-teal-50">
                     <div className="flex items-center justify-between">
@@ -217,7 +288,7 @@ export default function SupervisorFormsManagement() {
                       فورم تقييم الهاكاثون
                     </CardTitle>
                     <CardDescription>
-                      متابعة تقييمات المشاركين
+                      متابعة تقييمات المشاركين وتحليل النتائج
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
@@ -231,10 +302,29 @@ export default function SupervisorFormsManagement() {
                         معاينة الفورم
                       </Button>
 
-                      <div className="bg-green-50 p-3 rounded-lg text-sm text-green-800">
-                        <p className="font-medium">📋 للمتابعة فقط</p>
-                        <p className="text-xs mt-1">يمكنك معاينة الفورم ومتابعة التقييمات</p>
-                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => copyLink(`${window.location.origin}/feedback/${selectedHackathon}`, 'فورم التقييم')}
+                      >
+                        <Copy className="w-4 h-4 ml-2" />
+                        نسخ الرابط
+                      </Button>
+
+                      <Link href={`/supervisor/hackathons/${selectedHackathon}/feedback-results`}>
+                        <Button variant="outline" className="w-full border-green-300">
+                          <BarChart3 className="w-4 h-4 ml-2" />
+                          عرض النتائج
+                        </Button>
+                      </Link>
+
+                      <Button
+                        className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
+                        onClick={() => downloadSubmissions('feedback', 'تقييمات_الهاكاثون')}
+                      >
+                        <Download className="w-4 h-4 ml-2" />
+                        تحميل Excel
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -243,7 +333,7 @@ export default function SupervisorFormsManagement() {
 
             {/* Registration Forms Tab */}
             <TabsContent value="registration">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="hover:shadow-lg transition-shadow border-2 border-blue-200">
                   <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
                     <div className="flex items-center justify-between">
@@ -254,7 +344,7 @@ export default function SupervisorFormsManagement() {
                       فورم تسجيل المشاركين
                     </CardTitle>
                     <CardDescription>
-                      متابعة تسجيلات المشاركين
+                      متابعة تسجيلات المشاركين وتحميل البيانات
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
@@ -262,16 +352,35 @@ export default function SupervisorFormsManagement() {
                       <Button
                         variant="outline"
                         className="w-full"
-                        onClick={() => window.open(`/hackathons/${selectedHackathon}/register-form?preview=1`, '_blank')}
+                        onClick={() => window.open(`/hackathons/${selectedHackathon}/register-form`, '_blank')}
                       >
                         <ExternalLink className="w-4 h-4 ml-2" />
                         معاينة الفورم
                       </Button>
 
-                      <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
-                        <p className="font-medium">📋 للمتابعة فقط</p>
-                        <p className="text-xs mt-1">يمكنك معاينة الفورم ومتابعة التسجيلات</p>
-                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => copyLink(`${window.location.origin}/hackathons/${selectedHackathon}/register-form`, 'فورم التسجيل')}
+                      >
+                        <Copy className="w-4 h-4 ml-2" />
+                        نسخ الرابط
+                      </Button>
+
+                      <Link href={`/supervisor/hackathons/${selectedHackathon}/form-submissions`}>
+                        <Button variant="outline" className="w-full border-blue-300">
+                          <FileText className="w-4 h-4 ml-2" />
+                          متابعة الردود
+                        </Button>
+                      </Link>
+
+                      <Button
+                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                        onClick={() => downloadSubmissions('registration', 'تسجيلات_المشاركين')}
+                      >
+                        <Download className="w-4 h-4 ml-2" />
+                        تحميل Excel
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -296,4 +405,3 @@ export default function SupervisorFormsManagement() {
     </div>
   )
 }
-

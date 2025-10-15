@@ -22,7 +22,8 @@ import {
   MapPin,
   User,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Eye
 } from "lucide-react"
 
 interface Participant {
@@ -73,6 +74,7 @@ export default function SupervisorParticipants() {
   // Dialog state
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [feedback, setFeedback] = useState("")
   const [newStatus, setNewStatus] = useState<"approved" | "rejected">("approved")
 
@@ -335,30 +337,45 @@ export default function SupervisorParticipants() {
                     </div>
                   </div>
 
-                  {participant.status === "pending" && (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-green-600 border-green-600 hover:bg-green-50"
-                        onClick={() => openUpdateDialog(participant, "approved")}
-                        disabled={updating === participant.id}
-                      >
-                        <CheckCircle className="w-4 h-4 ml-1" />
-                        موافقة
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 border-red-600 hover:bg-red-50"
-                        onClick={() => openUpdateDialog(participant, "rejected")}
-                        disabled={updating === participant.id}
-                      >
-                        <XCircle className="w-4 h-4 ml-1" />
-                        رفض
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                      onClick={() => {
+                        setSelectedParticipant(participant)
+                        setDetailsDialogOpen(true)
+                      }}
+                    >
+                      <Eye className="w-4 h-4 ml-1" />
+                      عرض التفاصيل
+                    </Button>
+                    
+                    {participant.status === "pending" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-600 border-green-600 hover:bg-green-50"
+                          onClick={() => openUpdateDialog(participant, "approved")}
+                          disabled={updating === participant.id}
+                        >
+                          <CheckCircle className="w-4 h-4 ml-1" />
+                          موافقة
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          onClick={() => openUpdateDialog(participant, "rejected")}
+                          disabled={updating === participant.id}
+                        >
+                          <XCircle className="w-4 h-4 ml-1" />
+                          رفض
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -441,6 +458,151 @@ export default function SupervisorParticipants() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Participant Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">تفاصيل المشارك</DialogTitle>
+            <DialogDescription>
+              جميع المعلومات التي قدمها المشارك في فورم التسجيل
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedParticipant && (
+            <div className="space-y-6">
+              {/* Personal Info */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  المعلومات الشخصية
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-sm text-gray-600">الاسم</p>
+                    <p className="font-medium">{selectedParticipant.user.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">البريد الإلكتروني</p>
+                    <p className="font-medium">{selectedParticipant.user.email}</p>
+                  </div>
+                  {selectedParticipant.user.phone && (
+                    <div>
+                      <p className="text-sm text-gray-600">رقم الهاتف</p>
+                      <p className="font-medium">{selectedParticipant.user.phone}</p>
+                    </div>
+                  )}
+                  {selectedParticipant.user.city && (
+                    <div>
+                      <p className="text-sm text-gray-600">المدينة</p>
+                      <p className="font-medium">{selectedParticipant.user.city}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Team Info */}
+              {(selectedParticipant.teamName || selectedParticipant.team) && (
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-blue-600" />
+                    معلومات الفريق
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {selectedParticipant.teamName && (
+                      <div>
+                        <p className="text-sm text-gray-600">اسم الفريق</p>
+                        <p className="font-medium">{selectedParticipant.teamName}</p>
+                      </div>
+                    )}
+                    {selectedParticipant.team && (
+                      <div>
+                        <p className="text-sm text-gray-600">رقم الفريق</p>
+                        <p className="font-medium">#{selectedParticipant.team.teamNumber}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Project Info */}
+              {selectedParticipant.projectTitle && (
+                <div className="bg-green-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-lg mb-3">المشروع</h3>
+                  <div>
+                    <p className="text-sm text-gray-600">عنوان المشروع</p>
+                    <p className="font-medium">{selectedParticipant.projectTitle}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Skills */}
+              {selectedParticipant.user.skills && (
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-lg mb-3">المهارات</h3>
+                  <p className="text-sm">{selectedParticipant.user.skills}</p>
+                </div>
+              )}
+
+              {/* Hackathon & Status */}
+              <div className="bg-yellow-50 rounded-lg p-4">
+                <h3 className="font-semibold text-lg mb-3">معلومات الهاكاثون</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-sm text-gray-600">الهاكاثون</p>
+                    <p className="font-medium">{selectedParticipant.hackathon.title}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">حالة الطلب</p>
+                    <div className="mt-1">{getStatusBadge(selectedParticipant.status)}</div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">تاريخ التسجيل</p>
+                    <p className="font-medium">
+                      {new Date(selectedParticipant.registeredAt).toLocaleDateString('ar-EG', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 justify-end pt-4 border-t">
+                <Button variant="outline" onClick={() => setDetailsDialogOpen(false)}>
+                  إغلاق
+                </Button>
+                {selectedParticipant.status === "pending" && (
+                  <>
+                    <Button
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => {
+                        setDetailsDialogOpen(false)
+                        openUpdateDialog(selectedParticipant, "approved")
+                      }}
+                    >
+                      <CheckCircle className="w-4 h-4 ml-1" />
+                      موافقة
+                    </Button>
+                    <Button
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={() => {
+                        setDetailsDialogOpen(false)
+                        openUpdateDialog(selectedParticipant, "rejected")
+                      }}
+                    >
+                      <XCircle className="w-4 h-4 ml-1" />
+                      رفض
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

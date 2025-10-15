@@ -43,7 +43,7 @@ import { Badge } from '@/components/ui/badge'
 
 interface FormField {
   id: string
-  type: 'text' | 'email' | 'phone' | 'idNumber' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'file'
+  type: 'text' | 'email' | 'phone' | 'idNumber' | 'textarea' | 'paragraph' | 'select' | 'checkbox' | 'radio' | 'date' | 'file'
   label: string
   placeholder?: string
   required: boolean
@@ -386,6 +386,7 @@ export default function HackathonRegistrationFormPage() {
       case 'phone': return Phone
       case 'idNumber': return CreditCard
       case 'textarea': return FileText
+      case 'paragraph': return FileText
       case 'select': return List
       case 'checkbox': return ToggleLeft
       case 'radio': return ToggleLeft
@@ -401,6 +402,7 @@ export default function HackathonRegistrationFormPage() {
     { value: 'phone', label: 'رقم هاتف' },
     { value: 'idNumber', label: 'رقم الهوية' },
     { value: 'textarea', label: 'نص طويل' },
+    { value: 'paragraph', label: 'فقرة (Paragraph)' },
     { value: 'select', label: 'قائمة منسدلة' },
     { value: 'checkbox', label: 'مربع اختيار' },
     { value: 'radio', label: 'اختيار واحد' },
