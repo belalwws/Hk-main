@@ -42,6 +42,7 @@ interface RegistrationForm {
   hackathonId: string
   title: string
   description: string
+  coverImage?: string
   isActive: boolean
   fields: FormField[]
   settings: {
@@ -481,10 +482,33 @@ export default function HackathonRegisterFormPage() {
 
         {/* Registration Form */}
         <Card>
+          {/* Cover Image */}
+          {form.coverImage && (
+            <div className="relative w-full h-64 overflow-hidden rounded-t-lg">
+              <img
+                src={form.coverImage}
+                alt={form.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                <div className="p-6 text-white">
+                  <h2 className="text-2xl font-bold">{form.title}</h2>
+                  {form.description && (
+                    <p className="text-sm mt-2 opacity-90">{form.description}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <CardHeader>
-            <CardTitle>{form.title}</CardTitle>
-            {form.description && (
-              <CardDescription>{form.description}</CardDescription>
+            {!form.coverImage && (
+              <>
+                <CardTitle>{form.title}</CardTitle>
+                {form.description && (
+                  <CardDescription>{form.description}</CardDescription>
+                )}
+              </>
             )}
           </CardHeader>
           <CardContent>
