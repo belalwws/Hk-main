@@ -86,14 +86,27 @@ export default function SupervisorEmailManagementPage() {
   const loadTemplates = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/email-templates')
+      const response = await fetch('/api/admin/email-templates', {
+        credentials: 'include'
+      })
       
       if (response.ok) {
         const data = await response.json()
-        setTemplates(data.templates || [])
+        if (data.templates && data.templates.length > 0) {
+          setTemplates(data.templates)
+          console.log('✅ Loaded templates:', data.templates.length)
+        } else {
+          // إذا لم توجد قوالب، تحميل القوالب الافتراضية
+          console.log('⚠️ No templates found, initializing defaults...')
+          await initializeDefaultTemplates()
+        }
       } else {
-        // إذا لم توجد قوالب، تحميل القوالب الافتراضية
-        console.log('Loading default templates...')
+        console.error('Failed to load templates:', response.status)
+        toast({
+          title: "تنبيه",
+          description: "فشل تحميل قوالب الإيميلات. سيتم تهيئة القوالب الافتراضية.",
+          variant: "destructive"
+        })
         await initializeDefaultTemplates()
       }
     } catch (error) {
@@ -103,6 +116,7 @@ export default function SupervisorEmailManagementPage() {
         description: "فشل تحميل قوالب الإيميلات",
         variant: "destructive"
       })
+      await initializeDefaultTemplates()
     } finally {
       setLoading(false)
     }
@@ -110,20 +124,31 @@ export default function SupervisorEmailManagementPage() {
 
   const initializeDefaultTemplates = async () => {
     try {
+      console.log('🔄 Initializing default templates...')
       const response = await fetch('/api/admin/email-templates/initialize', {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       })
 
       if (response.ok) {
         const data = await response.json()
         setTemplates(data.templates || [])
+        console.log('✅ Initialized templates:', data.templates?.length)
         toast({
           title: "تم التهيئة",
-          description: "تم تحميل القوالب الافتراضية بنجاح"
+          description: `تم تحميل ${data.templates?.length || 0} قالب افتراضي بنجاح`
         })
+      } else {
+        console.error('Failed to initialize templates:', response.status)
+        throw new Error('Failed to initialize')
       }
     } catch (error) {
       console.error('Error initializing templates:', error)
+      toast({
+        title: "خطأ",
+        description: "فشل تهيئة القوالب الافتراضية",
+        variant: "destructive"
+      })
     }
   }
 
@@ -255,6 +280,25 @@ export default function SupervisorEmailManagementPage() {
         <p className="text-slate-600">
           إدارة شاملة لكل قوالب الإيميلات التلقائية وإرسال إيميلات مخصصة
         </p>
+        
+        {/* Important Templates Notice */}
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-blue-900 mb-2">القوالب التلقائية المهمة:</h3>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• <strong>تأكيد التسجيل</strong> - يُرسل تلقائياً عند تسجيل مشارك جديد</li>
+                <li>• <strong>قبول المشاركة</strong> - يُرسل تلقائياً عند قبول طلب مشارك</li>
+                <li>• <strong>رفض المشاركة</strong> - يُرسل تلقائياً عند رفض طلب مشارك</li>
+                <li>• <strong>تكوين الفريق</strong> - يُرسل عند تشكيل الفرق</li>
+              </ul>
+              <p className="text-xs text-blue-700 mt-2">
+                💡 يمكنك تعديل محتوى ومظهر جميع القوالب حسب احتياجاتك
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -302,51 +346,62 @@ export default function SupervisorEmailManagementPage() {
               </Alert>
             )}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredTemplates.map((template) => (
-                <Card
-                  key={template.id}
-                  className={`cursor-pointer transition-all hover:shadow-md border-slate-200 ${
-                    selectedTemplate?.id === template.id ? 'ring-2 ring-indigo-500' : ''
-                  }`}
-                  onClick={() => setSelectedTemplate(template)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="flex items-center gap-2 text-slate-800">
-                          {template.nameAr}
-                          {template.isSystem && (
-                            <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-700">
-                              أساسي
-                            </Badge>
-                          )}
-                        </CardTitle>
-                        <CardDescription className="mt-1 text-slate-600">
-                          {template.nameEn}
-                        </CardDescription>
+              {filteredTemplates.map((template) => {
+                // Highlight important automated templates
+                const isImportantAutomatic = ['registration_confirmation', 'acceptance', 'rejection', 'team_formation'].includes(template.templateKey)
+                
+                return (
+                  <Card
+                    key={template.id}
+                    className={`cursor-pointer transition-all hover:shadow-md border-slate-200 ${
+                      selectedTemplate?.id === template.id ? 'ring-2 ring-indigo-500' : ''
+                    } ${isImportantAutomatic ? 'border-l-4 border-l-indigo-500 bg-indigo-50/30' : ''}`}
+                    onClick={() => setSelectedTemplate(template)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2 text-slate-800">
+                            {isImportantAutomatic && <Sparkles className="w-4 h-4 text-indigo-600" />}
+                            {template.nameAr}
+                            {template.isSystem && (
+                              <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-700">
+                                أساسي
+                              </Badge>
+                            )}
+                            {isImportantAutomatic && (
+                              <Badge className="text-xs bg-indigo-600 text-white">
+                                تلقائي
+                              </Badge>
+                            )}
+                          </CardTitle>
+                          <CardDescription className="mt-1 text-slate-600">
+                            {template.nameEn}
+                          </CardDescription>
+                        </div>
+                        {template.isActive ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-slate-400" />
+                        )}
                       </div>
-                      {template.isActive ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-slate-400" />
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <p className="text-sm text-slate-600 line-clamp-2">
-                        {template.description}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="border-slate-200 text-slate-700">{template.category}</Badge>
-                        <span className="text-xs text-slate-500">
-                          {template.templateKey}
-                        </span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <p className="text-sm text-slate-600 line-clamp-2">
+                          {template.description}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="border-slate-200 text-slate-700">{template.category}</Badge>
+                          <span className="text-xs text-slate-500">
+                            {template.templateKey}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
 
             {/* Template Editor */}

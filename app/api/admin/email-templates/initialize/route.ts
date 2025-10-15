@@ -19,6 +19,17 @@ export async function POST(request: NextRequest) {
 }
 
 async function initializeTemplates() {
+  // Helper function to generate feedback section
+  const generateFeedbackSection = () => `
+    <!-- Feedback Section (conditional) -->
+    {{#if feedback}}
+    <div style="background: #fef3c7; border-right: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <h3 style="color: #92400e; margin: 0 0 10px 0; font-size: 16px;">📝 ملاحظات:</h3>
+      <p style="color: #78350f; margin: 0; line-height: 1.6;">{{feedback}}</p>
+    </div>
+    {{/if}}
+  `
+
   const DEFAULT_TEMPLATES = [
   {
     templateKey: 'registration_confirmation',
@@ -26,9 +37,68 @@ async function initializeTemplates() {
     nameEn: 'Registration Confirmation',
     category: 'participant',
     subject: 'تأكيد التسجيل في الهاكاثون - {{hackathonTitle}}',
-    description: 'يُرسل عند تسجيل مشارك جديد في هاكاثون',
-    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2 style="color: #2563eb;">مرحباً {{participantName}}</h2><p>تم تأكيد تسجيلك بنجاح في هاكاثون <strong>{{hackathonTitle}}</strong>.</p><div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;"><h3>تفاصيل التسجيل:</h3><ul><li>📧 البريد: {{participantEmail}}</li><li>📅 التاريخ: {{registrationDate}}</li></ul></div></div>',
-    variables: { 'participantName': 'اسم المشارك', 'participantEmail': 'البريد الإلكتروني', 'hackathonTitle': 'عنوان الهاكاثون', 'registrationDate': 'تاريخ التسجيل' },
+    description: 'يُرسل تلقائياً عند تسجيل مشارك جديد في هاكاثون',
+    bodyHtml: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl; background: #f8f9fa;">
+  <!-- Header with gradient -->
+  <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+    <div style="font-size: 60px; margin-bottom: 10px;">✅</div>
+    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">تم تأكيد تسجيلك!</h1>
+    <p style="color: #dbeafe; margin: 10px 0 0 0; font-size: 16px;">نشكرك على انضمامك إلينا</p>
+  </div>
+  
+  <!-- Main Content -->
+  <div style="background: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+    <p style="font-size: 18px; color: #1f2937; margin: 0 0 20px 0;">
+      مرحباً <strong>{{participantName}}</strong> 👋
+    </p>
+    
+    <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 20px 0;">
+      تم تأكيد تسجيلك بنجاح في هاكاثون <strong style="color: #2563eb;">{{hackathonTitle}}</strong>
+    </p>
+    
+    <!-- Registration Details Box -->
+    <div style="background: #f0f9ff; border-right: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <h3 style="color: #1e40af; margin: 0 0 15px 0; font-size: 18px;">📋 تفاصيل التسجيل:</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #1e3a8a; font-weight: 600;">📧 البريد الإلكتروني:</td>
+          <td style="padding: 8px 0; color: #1e40af;">{{participantEmail}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #1e3a8a; font-weight: 600;">📅 تاريخ التسجيل:</td>
+          <td style="padding: 8px 0; color: #1e40af;">{{registrationDate}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- Next Steps -->
+    <div style="background: #fef3c7; border-right: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <h3 style="color: #92400e; margin: 0 0 15px 0; font-size: 18px;">🚀 ماذا بعد؟</h3>
+      <ul style="color: #78350f; margin: 0; padding: 0 0 0 20px; line-height: 1.8;">
+        <li>سيتم مراجعة طلبك من قبل فريق الإدارة</li>
+        <li>ستصلك رسالة بريد إلكتروني عند قبول طلبك</li>
+        <li>تابع بريدك الإلكتروني للحصول على التحديثات</li>
+      </ul>
+    </div>
+    
+    <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0; line-height: 1.6;">
+      نتطلع لرؤيتك قريباً! 🎯
+    </p>
+    
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+      <p style="font-size: 14px; color: #9ca3af; margin: 0;">
+        مع أطيب التحيات،<br/>
+        <strong style="color: #6b7280;">فريق إدارة الهاكاثونات</strong>
+      </p>
+    </div>
+  </div>
+</div>`,
+    variables: { 
+      'participantName': 'اسم المشارك', 
+      'participantEmail': 'البريد الإلكتروني', 
+      'hackathonTitle': 'عنوان الهاكاثون', 
+      'registrationDate': 'تاريخ التسجيل' 
+    },
     isSystem: true,
     isActive: true
   },
@@ -38,9 +108,54 @@ async function initializeTemplates() {
     nameEn: 'Application Acceptance',
     category: 'participant',
     subject: 'مبروك! تم قبولك في {{hackathonTitle}}',
-    description: 'يُرسل عند قبول طلب مشارك',
-    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;"><h1 style="color: white; margin: 0;">🎉 مبروك!</h1></div><div style="padding: 30px;"><p>يسعدنا قبولك في <strong>{{hackathonTitle}}</strong>!</p></div></div>',
-    variables: { 'participantName': 'اسم المشارك', 'hackathonTitle': 'عنوان الهاكاثون' },
+    description: 'يُرسل تلقائياً عند قبول طلب مشارك',
+    bodyHtml: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl; background: #f8f9fa;">
+  <!-- Header with gradient -->
+  <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+    <div style="font-size: 60px; margin-bottom: 10px;">🎉</div>
+    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">مبروك!</h1>
+    <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">تم قبول طلبك بنجاح</p>
+  </div>
+  
+  <!-- Main Content -->
+  <div style="background: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+    <p style="font-size: 18px; color: #1f2937; margin: 0 0 20px 0;">
+      عزيزي <strong>{{participantName}}</strong>،
+    </p>
+    
+    <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 20px 0;">
+      يسعدنا إبلاغك بأنه تم قبول طلبك للمشاركة في هاكاثون <strong style="color: #059669;">{{hackathonTitle}}</strong>
+    </p>
+    
+    <!-- Info Box -->
+    <div style="background: #f0fdf4; border-right: 4px solid #10b981; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">الخطوات القادمة:</h3>
+      <ul style="color: #065f46; margin: 0; padding: 0 0 0 20px; line-height: 1.8;">
+        <li>سيتم إرسال تفاصيل الفريق قريباً</li>
+        <li>تابع بريدك الإلكتروني للحصول على التحديثات</li>
+        <li>تأكد من تسجيل الدخول إلى المنصة بانتظام</li>
+      </ul>
+    </div>
+    
+    ${generateFeedbackSection()}
+    
+    <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0; line-height: 1.6;">
+      نتمنى لك تجربة رائعة ومثمرة! 🚀
+    </p>
+    
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+      <p style="font-size: 14px; color: #9ca3af; margin: 0;">
+        مع أطيب التحيات،<br/>
+        <strong style="color: #6b7280;">فريق إدارة الهاكاثونات</strong>
+      </p>
+    </div>
+  </div>
+</div>`,
+    variables: { 
+      'participantName': 'اسم المشارك', 
+      'hackathonTitle': 'عنوان الهاكاثون',
+      'feedback': 'ملاحظات إضافية (اختياري)'
+    },
     isSystem: true,
     isActive: true
   },
@@ -50,9 +165,56 @@ async function initializeTemplates() {
     nameEn: 'Application Rejection',
     category: 'participant',
     subject: 'شكراً لاهتمامك بـ {{hackathonTitle}}',
-    description: 'يُرسل عند رفض طلب مشارك',
-    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2>مرحباً {{participantName}}</h2><p>شكراً لاهتمامك بـ <strong>{{hackathonTitle}}</strong>.</p><p>للأسف، لم نتمكن من قبول طلبك هذه المرة.</p></div>',
-    variables: { 'participantName': 'اسم المشارك', 'hackathonTitle': 'عنوان الهاكاثون' },
+    description: 'يُرسل تلقائياً عند رفض طلب مشارك',
+    bodyHtml: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl; background: #f8f9fa;">
+  <!-- Header -->
+  <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+    <div style="font-size: 50px; margin-bottom: 10px;">💙</div>
+    <h1 style="color: white; margin: 0; font-size: 26px; font-weight: bold;">شكراً لاهتمامك</h1>
+  </div>
+  
+  <!-- Main Content -->
+  <div style="background: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+    <p style="font-size: 18px; color: #1f2937; margin: 0 0 20px 0;">
+      عزيزي <strong>{{participantName}}</strong>،
+    </p>
+    
+    <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 20px 0;">
+      نشكرك على اهتمامك بالمشاركة في هاكاثون <strong style="color: #4f46e5;">{{hackathonTitle}}</strong>
+    </p>
+    
+    <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 20px 0;">
+      للأسف، لم نتمكن من قبول طلبك هذه المرة نظراً لمحدودية الأماكن المتاحة والعدد الكبير من الطلبات المميزة التي تلقيناها.
+    </p>
+    
+    ${generateFeedbackSection()}
+    
+    <!-- Encouragement Box -->
+    <div style="background: #eff6ff; border-right: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <h3 style="color: #1e40af; margin: 0 0 10px 0; font-size: 18px;">لا تيأس! 💪</h3>
+      <p style="color: #1e3a8a; margin: 0; line-height: 1.6;">
+        نشجعك على متابعة الفعاليات القادمة والمشاركة في الهاكاثونات المستقبلية. 
+        كل تجربة هي فرصة للتعلم والنمو.
+      </p>
+    </div>
+    
+    <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0; line-height: 1.6;">
+      نتمنى لك كل التوفيق في مسيرتك! 🌟
+    </p>
+    
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+      <p style="font-size: 14px; color: #9ca3af; margin: 0;">
+        مع أطيب التحيات،<br/>
+        <strong style="color: #6b7280;">فريق إدارة الهاكاثونات</strong>
+      </p>
+    </div>
+  </div>
+</div>`,
+    variables: { 
+      'participantName': 'اسم المشارك', 
+      'hackathonTitle': 'عنوان الهاكاثون',
+      'feedback': 'ملاحظات إضافية (اختياري)'
+    },
     isSystem: true,
     isActive: true
   },
