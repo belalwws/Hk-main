@@ -3,9 +3,8 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const params = await context.params
   try {
     const userRole = request.headers.get("x-user-role")
     const userId = request.headers.get("x-user-id")
@@ -121,84 +120,6 @@ export async function GET(
     console.error("Error fetching teams:", error)
     return NextResponse.json(
       { error: "حدث خطأ في جلب الفرق" },
-      { status: 500 }
-    )
-  }
-}
-
-// POST /api/supervisor/hackathons/[id]/teams - Create a new team
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const params = await context.params
-    const userRole = request.headers.get("x-user-role")
-    const userId = request.headers.get("x-user-id")
-
-    if (!["supervisor", "admin"].includes(userRole || "")) {
-      return NextResponse.json(
-        { error: "غير مصرح لك بالوصول" },
-        { status: 403 }
-      )
-    }
-
-    // Check supervisor permissions
-    if (userRole === "supervisor") {
-      const supervisor = await prisma.supervisor.findFirst({
-        where: {
-          userId: userId!,
-          OR: [
-            { hackathonId: params.id },
-            { hackathonId: null }
-          ],
-          isActive: true
-        }
-      })
-
-      if (!supervisor) {
-        return NextResponse.json(
-          { error: "لست مشرفاً على هذا الهاكاثون" },
-          { status: 403 }
-        )
-      }
-
-      const permissions = supervisor.permissions as any
-      if (permissions && permissions.canManageTeams === false) {
-        return NextResponse.json(
-          { error: "ليس لديك صلاحية إدارة الفرق" },
-          { status: 403 }
-        )
-      }
-    }
-
-    const { name } = await request.json()
-
-    if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: "اسم الفريق مطلوب" },
-        { status: 400 }
-      )
-    }
-
-    // Create team
-    const team = await prisma.team.create({
-      data: {
-        name: name.trim(),
-        hackathonId: params.id,
-        status: 'active'
-      }
-    })
-
-    return NextResponse.json({
-      message: `تم إنشاء ${team.name} بنجاح`,
-      team
-    })
-
-  } catch (error) {
-    console.error("Error creating team:", error)
-    return NextResponse.json(
-      { error: "حدث خطأ في إنشاء الفريق" },
       { status: 500 }
     )
   }

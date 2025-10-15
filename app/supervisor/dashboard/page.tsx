@@ -444,8 +444,8 @@ export default function SupervisorDashboard() {
                   تم التسليم
                 </p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                <CheckCircle className="w-7 h-7 text-white" />
+              <div className="w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-sky-600" />
               </div>
             </div>
           </CardContent>
