@@ -72,16 +72,7 @@ export default function SupervisorEmailManagementPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [previewMode, setPreviewMode] = useState(false)
   const [simpleMode, setSimpleMode] = useState(true) // محرر بسيط أو متقدم
-
-  // Simple editor state (for non-technical users)
-  const [simpleContent, setSimpleContent] = useState({
-    greeting: '',
-    mainMessage: '',
-    additionalInfo: '',
-    closing: '',
-    buttonText: '',
-    buttonUrl: ''
-  })
+  const [simpleText, setSimpleText] = useState('') // النص البسيط للمحرر
 
   // Custom email state
   const [customEmail, setCustomEmail] = useState({
@@ -227,35 +218,77 @@ export default function SupervisorEmailManagementPage() {
 
   // تحويل HTML إلى نص بسيط للمحرر
   const htmlToSimpleText = (html: string): string => {
-    // إزالة HTML tags والحصول على النص فقط
-    const temp = document.createElement('div')
-    temp.innerHTML = html
-    return temp.textContent || temp.innerText || ''
+    if (!html) return ''
+
+    try {
+      const temp = document.createElement('div')
+      temp.innerHTML = html
+
+      // إزالة العناصر غير المرغوبة
+      const unwantedElements = temp.querySelectorAll('style, script, div[style*="border-top"]')
+      unwantedElements.forEach(el => el.remove())
+
+      // استخراج النص مع الحفاظ على البنية
+      let text = temp.innerText || temp.textContent || ''
+
+      // تنظيف النص
+      text = text
+        .replace(/\n{3,}/g, '\n\n') // تقليل الأسطر الفارغة المتعددة
+        .replace(/^\s+|\s+$/g, '') // إزالة المسافات من البداية والنهاية
+        .replace(/مع أطيب التحيات،?\s*فريق المنصة/g, '') // إزالة التوقيع
+        .trim()
+
+      return text
+    } catch (error) {
+      console.error('Error converting HTML to text:', error)
+      return ''
+    }
   }
 
   // تحويل النص البسيط إلى HTML منسق
   const simpleTextToHtml = (text: string, subject: string): string => {
+    if (!text || !text.trim()) {
+      return `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">${subject || 'رسالة'}</h1>
+          </div>
+          <div style="background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="color: #4b5563; line-height: 1.8; margin: 15px 0;">محتوى الرسالة...</p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 14px;">
+              <p>مع أطيب التحيات،<br>فريق المنصة</p>
+            </div>
+          </div>
+        </div>
+      `
+    }
+
     // تقسيم النص إلى فقرات
     const paragraphs = text.split('\n\n').filter(p => p.trim())
 
     // بناء HTML بسيط ومنسق
     const htmlParagraphs = paragraphs.map(p => {
       const trimmed = p.trim()
+
       // إذا كانت الفقرة تحتوي على نقاط (bullet points)
       if (trimmed.includes('\n- ') || trimmed.startsWith('- ')) {
         const items = trimmed.split('\n').filter(line => line.trim().startsWith('- '))
-        const listItems = items.map(item => `<li>${item.replace(/^-\s*/, '')}</li>`).join('')
-        return `<ul style="margin: 15px 0; padding-right: 20px;">${listItems}</ul>`
+        const listItems = items.map(item => {
+          const itemText = item.replace(/^-\s*/, '').trim()
+          return `<li style="margin: 8px 0;">${itemText}</li>`
+        }).join('')
+        return `<ul style="margin: 15px 0; padding-right: 20px; color: #4b5563; line-height: 1.6;">${listItems}</ul>`
       }
+
       // فقرة عادية
-      return `<p style="margin: 15px 0; line-height: 1.6; color: #374151;">${trimmed}</p>`
+      return `<p style="color: #4b5563; line-height: 1.8; margin: 15px 0;">${trimmed}</p>`
     }).join('')
 
     // قالب HTML كامل
     return `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 24px;">${subject}</h1>
+          <h1 style="color: white; margin: 0; font-size: 24px;">${subject || 'رسالة'}</h1>
         </div>
         <div style="background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
           ${htmlParagraphs}
@@ -267,6 +300,14 @@ export default function SupervisorEmailManagementPage() {
     `
   }
 
+  // تحديث النص البسيط عند تغيير القالب المحدد
+  useEffect(() => {
+    if (selectedTemplate && simpleMode) {
+      const extracted = htmlToSimpleText(selectedTemplate.bodyHtml)
+      setSimpleText(extracted)
+    }
+  }, [selectedTemplate?.id, simpleMode])
+
   const resetSingleTemplate = async (templateKey: string) => {
     // تأكيد من المستخدم
     const confirmed = window.confirm(
@@ -276,31 +317,48 @@ export default function SupervisorEmailManagementPage() {
     if (!confirmed) return
 
     try {
+      console.log('🔄 Resetting template:', templateKey)
+
       const response = await fetch('/api/admin/email-templates/reset', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
         body: JSON.stringify({ templateKey })
       })
 
+      console.log('📡 Reset response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Reset successful:', data)
+
         toast({
           title: "✅ تم إعادة التعيين",
           description: "تم إعادة القالب للوضع الافتراضي بنجاح"
         })
+
+        // إعادة تحميل القوالب
         await loadTemplates()
+
         // إعادة تحديد القالب المحدث
-        if (selectedTemplate?.templateKey === templateKey) {
-          const updatedTemplate = data.template
-          setSelectedTemplate(updatedTemplate)
+        if (selectedTemplate?.templateKey === templateKey && data.template) {
+          setSelectedTemplate(data.template)
+          // تحديث النص البسيط
+          const extracted = htmlToSimpleText(data.template.bodyHtml)
+          setSimpleText(extracted)
         }
       } else {
-        throw new Error('Failed to reset')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ Reset failed:', response.status, errorData)
+        throw new Error(errorData.error || 'Failed to reset')
       }
     } catch (error) {
+      console.error('❌ Error resetting template:', error)
       toast({
         title: "خطأ",
-        description: "فشل إعادة تعيين القالب",
+        description: error instanceof Error ? error.message : "فشل إعادة تعيين القالب",
         variant: "destructive"
       })
     }
@@ -744,17 +802,19 @@ export default function SupervisorEmailManagementPage() {
                             </Alert>
 
                             <Textarea
-                              value={htmlToSimpleText(selectedTemplate.bodyHtml)}
+                              value={simpleText}
                               onChange={(e) => {
-                                const simpleText = e.target.value
-                                const htmlContent = simpleTextToHtml(simpleText, selectedTemplate.subject)
+                                const newText = e.target.value
+                                setSimpleText(newText)
+                                // تحديث HTML فقط عند التوقف عن الكتابة
+                                const htmlContent = simpleTextToHtml(newText, selectedTemplate.subject)
                                 setSelectedTemplate({
                                   ...selectedTemplate,
                                   bodyHtml: htmlContent
                                 })
                               }}
                               rows={15}
-                              className="mt-1 border-slate-200 text-base leading-relaxed"
+                              className="mt-1 border-slate-200 text-base leading-relaxed font-['Segoe_UI',Tahoma,sans-serif]"
                               placeholder={`مثال:
 
 مرحباً {{participantName}}،
