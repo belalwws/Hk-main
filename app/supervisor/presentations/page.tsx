@@ -33,26 +33,43 @@ interface Team {
 export default function SupervisorPresentationsPage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [hackathons, setHackathons] = useState<any[]>([])
-  const [selectedHackathon, setSelectedHackathon] = useState<string>('all')
+  const [selectedHackathon, setSelectedHackathon] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
-  const { showSuccess, showError, showConfirm, ModalComponents } = useModal()
+  const { showSuccess, showError, showConfirm } = useModal()
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [selectedHackathon])
 
   const fetchData = async () => {
     try {
+      setLoading(true)
+      
       // Fetch hackathons assigned to supervisor
       const hackathonsRes = await fetch('/api/supervisor/hackathons')
       if (hackathonsRes.ok) {
         const data = await hackathonsRes.json()
-        setHackathons(data.hackathons || [])
+        const hackathonsArray = data.hackathons || []
+        setHackathons(hackathonsArray)
+        
+        // Set first hackathon as default if available
+        if (hackathonsArray.length > 0 && !selectedHackathon) {
+          setSelectedHackathon(hackathonsArray[0].id)
+          return // Don't fetch teams yet, let the next useEffect handle it
+        }
       }
 
-      // Fetch all teams for supervisor's hackathons
-      const teamsRes = await fetch('/api/supervisor/teams')
+      // Only fetch teams if hackathon is selected
+      if (!selectedHackathon) {
+        setLoading(false)
+        return
+      }
+
+      // Fetch teams based on selected hackathon
+      const teamsUrl = `/api/supervisor/teams?hackathonId=${selectedHackathon}`
+      
+      const teamsRes = await fetch(teamsUrl)
       if (teamsRes.ok) {
         const data = await teamsRes.json()
         setTeams(data.teams || [])
@@ -64,9 +81,7 @@ export default function SupervisorPresentationsPage() {
     }
   }
 
-  const filteredTeams = selectedHackathon === 'all'
-    ? teams
-    : teams.filter(t => t.hackathonId === selectedHackathon)
+  const filteredTeams = teams
 
   const teamsWithPresentation = filteredTeams.filter(t => t.ideaFile)
   const teamsWithoutPresentation = filteredTeams.filter(t => !t.ideaFile)
@@ -80,9 +95,13 @@ export default function SupervisorPresentationsPage() {
   }
 
   const handleDelete = async (teamId: string, teamName: string) => {
-    showConfirm(
-      `هل أنت متأكد من حذف العرض التقديمي للفريق "${teamName}"؟\n\nسيتمكن الفريق من رفع عرض جديد بعد الحذف.`,
-      async () => {
+    showConfirm({
+      title: '🗑️ تأكيد الحذف',
+      message: `هل أنت متأكد من حذف العرض التقديمي للفريق "${teamName}"؟\n\nسيتمكن الفريق من رفع عرض جديد بعد الحذف.`,
+      type: 'danger',
+      confirmText: 'حذف',
+      cancelText: 'إلغاء',
+      onConfirm: async () => {
         setDeleting(teamId)
         try {
           const response = await fetch(`/api/supervisor/teams/${teamId}/delete-presentation`, {
@@ -102,12 +121,8 @@ export default function SupervisorPresentationsPage() {
         } finally {
           setDeleting(null)
         }
-      },
-      '🗑️ تأكيد الحذف',
-      'حذف',
-      'إلغاء',
-      'danger'
-    )
+      }
+    })
   }
 
   if (loading) {
@@ -137,13 +152,12 @@ export default function SupervisorPresentationsPage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <label className="text-gray-700 font-medium">الهاكاثون:</label>
+            <label className="text-gray-700 font-medium">اختر الهاكاثون:</label>
             <Select value={selectedHackathon} onValueChange={setSelectedHackathon}>
               <SelectTrigger className="w-64">
-                <SelectValue />
+                <SelectValue placeholder="اختر هاكاثون" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">جميع الهاكاثونات</SelectItem>
                 {hackathons.map((h) => (
                   <SelectItem key={h.id} value={h.id}>
                     {h.title}
@@ -151,6 +165,11 @@ export default function SupervisorPresentationsPage() {
                 ))}
               </SelectContent>
             </Select>
+            {selectedHackathon && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                {hackathons.find(h => h.id === selectedHackathon)?.title}
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -303,8 +322,6 @@ export default function SupervisorPresentationsPage() {
           )}
         </CardContent>
       </Card>
-
-      <ModalComponents />
     </div>
   )
 }

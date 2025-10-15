@@ -175,50 +175,38 @@ export interface EmailTemplates {
 
 /**
  * Get email templates with priority:
- * 1. Hackathon-specific templates (if hackathonId provided)
- * 2. Global custom templates
- * 3. Default templates
+ * 1. Database EmailTemplate table (by templateKey)
+ * 2. Default hardcoded templates
  */
 export async function getEmailTemplates(hackathonId?: string): Promise<EmailTemplates> {
   try {
     let templates = { ...DEFAULT_TEMPLATES }
 
-    // Get global custom templates from email_templates table
+    // Get templates from EmailTemplate table
     try {
-      const { PrismaClient } = await import('@prisma/client')
-      const prismaClient = new PrismaClient()
+      const dbTemplates = await prisma.emailTemplate.findMany({
+        where: { isActive: true }
+      })
       
-      const globalTemplates = await prismaClient.$queryRaw`
-        SELECT * FROM email_templates 
-        WHERE id = 'global_templates'
-        LIMIT 1
-      ` as any[]
-      
-      if (globalTemplates.length > 0) {
-        const customTemplates = JSON.parse(globalTemplates[0].htmlContent || '{}')
-        templates = { ...templates, ...customTemplates }
-        console.log('✅ Loaded custom email templates from database')
-      }
-      
-      await prismaClient.$disconnect()
-    } catch (error: any) {
-      console.log('⚠️ No global templates found, using defaults:', error?.message || 'Unknown error')
-    }
-
-    // Get hackathon-specific templates if hackathonId provided
-    if (hackathonId) {
-      try {
-        const hackathon = await prisma.hackathon.findUnique({
-          where: { id: hackathonId },
-          select: { emailTemplates: true }
+      if (dbTemplates && dbTemplates.length > 0) {
+        console.log(`✅ Loaded ${dbTemplates.length} email templates from database`)
+        
+        // Map database templates to our template structure
+        dbTemplates.forEach(dbTemplate => {
+          const templateKey = dbTemplate.templateKey as keyof EmailTemplates
+          if (DEFAULT_TEMPLATES[templateKey]) {
+            templates[templateKey] = {
+              subject: dbTemplate.subject,
+              body: dbTemplate.bodyHtml || dbTemplate.bodyText || DEFAULT_TEMPLATES[templateKey].body
+            }
+          }
         })
-        if (hackathon?.emailTemplates) {
-          const hackathonTemplates = hackathon.emailTemplates as any
-          templates = { ...templates, ...hackathonTemplates }
-        }
-      } catch (error) {
-        console.log('No hackathon-specific templates found')
+      } else {
+        console.log('⚠️ No active templates in database, using defaults')
       }
+    } catch (error: any) {
+      console.log('⚠️ Error loading templates from database:', error?.message || 'Unknown error')
+      console.log('📋 Falling back to default templates')
     }
 
     return templates

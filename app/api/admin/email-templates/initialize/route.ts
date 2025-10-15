@@ -127,6 +127,90 @@ async function initializeTemplates() {
     variables: { 'userName': 'اسم المستخدم', 'userEmail': 'البريد الإلكتروني' },
     isSystem: true,
     isActive: true
+  },
+  {
+    templateKey: 'team_formation',
+    nameAr: 'تشكيل الفريق',
+    nameEn: 'Team Formation',
+    category: 'team',
+    subject: 'تم تشكيل فريقك - {{hackathonTitle}}',
+    description: 'يُرسل عند إنشاء الفريق وتوزيع الأعضاء',
+    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2>مرحباً {{participantName}}</h2><p>تم تشكيل فريقك بنجاح!</p><div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;"><h3>تفاصيل الفريق:</h3><p><strong>اسم الفريق:</strong> {{teamName}}</p><p><strong>رقم الفريق:</strong> {{teamNumber}}</p></div></div>',
+    variables: { 'participantName': 'اسم المشارك', 'hackathonTitle': 'عنوان الهاكاثون', 'teamName': 'اسم الفريق', 'teamNumber': 'رقم الفريق' },
+    isSystem: true,
+    isActive: true
+  },
+  {
+    templateKey: 'team_member_added',
+    nameAr: 'إضافة عضو للفريق',
+    nameEn: 'Team Member Added',
+    category: 'team',
+    subject: 'تم إضافتك لفريق {{teamName}}',
+    description: 'يُرسل عند نقل مشارك لفريق جديد',
+    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2>مرحباً {{participantName}}</h2><p>تم إضافتك للفريق <strong>{{teamName}}</strong> في هاكاثون {{hackathonTitle}}.</p></div>',
+    variables: { 'participantName': 'اسم المشارك', 'hackathonTitle': 'عنوان الهاكاثون', 'teamName': 'اسم الفريق' },
+    isSystem: true,
+    isActive: true
+  },
+  {
+    templateKey: 'team_member_removed',
+    nameAr: 'إزالة عضو من الفريق',
+    nameEn: 'Team Member Removed',
+    category: 'team',
+    subject: 'تحديث على فريقك - {{hackathonTitle}}',
+    description: 'يُرسل عند إزالة عضو من فريق',
+    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2>مرحباً {{participantName}}</h2><p>تم تحديث فريقك <strong>{{teamName}}</strong>.</p></div>',
+    variables: { 'participantName': 'اسم المشارك', 'hackathonTitle': 'عنوان الهاكاثون', 'teamName': 'اسم الفريق' },
+    isSystem: true,
+    isActive: true
+  },
+  {
+    templateKey: 'reminder',
+    nameAr: 'تذكير عام',
+    nameEn: 'General Reminder',
+    category: 'general',
+    subject: 'تذكير: {{hackathonTitle}}',
+    description: 'تذكير عام للمشاركين',
+    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2>تذكير</h2><p>{{reminderMessage}}</p></div>',
+    variables: { 'hackathonTitle': 'عنوان الهاكاثون', 'reminderMessage': 'رسالة التذكير' },
+    isSystem: true,
+    isActive: true
+  },
+  {
+    templateKey: 'evaluation_results',
+    nameAr: 'نتائج التقييم',
+    nameEn: 'Evaluation Results',
+    category: 'team',
+    subject: 'نتائج التقييم - {{hackathonTitle}}',
+    description: 'يُرسل مع نتائج التقييم للفرق',
+    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2>مرحباً فريق {{teamName}}</h2><p>تم الانتهاء من التقييم!</p><p><strong>النتيجة:</strong> {{totalScore}}</p></div>',
+    variables: { 'teamName': 'اسم الفريق', 'hackathonTitle': 'عنوان الهاكاثون', 'totalScore': 'النتيجة الإجمالية' },
+    isSystem: true,
+    isActive: true
+  },
+  {
+    templateKey: 'certificate_ready',
+    nameAr: 'الشهادة جاهزة',
+    nameEn: 'Certificate Ready',
+    category: 'certificate',
+    subject: 'شهادتك جاهزة - {{hackathonTitle}}',
+    description: 'يُرسل عند جاهزية شهادة المشارك',
+    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2>مرحباً {{participantName}}</h2><p>شهادتك جاهزة! يمكنك تحميلها من الرابط التالي:</p><p><a href="{{certificateUrl}}" style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">تحميل الشهادة</a></p></div>',
+    variables: { 'participantName': 'اسم المشارك', 'hackathonTitle': 'عنوان الهاكاثون', 'certificateUrl': 'رابط الشهادة' },
+    isSystem: true,
+    isActive: true
+  },
+  {
+    templateKey: 'welcome',
+    nameAr: 'ترحيب في الهاكاثون',
+    nameEn: 'Welcome to Hackathon',
+    category: 'participant',
+    subject: 'أهلاً بك في {{hackathonTitle}}',
+    description: 'رسالة ترحيب عامة',
+    bodyHtml: '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;"><h2>مرحباً {{participantName}}</h2><p>أهلاً بك في {{hackathonTitle}}!</p></div>',
+    variables: { 'participantName': 'اسم المشارك', 'hackathonTitle': 'عنوان الهاكاثون' },
+    isSystem: true,
+    isActive: true
   }
   ]
 
