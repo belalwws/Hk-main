@@ -3,14 +3,14 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ participantId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { participantId } = await params
+    const { id } = await params
 
     // Fetch participant with all details
     const participant = await prisma.participant.findUnique({
-      where: { id: participantId },
+      where: { id },
       include: {
         user: {
           select: {
