@@ -151,7 +151,20 @@ export default function HackathonRegisterFormPage() {
 
     // Check if the condition is met
     const watchFieldValue = formData[field.conditional.showWhen]
-    return watchFieldValue === field.conditional.showWhenValue
+    const shouldShow = watchFieldValue === field.conditional.showWhenValue
+    
+    // Debug logging
+    if (field.conditional?.enabled) {
+      console.log('🔍 Conditional Field Check:', {
+        fieldLabel: field.label,
+        watchField: field.conditional.showWhen,
+        expectedValue: field.conditional.showWhenValue,
+        actualValue: watchFieldValue,
+        shouldShow
+      })
+    }
+    
+    return shouldShow
   }
 
   const handleFieldChange = (fieldId: string, value: any) => {
@@ -318,11 +331,12 @@ export default function HackathonRegisterFormPage() {
               value={formData[field.id] || ''}
               onValueChange={(value) => handleFieldChange(field.id, value)}
               className="mt-2 space-y-3"
+              dir="rtl"
             >
               {field.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                  <RadioGroupItem value={option} id={`${field.id}_${option}`} className="ml-3" />
-                  <Label htmlFor={`${field.id}_${option}`} className="mr-2 text-base cursor-pointer flex-1">
+                <div key={option} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors" dir="rtl">
+                  <RadioGroupItem value={option} id={`${field.id}_${option}`} />
+                  <Label htmlFor={`${field.id}_${option}`} className="text-base cursor-pointer flex-1 text-right">
                     {option}
                   </Label>
                 </div>
@@ -343,14 +357,13 @@ export default function HackathonRegisterFormPage() {
             </Label>
             <div className="mt-2 space-y-3">
               {field.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                <div key={option} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors" dir="rtl">
                   <Checkbox
                     id={`${field.id}_${option}`}
                     checked={(formData[field.id] || []).includes(option)}
                     onCheckedChange={(checked) => handleCheckboxChange(field.id, option, checked as boolean)}
-                    className="ml-3"
                   />
-                  <Label htmlFor={`${field.id}_${option}`} className="mr-2 text-base cursor-pointer flex-1">
+                  <Label htmlFor={`${field.id}_${option}`} className="text-base cursor-pointer flex-1 text-right">
                     {option}
                   </Label>
                 </div>

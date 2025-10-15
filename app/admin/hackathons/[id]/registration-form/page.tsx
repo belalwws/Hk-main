@@ -902,13 +902,15 @@ export default function HackathonRegistrationFormPage() {
                                 إضافة خيار
                               </Button>
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2" dir="rtl">
                               {field.options?.map((option, optionIndex) => (
-                                <div key={optionIndex} className="flex items-center gap-2">
+                                <div key={optionIndex} className="flex items-center gap-2" dir="rtl">
                                   <Input
                                     value={option}
                                     onChange={(e) => updateOption(field.id, optionIndex, e.target.value)}
                                     placeholder={`خيار ${optionIndex + 1}`}
+                                    className="text-right"
+                                    dir="rtl"
                                   />
                                   <Button
                                     variant="destructive"
