@@ -27,6 +27,12 @@ interface Hackathon {
   status: string
   maxParticipants: number
   currentParticipants: number
+  stats?: {
+    totalParticipants: number
+    approvedParticipants: number
+    pendingParticipants: number
+    totalTeams: number
+  }
 }
 
 export default function SupervisorHackathons() {
@@ -35,7 +41,6 @@ export default function SupervisorHackathons() {
   const [assignedHackathons, setAssignedHackathons] = useState<Hackathon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [activeTab, setActiveTab] = useState<'assigned' | 'all'>('assigned')
 
   useEffect(() => {
     fetchHackathons()
@@ -46,7 +51,7 @@ export default function SupervisorHackathons() {
       setLoading(true)
       setError("")
 
-      // Fetch dashboard to get assigned hackathons
+      // Fetch dashboard to get assigned hackathons with statistics
       const dashboardRes = await fetch("/api/supervisor/dashboard", { credentials: 'include' })
       
       if (dashboardRes.ok) {
@@ -54,23 +59,46 @@ export default function SupervisorHackathons() {
         console.log("Dashboard data:", dashboardData)
         
         if (dashboardData.supervisor?.hackathons && dashboardData.supervisor.hackathons.length > 0) {
-          setAssignedHackathons(dashboardData.supervisor.hackathons)
+          // Fetch detailed stats for each hackathon
+          const hackathonsWithStats = await Promise.all(
+            dashboardData.supervisor.hackathons.map(async (hackathon: any) => {
+              try {
+                const statsRes = await fetch(`/api/supervisor/hackathons/${hackathon.id}`, { credentials: 'include' })
+                if (statsRes.ok) {
+                  const statsData = await statsRes.json()
+                  return {
+                    ...hackathon,
+                    currentParticipants: statsData.hackathon?.stats?.totalParticipants || 0,
+                    maxParticipants: statsData.hackathon?.maxParticipants || 0,
+                    location: statsData.hackathon?.location || 'غير محدد',
+                    stats: statsData.hackathon?.stats
+                  }
+                }
+                return {
+                  ...hackathon,
+                  currentParticipants: 0,
+                  maxParticipants: 0,
+                  location: 'غير محدد'
+                }
+              } catch (error) {
+                console.error(`Error fetching stats for hackathon ${hackathon.id}:`, error)
+                return {
+                  ...hackathon,
+                  currentParticipants: 0,
+                  maxParticipants: 0,
+                  location: 'غير محدد'
+                }
+              }
+            })
+          )
+          setAssignedHackathons(hackathonsWithStats)
         } else {
-          // No assigned hackathons - show message
           setAssignedHackathons([])
           console.log("No assigned hackathons")
         }
       } else {
         const errorData = await dashboardRes.json()
         console.error("Dashboard error:", errorData)
-      }
-
-      // Fetch all hackathons
-      const allHackathonsRes = await fetch("/api/hackathons/active", { credentials: 'include' })
-      
-      if (allHackathonsRes.ok) {
-        const allData = await allHackathonsRes.json()
-        setHackathons(allData.hackathons || [])
       }
     } catch (error) {
       console.error("Error fetching hackathons:", error)
@@ -122,28 +150,8 @@ export default function SupervisorHackathons() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">إدارة الهاكاثونات</h1>
           <p className="text-gray-600 mt-2">
-            استعرض وأدر الهاكاثونات المعينة لك أو جميع الهاكاثونات المتاحة
+            استعرض وأدر الهاكاثونات المعينة لك
           </p>
-        </div>
-
-        {/* Tab Buttons */}
-        <div className="flex gap-2">
-          <Button
-            variant={activeTab === 'assigned' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('assigned')}
-            className="flex items-center gap-2"
-          >
-            <UserCheck className="w-4 h-4" />
-            هاكاثوناتي ({assignedHackathons.length})
-          </Button>
-          <Button
-            variant={activeTab === 'all' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('all')}
-            className="flex items-center gap-2"
-          >
-            <Trophy className="w-4 h-4" />
-            جميع الهاكاثونات ({hackathons.length})
-          </Button>
         </div>
       </div>
 
@@ -157,30 +165,10 @@ export default function SupervisorHackathons() {
         </Alert>
       )}
 
-      {/* Assigned Hackathons Alert */}
-      {activeTab === 'assigned' && assignedHackathons.length > 0 && (
-        <Alert className="border-green-200 bg-green-50">
-          <UserCheck className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-700">
-            لديك صلاحيات كاملة لإدارة الهاكاثونات المعينة لك بما في ذلك: قبول المشاركين، إدارة الفرق، التكوين التلقائي للفرق، ونقل الأعضاء.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Info Alert for All Tab */}
-      {activeTab === 'all' && (
-        <Alert className="border-blue-200 bg-blue-50">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-700">
-            للحصول على صلاحيات الإشراف على هاكاثون معين، يرجى التواصل مع الإدارة.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Hackathons Grid */}
-      {(activeTab === 'assigned' ? assignedHackathons : hackathons).length > 0 ? (
+      {assignedHackathons.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(activeTab === 'assigned' ? assignedHackathons : hackathons).map((hackathon) => (
+          {assignedHackathons.map((hackathon) => (
             <Card key={hackathon.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -217,26 +205,37 @@ export default function SupervisorHackathons() {
                   </div>
                 </div>
 
+                {/* Statistics */}
+                {hackathon.stats && (
+                  <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t">
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <p className="text-xs text-blue-600 mb-1">إجمالي المتقدمين</p>
+                      <p className="text-2xl font-bold text-blue-700">{hackathon.stats.totalParticipants}</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3">
+                      <p className="text-xs text-green-600 mb-1">مقبول</p>
+                      <p className="text-2xl font-bold text-green-700">{hackathon.stats.approvedParticipants}</p>
+                    </div>
+                    <div className="bg-yellow-50 rounded-lg p-3">
+                      <p className="text-xs text-yellow-600 mb-1">في الانتظار</p>
+                      <p className="text-2xl font-bold text-yellow-700">{hackathon.stats.pendingParticipants}</p>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-3">
+                      <p className="text-xs text-purple-600 mb-1">عدد الفرق</p>
+                      <p className="text-2xl font-bold text-purple-700">{hackathon.stats.totalTeams}</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="pt-4 border-t">
                   <div className="flex gap-2">
-                    {activeTab === 'assigned' ? (
-                      <Button
-                        variant="default"
-                        className="flex-1"
-                        onClick={() => window.location.href = `/supervisor/hackathons/${hackathon.id}`}
-                      >
-                        إدارة الهاكاثون
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        disabled={hackathon.status !== 'open'}
-                      >
-                        <ExternalLink className="w-4 h-4 ml-2" />
-                        عرض التفاصيل
-                      </Button>
-                    )}
+                    <Button
+                      variant="default"
+                      className="flex-1"
+                      onClick={() => window.location.href = `/supervisor/hackathons/${hackathon.id}`}
+                    >
+                      إدارة الهاكاثون
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -248,16 +247,10 @@ export default function SupervisorHackathons() {
           <CardContent className="text-center py-12">
             <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {activeTab === 'assigned'
-                ? "لم يتم تعيينك لأي هاكاثون بعد"
-                : "لا توجد هاكاثونات متاحة حالياً"
-              }
+              لم يتم تعيينك لأي هاكاثون بعد
             </h3>
             <p className="text-gray-600">
-              {activeTab === 'assigned'
-                ? "تواصل مع الإدارة للحصول على تعيين لهاكاثون معين"
-                : "سيتم عرض الهاكاثونات المتاحة هنا عند إضافتها"
-              }
+              تواصل مع الإدارة للحصول على تعيين لهاكاثون معين
             </p>
           </CardContent>
         </Card>
