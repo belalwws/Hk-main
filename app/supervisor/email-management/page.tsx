@@ -73,6 +73,7 @@ export default function SupervisorEmailManagementPage() {
   const [previewMode, setPreviewMode] = useState(false)
   const [simpleMode, setSimpleMode] = useState(true) // محرر بسيط أو متقدم
   const [simpleText, setSimpleText] = useState('') // النص البسيط للمحرر
+  const [testEmail, setTestEmail] = useState('') // الإيميل التجريبي
 
   // Custom email state
   const [customEmail, setCustomEmail] = useState({
@@ -410,26 +411,61 @@ export default function SupervisorEmailManagementPage() {
   }
 
   const sendTestEmail = async (template: EmailTemplate) => {
+    // التحقق من إدخال الإيميل
+    if (!testEmail || !testEmail.trim()) {
+      toast({
+        title: "⚠️ تنبيه",
+        description: "يرجى إدخال البريد الإلكتروني التجريبي أولاً",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // التحقق من صحة الإيميل
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(testEmail.trim())) {
+      toast({
+        title: "⚠️ تنبيه",
+        description: "يرجى إدخال بريد إلكتروني صحيح",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
+      console.log('📧 Sending test email for template:', template.templateKey)
+      console.log('📧 Test email address:', testEmail.trim())
+
       const response = await fetch('/api/admin/email-templates/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           templateKey: template.templateKey,
-          testEmail: 'admin@example.com' // يمكن تخصيصه
+          testEmail: testEmail.trim()
         })
       })
 
+      console.log('📡 Test email response status:', response.status)
+
       if (response.ok) {
+        const data = await response.json()
+        console.log('✅ Test email sent successfully:', data)
+
         toast({
           title: "✅ تم الإرسال",
-          description: "تم إرسال إيميل تجريبي بنجاح"
+          description: `تم إرسال إيميل تجريبي إلى ${testEmail.trim()}`
         })
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ Test email failed:', response.status, errorData)
+        throw new Error(errorData.error || 'Failed to send test email')
       }
     } catch (error) {
+      console.error('❌ Error sending test email:', error)
       toast({
         title: "خطأ",
-        description: "فشل إرسال الإيميل التجريبي",
+        description: error instanceof Error ? error.message : "فشل إرسال الإيميل التجريبي",
         variant: "destructive"
       })
     }
@@ -712,7 +748,20 @@ export default function SupervisorEmailManagementPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between text-slate-800">
                     <span>تحرير القالب: {selectedTemplate.nameAr}</span>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      {/* حقل الإيميل التجريبي */}
+                      <div className="flex items-center gap-2 border border-slate-200 rounded-md px-3 py-1.5 bg-white">
+                        <Mail className="w-4 h-4 text-slate-400" />
+                        <input
+                          type="email"
+                          value={testEmail}
+                          onChange={(e) => setTestEmail(e.target.value)}
+                          placeholder="بريد تجريبي..."
+                          className="outline-none text-sm w-48 text-slate-700 placeholder:text-slate-400"
+                          dir="ltr"
+                        />
+                      </div>
+
                       <Button
                         variant="outline"
                         size="sm"
