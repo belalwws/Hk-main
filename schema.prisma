@@ -390,6 +390,7 @@ model HackathonForm {
   hackathonId  String   @unique
   title        String
   description  String?
+  coverImage   String?  // Cover image URL from Cloudinary
   isActive     Boolean  @default(true)
   fields       String   // JSON string of form fields
   settings     String   // JSON string of form settings

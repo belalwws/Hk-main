@@ -29,7 +29,10 @@ import {
   Copy,
   CheckCircle2,
   Globe,
-  Clock
+  Clock,
+  Upload,
+  Image as ImageIcon,
+  X
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -55,6 +58,7 @@ interface RegistrationForm {
   hackathonId: string
   title: string
   description: string
+  coverImage?: string
   isActive: boolean
   fields: FormField[]
   settings: {
@@ -71,6 +75,7 @@ export default function HackathonRegistrationFormPage() {
   const hackathonId = params.id as string
   
   const [loading, setLoading] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
   const [hackathon, setHackathon] = useState<any>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [apiKey, setApiKey] = useState<string>('')
@@ -269,6 +274,53 @@ export default function HackathonRegistrationFormPage() {
     }
   }
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('يرجى اختيار صورة فقط')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('حجم الصورة يجب أن لا يتجاوز 5 ميجابايت')
+      return
+    }
+
+    setUploadingCover(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'hackathon-forms')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.url) {
+        setForm(prev => ({ ...prev, coverImage: data.url }))
+        alert('✅ تم رفع صورة الغلاف بنجاح!')
+      } else {
+        alert('❌ فشل رفع الصورة: ' + (data.error || 'خطأ غير معروف'))
+      }
+    } catch (error) {
+      console.error('Error uploading cover:', error)
+      alert('❌ حدث خطأ أثناء رفع الصورة')
+    } finally {
+      setUploadingCover(false)
+    }
+  }
+
+  const removeCoverImage = () => {
+    setForm(prev => ({ ...prev, coverImage: undefined }))
+  }
+
   const saveForm = async () => {
     if (!form.title.trim()) {
       alert('يرجى إدخال عنوان النموذج')
@@ -394,6 +446,66 @@ export default function HackathonRegistrationFormPage() {
                     rows={3}
                     className="mt-1"
                   />
+                </div>
+
+                {/* Cover Image Upload */}
+                <div>
+                  <Label htmlFor="coverImage" className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4" />
+                    صورة الغلاف
+                  </Label>
+                  <div className="mt-2 space-y-3">
+                    {form.coverImage ? (
+                      <div className="relative">
+                        <img
+                          src={form.coverImage}
+                          alt="Cover"
+                          className="w-full h-48 object-cover rounded-lg border-2 border-gray-200"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={removeCoverImage}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          حذف
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#01645e] transition-colors">
+                        <input
+                          type="file"
+                          id="coverImage"
+                          accept="image/*"
+                          onChange={handleCoverUpload}
+                          disabled={uploadingCover}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="coverImage"
+                          className="cursor-pointer flex flex-col items-center gap-3"
+                        >
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                            {uploadingCover ? (
+                              <div className="w-6 h-6 border-2 border-[#01645e] border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Upload className="w-8 h-8 text-gray-400" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              {uploadingCover ? 'جاري الرفع...' : 'انقر لرفع صورة الغلاف'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              PNG, JPG, GIF حتى 5MB
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-2">

@@ -30,6 +30,7 @@ export async function GET(
             hackathonId: existingForm.hackathonId,
             title: existingForm.title,
             description: existingForm.description,
+            coverImage: (existingForm as any).coverImage,
             isActive: existingForm.isActive,
             fields: JSON.parse(existingForm.fields),
             settings: JSON.parse(existingForm.settings)
@@ -66,7 +67,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { title, description, isActive, fields, settings } = body
+    const { title, description, coverImage, isActive, fields, settings } = body
 
     // Validate required fields
     if (!title?.trim()) {
@@ -118,10 +119,11 @@ export async function POST(
           data: {
             title,
             description: description || '',
+            coverImage: coverImage || null,
             isActive: isActive ?? true,
             fields: fieldsJson,
             settings: settingsJson
-          }
+          } as any
         })
 
         console.log('✅ Form updated successfully:', {
@@ -137,10 +139,11 @@ export async function POST(
             hackathonId: params.id,
             title,
             description: description || '',
+            coverImage: coverImage || null,
             isActive: isActive ?? true,
             fields: fieldsJson,
             settings: settingsJson
-          }
+          } as any
         })
 
         console.log('✅ Form created successfully:', {
