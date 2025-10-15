@@ -11,11 +11,12 @@ import {
   Users,
   Trophy,
   CheckCircle,
-  TrendingUp,
   AlertCircle,
   Activity,
-  UserCircle,
-  MessageSquare
+  MessageSquare,
+  Target,
+  BarChart3,
+  UserCircle
 } from "lucide-react"
 import {
   Dialog,
@@ -305,16 +306,16 @@ export default function SupervisorDashboard() {
       </Dialog>
 
       {/* Welcome Section */}
-      <div className="bg-gradient-to-br from-[#01645e] via-[#3ab666] to-[#c3e956] rounded-xl p-8 text-white shadow-lg">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-2xl border-2 border-white/30">
+      <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-8 border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-5 mb-4">
+          <div className="w-20 h-20 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-md">
             {supervisor?.name?.charAt(0).toUpperCase() || 'م'}
           </div>
           <div>
-            <h1 className="text-3xl font-bold mb-1">
+            <h1 className="text-3xl font-bold mb-2 text-slate-800">
               مرحباً {supervisor?.name || 'بك'} 👋
             </h1>
-            <p className="text-white/90 text-lg">
+            <p className="text-slate-600 text-lg">
               {supervisor?.hackathons && supervisor.hackathons.length > 0
                 ? `إدارة ${supervisor.hackathons.length} هاكاثون${supervisor.hackathons.length > 1 ? 'ات' : ''}`
                 : supervisor?.hackathon
@@ -326,11 +327,11 @@ export default function SupervisorDashboard() {
         </div>
         <div className="flex flex-wrap gap-2 mt-4">
           {supervisor?.department && (
-            <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white px-3 py-1">
+            <Badge className="bg-slate-200 hover:bg-slate-300 text-slate-700 border-0 px-3 py-1.5 font-medium">
               📍 {supervisor.department}
             </Badge>
           )}
-          <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white px-3 py-1">
+          <Badge className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border-0 px-3 py-1.5 font-medium">
             👨‍🏫 مشرف معتمد
           </Badge>
         </div>
@@ -340,20 +341,20 @@ export default function SupervisorDashboard() {
       {supervisor && (
         <>
           {supervisor.isGeneralSupervisor && (
-            <Alert className="border-green-200 bg-green-50">
-              <AlertCircle className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-800">مشرف عام</AlertTitle>
-              <AlertDescription className="text-green-700">
+            <Alert className="border-emerald-200 bg-emerald-50">
+              <AlertCircle className="h-5 w-5 text-emerald-600" />
+              <AlertTitle className="text-emerald-800 font-semibold">مشرف عام</AlertTitle>
+              <AlertDescription className="text-emerald-700">
                 أنت مشرف عام على جميع الهاكاثونات. يمكنك الوصول لجميع البيانات والإحصائيات.
               </AlertDescription>
             </Alert>
           )}
 
           {!supervisor.isGeneralSupervisor && supervisor.hackathons && supervisor.hackathons.length === 0 && (
-            <Alert className="border-blue-200 bg-blue-50">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              <AlertTitle className="text-blue-800">مرحباً بك!</AlertTitle>
-              <AlertDescription className="text-blue-700">
+            <Alert className="border-sky-200 bg-sky-50">
+              <AlertCircle className="h-5 w-5 text-sky-600" />
+              <AlertTitle className="text-sky-800 font-semibold">مرحباً بك!</AlertTitle>
+              <AlertDescription className="text-sky-700">
                 لم يتم تعيينك لهاكاثون محدد بعد. يمكنك استخدام الأدوات العامة أو انتظار تعيينك من قبل الإدارة.
                 <br />
                 <strong>الأدوات المتاحة:</strong> إدارة المشاركين، إدارة الفرق، إرسال الرسائل، والتقارير.
@@ -362,10 +363,10 @@ export default function SupervisorDashboard() {
           )}
 
           {!supervisor.isGeneralSupervisor && supervisor.hackathons && supervisor.hackathons.length > 0 && (
-            <Alert className="border-purple-200 bg-purple-50">
-              <AlertCircle className="h-4 w-4 text-purple-600" />
-              <AlertTitle className="text-purple-800">هاكاثوناتك المعينة</AlertTitle>
-              <AlertDescription className="text-purple-700">
+            <Alert className="border-indigo-200 bg-indigo-50">
+              <AlertCircle className="h-5 w-5 text-indigo-600" />
+              <AlertTitle className="text-indigo-800 font-semibold">هاكاثوناتك المعينة</AlertTitle>
+              <AlertDescription className="text-indigo-700">
                 أنت مشرف على {supervisor.hackathons.length} هاكاثون. يمكنك إدارة المشاركين والفرق في هذه الهاكاثونات.
               </AlertDescription>
             </Alert>
@@ -374,72 +375,72 @@ export default function SupervisorDashboard() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover:shadow-lg transition-all hover:scale-105 border-l-4 border-l-blue-500">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-md transition-all duration-300 border border-slate-200 bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1 font-medium">إجمالي المشاركين</p>
-                <p className="text-4xl font-bold text-blue-600 mb-2">{stats.totalParticipants}</p>
+                <p className="text-sm text-slate-600 mb-2 font-medium">إجمالي المشاركين</p>
+                <p className="text-3xl font-bold text-slate-800 mb-3">{stats.totalParticipants}</p>
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-blue-100 text-blue-800 text-xs">
+                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
                     {stats.approvedParticipants} معتمد
                   </Badge>
-                  <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                  <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium">
                     {stats.pendingParticipants} قيد المراجعة
                   </Badge>
                 </div>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Users className="w-7 h-7 text-white" />
+              <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center">
+                <Users className="w-8 h-8 text-slate-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-all hover:scale-105 border-l-4 border-l-green-500">
+        <Card className="hover:shadow-md transition-all duration-300 border border-emerald-200 bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1 font-medium">المعتمدين</p>
-                <p className="text-4xl font-bold text-green-600 mb-2">{stats.approvedParticipants}</p>
-                <p className="text-sm text-gray-500 flex items-center gap-1">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                <p className="text-sm text-slate-600 mb-2 font-medium">المعتمدين</p>
+                <p className="text-3xl font-bold text-emerald-700 mb-3">{stats.approvedParticipants}</p>
+                <p className="text-sm text-slate-500 flex items-center gap-1">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
                   جاهزون للمشاركة
                 </p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                <CheckCircle className="w-7 h-7 text-white" />
+              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-emerald-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-all hover:scale-105 border-l-4 border-l-purple-500">
+        <Card className="hover:shadow-md transition-all duration-300 border border-indigo-200 bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1 font-medium">إجمالي الفرق</p>
-                <p className="text-4xl font-bold text-purple-600 mb-2">{stats.totalTeams}</p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-600 mb-2 font-medium">إجمالي الفرق</p>
+                <p className="text-3xl font-bold text-indigo-700 mb-3">{stats.totalTeams}</p>
+                <p className="text-sm text-slate-500">
                   {stats.activeTeams} فريق نشط
                 </p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Trophy className="w-7 h-7 text-white" />
+              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                <Trophy className="w-8 h-8 text-indigo-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-all hover:scale-105 border-l-4 border-l-orange-500">
+        <Card className="hover:shadow-md transition-all duration-300 border border-sky-200 bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1 font-medium">مشاريع مكتملة</p>
-                <p className="text-4xl font-bold text-orange-600 mb-2">{stats.completedProjects}</p>
-                <p className="text-sm text-gray-500 flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4 text-orange-600" />
+                <p className="text-sm text-slate-600 mb-2 font-medium">مشاريع مكتملة</p>
+                <p className="text-3xl font-bold text-sky-700 mb-3">{stats.completedProjects}</p>
+                <p className="text-sm text-slate-500 flex items-center gap-1">
+                  <Target className="w-4 h-4 text-sky-600" />
                   تم التسليم
                 </p>
               </div>
@@ -453,37 +454,37 @@ export default function SupervisorDashboard() {
 
       {/* Assigned Hackathons */}
       {supervisor && supervisor.hackathons && supervisor.hackathons.length > 0 && (
-        <Card>
+        <Card className="border-slate-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-purple-600" />
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <Trophy className="w-5 h-5 text-indigo-600" />
               الهاكاثونات المعينة ({supervisor.hackathons.length})
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600">
               الهاكاثونات التي تشرف عليها حالياً
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {supervisor.hackathons.map((hackathon) => (
-                <div key={hackathon.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div key={hackathon.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Trophy className="w-5 h-5 text-purple-600" />
+                    <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
+                      <Trophy className="w-6 h-6 text-indigo-600" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900">{hackathon.title}</h4>
-                      <p className="text-sm text-gray-500">
+                      <h4 className="font-semibold text-slate-800">{hackathon.title}</h4>
+                      <p className="text-sm text-slate-500">
                         {new Date(hackathon.startDate).toLocaleDateString('ar-EG')} - {new Date(hackathon.endDate).toLocaleDateString('ar-EG')}
                       </p>
                     </div>
                   </div>
                   <Badge
                     className={
-                      hackathon.status === 'open' ? 'bg-green-100 text-green-800' :
-                      hackathon.status === 'closed' ? 'bg-red-100 text-red-800' :
-                      hackathon.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                      'bg-yellow-100 text-yellow-800'
+                      hackathon.status === 'open' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      hackathon.status === 'closed' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                      hackathon.status === 'completed' ? 'bg-slate-100 text-slate-700 border-slate-200' :
+                      'bg-amber-50 text-amber-700 border-amber-200'
                     }
                   >
                     {hackathon.status === 'open' ? 'مفتوح' :
@@ -499,29 +500,29 @@ export default function SupervisorDashboard() {
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="border-slate-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-slate-800">
+              <Activity className="w-5 h-5 text-slate-600" />
               النشاط الأخير
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600">
               آخر الأحداث والتحديثات في النظام
             </CardDescription>
           </CardHeader>
           <CardContent>
             {recentActivity.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">
+                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100">
                     <div className={`p-2 rounded-lg ${getStatusColor(activity.status)}`}>
                       {getActivityIcon(activity.type)}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-slate-800">
                         {activity.message}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-slate-500 mt-1">
                         {activity.timestamp}
                       </p>
                     </div>
@@ -529,11 +530,11 @@ export default function SupervisorDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>لا توجد أنشطة حديثة</p>
+              <div className="text-center py-12 text-slate-500">
+                <Activity className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                <p className="font-medium">لا توجد أنشطة حديثة</p>
                 {supervisor && (!supervisor.hackathons || supervisor.hackathons.length === 0) && !supervisor.isGeneralSupervisor && (
-                  <p className="text-sm mt-2">
+                  <p className="text-sm mt-2 text-slate-400">
                     ستظهر الأنشطة هنا بعد تعيينك لهاكاثون
                   </p>
                 )}
@@ -543,46 +544,46 @@ export default function SupervisorDashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className="border-slate-200">
           <CardHeader>
-            <CardTitle>إجراءات سريعة</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-slate-800">إجراءات سريعة</CardTitle>
+            <CardDescription className="text-slate-600">
               الإجراءات الأكثر استخداماً
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
-                className="h-20 flex-col gap-2 hover:bg-blue-50 hover:border-blue-300"
+                className="h-24 flex-col gap-2 hover:bg-slate-50 hover:border-slate-300 border-slate-200 transition-all"
                 onClick={() => router.push('/supervisor/participants')}
               >
-                <Users className="w-6 h-6" />
-                <span className="text-sm">مراجعة المشاركين</span>
+                <Users className="w-7 h-7 text-slate-600" />
+                <span className="text-sm font-medium text-slate-700">مراجعة المشاركين</span>
               </Button>
               <Button
                 variant="outline"
-                className="h-20 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300"
+                className="h-24 flex-col gap-2 hover:bg-indigo-50 hover:border-indigo-300 border-slate-200 transition-all"
                 onClick={() => router.push('/supervisor/teams')}
               >
-                <Trophy className="w-6 h-6" />
-                <span className="text-sm">إدارة الفرق</span>
+                <Trophy className="w-7 h-7 text-indigo-600" />
+                <span className="text-sm font-medium text-slate-700">إدارة الفرق</span>
               </Button>
               <Button
                 variant="outline"
-                className="h-20 flex-col gap-2 hover:bg-green-50 hover:border-green-300"
+                className="h-24 flex-col gap-2 hover:bg-sky-50 hover:border-sky-300 border-slate-200 transition-all"
                 onClick={() => router.push('/supervisor/messages')}
               >
-                <MessageSquare className="w-6 h-6" />
-                <span className="text-sm">إرسال رسائل</span>
+                <MessageSquare className="w-7 h-7 text-sky-600" />
+                <span className="text-sm font-medium text-slate-700">إرسال رسائل</span>
               </Button>
               <Button
                 variant="outline"
-                className="h-20 flex-col gap-2 hover:bg-orange-50 hover:border-orange-300"
+                className="h-24 flex-col gap-2 hover:bg-emerald-50 hover:border-emerald-300 border-slate-200 transition-all"
                 onClick={() => router.push('/supervisor/reports')}
               >
-                <Activity className="w-6 h-6" />
-                <span className="text-sm">عرض التقارير</span>
+                <BarChart3 className="w-7 h-7 text-emerald-600" />
+                <span className="text-sm font-medium text-slate-700">عرض التقارير</span>
               </Button>
             </div>
           </CardContent>

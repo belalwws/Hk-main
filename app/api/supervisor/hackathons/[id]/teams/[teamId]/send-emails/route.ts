@@ -6,13 +6,18 @@ const prisma = new PrismaClient()
 
 // Email transporter configuration
 function getTransporter() {
+  const gmailUser = process.env.GMAIL_USER || process.env.MAIL_USER
+  const gmailPass = process.env.GMAIL_PASS || process.env.MAIL_PASS
+
+  if (!gmailUser || !gmailPass) {
+    throw new Error('Gmail credentials not configured')
+  }
+
   return nodemailer.createTransporter({
-    host: process.env.MAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.MAIL_PORT || '587'),
-    secure: false,
+    service: 'gmail',
     auth: {
-      user: process.env.MAIL_USER || process.env.GMAIL_USER,
-      pass: process.env.MAIL_PASS || process.env.GMAIL_PASS
+      user: gmailUser,
+      pass: gmailPass
     }
   })
 }
