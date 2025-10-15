@@ -7,6 +7,7 @@ const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor
   { prefix: "/api/teams", roles: ["judge", "supervisor"] },
   { prefix: "/api/submit-score", roles: ["judge"] },
   { prefix: "/api/results", roles: ["admin"] },
+  { prefix: "/api/admin/email-templates", roles: ["admin", "supervisor"] }, // Allow supervisors to manage email templates
   { prefix: "/api/admin", roles: ["admin"] },
   { prefix: "/api/supervisor", roles: ["supervisor", "admin"] },
   { prefix: "/judge", roles: ["judge"] },
