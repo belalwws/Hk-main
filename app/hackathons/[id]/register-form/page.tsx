@@ -435,85 +435,11 @@ export default function HackathonRegisterFormPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header (hidden in preview mode) */}
-        {!isPreview && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <Link href={`/hackathons/${hackathonId}`}>
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  العودة
-                </Button>
-              </Link>
-            </div>
-
-            {hackathon && (
-              <Card className="mb-6">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <Trophy className="w-12 h-12 text-[#01645e] mt-1" />
-                    <div className="flex-1">
-                      <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                        {hackathon.title}
-                      </h1>
-                      <p className="text-gray-600 mb-4">{hackathon.description}</p>
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {new Date(hackathon.startDate).toLocaleDateString('ar-SA')}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {hackathon.location}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          {hackathon.participantCount || 0} مشارك
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-        )}
+        {/* Intentionally removed header/back and hackathon card to show only the form */}
 
         {/* Registration Form */}
         <Card>
-          {/* Cover Image */}
-          {form.coverImage && (
-            <div className="relative w-full h-64 overflow-hidden rounded-t-lg">
-              <img
-                src={form.coverImage}
-                alt={form.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                <div className="p-6 text-white">
-                  <h2 className="text-2xl font-bold">{form.title}</h2>
-                  {form.description && (
-                    <p className="text-sm mt-2 opacity-90">{form.description}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <CardHeader>
-            {!form.coverImage && (
-              <>
-                <CardTitle>{form.title}</CardTitle>
-                {form.description && (
-                  <CardDescription>{form.description}</CardDescription>
-                )}
-              </>
-            )}
-          </CardHeader>
+          {/* Removed cover image and header so only the form fields render below */}
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {form.fields.map(renderField)}
