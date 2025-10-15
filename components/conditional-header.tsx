@@ -11,6 +11,7 @@ export function ConditionalHeader() {
     '/judge/apply/',
     '/feedback/',
     '/forms/',
+    '/register-form'
   ]
   
   const shouldHideHeader = hideHeaderPaths.some(path => pathname?.includes(path))
