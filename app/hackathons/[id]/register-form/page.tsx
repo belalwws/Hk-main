@@ -11,17 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { 
-  ArrowLeft, 
   Send, 
   CheckCircle,
-  AlertCircle,
-  Calendar,
-  MapPin,
-  Users,
-  Trophy
+  AlertCircle
 } from 'lucide-react'
-import Link from 'next/link'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 interface FormField {
   id: string
@@ -56,22 +50,17 @@ interface RegistrationForm {
 export default function HackathonRegisterFormPage() {
   const params = useParams()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const isPreview = searchParams?.get('preview') === '1'
   const hackathonId = params.id as string
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [hackathon, setHackathon] = useState<any>(null)
   const [form, setForm] = useState<RegistrationForm | null>(null)
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
-  const [hasCustomDesign, setHasCustomDesign] = useState(false)
 
   useEffect(() => {
     checkCustomDesign()
-    fetchHackathon()
     fetchForm()
   }, [hackathonId])
 
@@ -88,17 +77,6 @@ export default function HackathonRegisterFormPage() {
       }
     } catch (error) {
       console.log('ℹ️ No custom design found, using default form')
-    }
-  }
-  const fetchHackathon = async () => {
-    try {
-      const response = await fetch(`/api/hackathons/${hackathonId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setHackathon(data)
-      }
-    } catch (error) {
-      console.error('Error fetching hackathon:', error)
     }
   }
 
@@ -234,7 +212,7 @@ export default function HackathonRegisterFormPage() {
       case 'phone':
         return (
           <div key={field.id}>
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} className="text-base font-medium text-gray-700 mb-2 block">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
             <Input
@@ -243,16 +221,19 @@ export default function HackathonRegisterFormPage() {
               value={formData[field.id] || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder}
-              className={`mt-1 ${error ? 'border-red-500' : ''}`}
+              className={`mt-1 h-12 text-base ${error ? 'border-red-500' : 'border-gray-300'}`}
             />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </p>}
           </div>
         )
 
       case 'textarea':
         return (
           <div key={field.id}>
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} className="text-base font-medium text-gray-700 mb-2 block">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
             <Textarea
@@ -261,89 +242,102 @@ export default function HackathonRegisterFormPage() {
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder}
               rows={4}
-              className={`mt-1 ${error ? 'border-red-500' : ''}`}
+              className={`mt-1 text-base ${error ? 'border-red-500' : 'border-gray-300'}`}
             />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </p>}
           </div>
         )
 
       case 'select':
         return (
           <div key={field.id}>
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} className="text-base font-medium text-gray-700 mb-2 block">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
             <Select
               value={formData[field.id] || ''}
               onValueChange={(value) => handleFieldChange(field.id, value)}
             >
-              <SelectTrigger className={`mt-1 ${error ? 'border-red-500' : ''}`}>
+              <SelectTrigger className={`mt-1 h-12 text-base ${error ? 'border-red-500' : 'border-gray-300'}`}>
                 <SelectValue placeholder={field.placeholder || `اختر ${field.label}`} />
               </SelectTrigger>
               <SelectContent>
                 {field.options?.map((option) => (
-                  <SelectItem key={option} value={option}>
+                  <SelectItem key={option} value={option} className="text-base">
                     {option}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </p>}
           </div>
         )
 
       case 'radio':
         return (
           <div key={field.id}>
-            <Label>
+            <Label className="text-base font-medium text-gray-700 mb-3 block">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
             <RadioGroup
               value={formData[field.id] || ''}
               onValueChange={(value) => handleFieldChange(field.id, value)}
-              className="mt-2"
+              className="mt-2 space-y-3"
             >
               {field.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`${field.id}_${option}`} />
-                  <Label htmlFor={`${field.id}_${option}`} className="mr-2">
+                <div key={option} className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                  <RadioGroupItem value={option} id={`${field.id}_${option}`} className="ml-3" />
+                  <Label htmlFor={`${field.id}_${option}`} className="mr-2 text-base cursor-pointer flex-1">
                     {option}
                   </Label>
                 </div>
               ))}
             </RadioGroup>
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </p>}
           </div>
         )
 
       case 'checkbox':
         return (
           <div key={field.id}>
-            <Label>
+            <Label className="text-base font-medium text-gray-700 mb-3 block">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
-            <div className="mt-2 space-y-2">
+            <div className="mt-2 space-y-3">
               {field.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
+                <div key={option} className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors">
                   <Checkbox
                     id={`${field.id}_${option}`}
                     checked={(formData[field.id] || []).includes(option)}
                     onCheckedChange={(checked) => handleCheckboxChange(field.id, option, checked as boolean)}
+                    className="ml-3"
                   />
-                  <Label htmlFor={`${field.id}_${option}`} className="mr-2">
+                  <Label htmlFor={`${field.id}_${option}`} className="mr-2 text-base cursor-pointer flex-1">
                     {option}
                   </Label>
                 </div>
               ))}
             </div>
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </p>}
           </div>
         )
 
       case 'date':
         return (
           <div key={field.id}>
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} className="text-base font-medium text-gray-700 mb-2 block">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
             <Input
@@ -351,25 +345,31 @@ export default function HackathonRegisterFormPage() {
               type="date"
               value={formData[field.id] || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              className={`mt-1 ${error ? 'border-red-500' : ''}`}
+              className={`mt-1 h-12 text-base ${error ? 'border-red-500' : 'border-gray-300'}`}
             />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </p>}
           </div>
         )
 
       case 'file':
         return (
           <div key={field.id}>
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} className="text-base font-medium text-gray-700 mb-2 block">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
             <Input
               id={field.id}
               type="file"
               onChange={(e) => handleFieldChange(field.id, e.target.files?.[0])}
-              className={`mt-1 ${error ? 'border-red-500' : ''}`}
+              className={`mt-1 h-12 text-base ${error ? 'border-red-500' : 'border-gray-300'}`}
             />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </p>}
           </div>
         )
 
@@ -380,25 +380,27 @@ export default function HackathonRegisterFormPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-xl">جاري التحميل...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#01645e] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-xl text-gray-600 font-medium">جاري تحميل النموذج...</p>
+        </div>
       </div>
     )
   }
 
   if (!form || !form.isActive) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="p-6 text-center">
-            <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">النموذج غير متاح</h2>
-            <p className="text-gray-600 mb-4">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center p-4">
+        <Card className="max-w-md mx-auto shadow-xl border-0">
+          <CardContent className="p-10 text-center">
+            <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-12 h-12 text-yellow-600" />
+            </div>
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">النموذج غير متاح</h2>
+            <p className="text-gray-600 leading-relaxed">
               نموذج التسجيل غير متاح حالياً أو تم إلغاء تفعيله
             </p>
-            <Link href={`/hackathons/${hackathonId}`}>
-              <Button>العودة للهاكاثون</Button>
-            </Link>
           </CardContent>
         </Card>
       </div>
@@ -407,56 +409,142 @@ export default function HackathonRegisterFormPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="p-6 text-center">
-            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">تم التسجيل بنجاح!</h2>
-            <p className="text-gray-600 mb-4">
-              {form.settings.requireApproval 
-                ? 'تم استلام طلبك وسيتم مراجعته قريباً'
-                : 'تم تأكيد تسجيلك في الهاكاثون'
-              }
-            </p>
-            {form.settings.sendConfirmationEmail && (
-              <p className="text-sm text-gray-500 mb-4">
-                ستصلك رسالة تأكيد على البريد الإلكتروني
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="max-w-lg mx-auto shadow-2xl border-0">
+            <CardContent className="p-10 text-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              >
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-12 h-12 text-green-600" />
+                </div>
+              </motion.div>
+              
+              <h2 className="text-3xl font-bold mb-4 text-gray-900">تم التسجيل بنجاح! 🎉</h2>
+              
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                {form.settings.requireApproval 
+                  ? 'تم استلام طلبك بنجاح وسيتم مراجعته من قبل فريق الإدارة قريباً'
+                  : 'تم تأكيد تسجيلك في الهاكاثون بنجاح'
+                }
               </p>
-            )}
-            <Link href={`/hackathons/${hackathonId}`}>
-              <Button>العودة للهاكاثون</Button>
-            </Link>
-          </CardContent>
-        </Card>
+              
+              {form.settings.sendConfirmationEmail && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800 flex items-center justify-center gap-2">
+                    <Send className="w-4 h-4" />
+                    تم إرسال رسالة تأكيد إلى بريدك الإلكتروني
+                  </p>
+                </div>
+              )}
+
+              <div className="pt-6">
+                <p className="text-sm text-gray-500">
+                  شكراً لتسجيلك معنا! 💚
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Intentionally removed header/back and hackathon card to show only the form */}
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+      <div className="max-w-3xl mx-auto">
         {/* Registration Form */}
-        <Card>
-          {/* Removed cover image and header so only the form fields render below */}
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {form.fields.map(renderField)}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+        <Card className="shadow-xl border-0">
+          {/* Cover Image */}
+          {form.coverImage && (
+            <div className="relative w-full h-64 overflow-hidden rounded-t-lg">
+              <img
+                src={form.coverImage}
+                alt={form.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                <div className="p-6 text-white">
+                  <h2 className="text-2xl font-bold">{form.title}</h2>
+                  {form.description && (
+                    <p className="text-sm mt-2 opacity-90">{form.description}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <CardHeader className={form.coverImage ? "pt-8" : ""}>
+            {!form.coverImage && (
+              <>
+                <CardTitle className="text-3xl font-bold text-center text-gray-900">
+                  {form.title}
+                </CardTitle>
+                {form.description && (
+                  <CardDescription className="text-center text-base mt-3">
+                    {form.description}
+                  </CardDescription>
+                )}
+              </>
+            )}
+          </CardHeader>
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {form.fields.map((field, index) => {
+                  // Full width fields
+                  if (field.type === 'textarea' || field.type === 'checkbox' || field.type === 'radio') {
+                    return (
+                      <div key={field.id} className="md:col-span-2">
+                        {renderField(field)}
+                      </div>
+                    )
+                  }
+                  // Two columns for other fields
+                  return (
+                    <div key={field.id}>
+                      {renderField(field)}
+                    </div>
+                  )
+                })}
+              </div>
               
-              <div className="flex justify-end pt-6 border-t">
+              <div className="flex justify-center pt-8 border-t mt-8">
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="bg-[#01645e] hover:bg-[#01645e]/90"
+                  size="lg"
+                  className="bg-[#01645e] hover:bg-[#01645e]/90 text-white px-12 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
                 >
-                  <Send className="w-4 h-4 mr-2" />
-                  {submitting ? 'جاري التسجيل...' : 'تسجيل'}
+                  {submitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
+                      جاري التسجيل...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5 mr-3" />
+                      إرسال التسجيل
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
     </div>
   )
