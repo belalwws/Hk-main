@@ -53,6 +53,11 @@ interface FormField {
     maxLength?: number
     pattern?: string
   }
+  conditional?: {
+    enabled: boolean
+    showWhen: string // ID of the field to watch
+    showWhenValue: string // Value that triggers this field to show
+  }
 }
 
 interface RegistrationForm {
@@ -797,6 +802,90 @@ export default function HackathonRegistrationFormPage() {
                             />
                             <Label className="mr-2">حقل مطلوب</Label>
                           </div>
+                        </div>
+
+                        {/* Conditional Logic */}
+                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <Switch
+                              checked={field.conditional?.enabled || false}
+                              onCheckedChange={(checked) => updateField(field.id, {
+                                conditional: {
+                                  enabled: checked,
+                                  showWhen: field.conditional?.showWhen || '',
+                                  showWhenValue: field.conditional?.showWhenValue || ''
+                                }
+                              })}
+                            />
+                            <Label className="mr-2 font-medium text-blue-900">
+                              حقل شرطي (يظهر عند شرط معين)
+                            </Label>
+                          </div>
+
+                          {field.conditional?.enabled && (
+                            <div className="space-y-3 mt-3">
+                              <div>
+                                <Label className="text-sm text-blue-800">يظهر عندما:</Label>
+                                <Select
+                                  value={field.conditional?.showWhen || ''}
+                                  onValueChange={(value) => updateField(field.id, {
+                                    conditional: {
+                                      ...field.conditional!,
+                                      showWhen: value
+                                    }
+                                  })}
+                                >
+                                  <SelectTrigger className="mt-1 bg-white">
+                                    <SelectValue placeholder="اختر الحقل..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {form.fields
+                                      .filter(f => 
+                                        f.id !== field.id && 
+                                        (f.type === 'select' || f.type === 'radio')
+                                      )
+                                      .map((f) => (
+                                        <SelectItem key={f.id} value={f.id}>
+                                          {f.label}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {field.conditional?.showWhen && (
+                                <div>
+                                  <Label className="text-sm text-blue-800">يساوي:</Label>
+                                  <Select
+                                    value={field.conditional?.showWhenValue || ''}
+                                    onValueChange={(value) => updateField(field.id, {
+                                      conditional: {
+                                        ...field.conditional!,
+                                        showWhenValue: value
+                                      }
+                                    })}
+                                  >
+                                    <SelectTrigger className="mt-1 bg-white">
+                                      <SelectValue placeholder="اختر القيمة..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {form.fields
+                                        .find(f => f.id === field.conditional?.showWhen)
+                                        ?.options?.map((option) => (
+                                          <SelectItem key={option} value={option}>
+                                            {option}
+                                          </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
+
+                              <p className="text-xs text-blue-700 mt-2">
+                                💡 هذا الحقل سيظهر فقط عندما يختار المستخدم "{field.conditional?.showWhenValue}" في حقل "{form.fields.find(f => f.id === field.conditional?.showWhen)?.label}"
+                              </p>
+                            </div>
+                          )}
                         </div>
 
                         {/* Options for select/radio/checkbox */}

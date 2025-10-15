@@ -29,6 +29,11 @@ interface FormField {
     maxLength?: number
     pattern?: string
   }
+  conditional?: {
+    enabled: boolean
+    showWhen: string
+    showWhenValue: string
+  }
 }
 
 interface RegistrationForm {
@@ -140,6 +145,15 @@ export default function HackathonRegisterFormPage() {
     return null
   }
 
+  const shouldShowField = (field: FormField): boolean => {
+    // If no conditional logic, always show
+    if (!field.conditional?.enabled) return true
+
+    // Check if the condition is met
+    const watchFieldValue = formData[field.conditional.showWhen]
+    return watchFieldValue === field.conditional.showWhenValue
+  }
+
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData(prev => ({ ...prev, [fieldId]: value }))
     
@@ -170,9 +184,12 @@ export default function HackathonRegisterFormPage() {
     // Validate all fields
     const newErrors: Record<string, string> = {}
     form.fields.forEach(field => {
-      const error = validateField(field, formData[field.id])
-      if (error) {
-        newErrors[field.id] = error
+      // Only validate if field should be shown
+      if (shouldShowField(field)) {
+        const error = validateField(field, formData[field.id])
+        if (error) {
+          newErrors[field.id] = error
+        }
       }
     })
 
@@ -515,20 +532,33 @@ export default function HackathonRegisterFormPage() {
           <CardContent className="px-8 pb-8">
             <form onSubmit={handleSubmit} className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {form.fields.map((field, index) => {
+                {form.fields.filter(field => shouldShowField(field)).map((field, index) => {
                   // Full width fields
                   if (field.type === 'textarea' || field.type === 'checkbox' || field.type === 'radio') {
                     return (
-                      <div key={field.id} className="md:col-span-2">
+                      <motion.div 
+                        key={field.id} 
+                        className="md:col-span-2"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
                         {renderField(field)}
-                      </div>
+                      </motion.div>
                     )
                   }
                   // Two columns for other fields
                   return (
-                    <div key={field.id}>
+                    <motion.div 
+                      key={field.id}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
                       {renderField(field)}
-                    </div>
+                    </motion.div>
                   )
                 })}
               </div>
