@@ -11,8 +11,8 @@ function getTransporter() {
     port: parseInt(process.env.MAIL_PORT || '587'),
     secure: false,
     auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS
+      user: process.env.MAIL_USER || process.env.GMAIL_USER,
+      pass: process.env.MAIL_PASS || process.env.GMAIL_PASS
     }
   })
 }
@@ -131,11 +131,16 @@ export async function POST(
     const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف'
 
     // Check if it's a mailer configuration error
-    if (errorMessage.includes('MAIL_USER') || errorMessage.includes('MAIL_PASS') || !process.env.MAIL_USER || !process.env.MAIL_PASS) {
+    const mailUser = process.env.MAIL_USER || process.env.GMAIL_USER
+    const mailPass = process.env.MAIL_PASS || process.env.GMAIL_PASS
+
+    if (errorMessage.includes('MAIL_USER') || errorMessage.includes('MAIL_PASS') || errorMessage.includes('GMAIL') || !mailUser || !mailPass) {
       return NextResponse.json({
         error: 'البريد الإلكتروني غير مُعد بشكل صحيح. يرجى التحقق من إعدادات Gmail في ملف .env',
-        details: 'MAIL_USER و MAIL_PASS مطلوبان',
-        mailerConfigured: false
+        details: 'MAIL_USER/GMAIL_USER و MAIL_PASS/GMAIL_PASS مطلوبان',
+        mailerConfigured: false,
+        hasMailUser: !!mailUser,
+        hasMailPass: !!mailPass
       }, { status: 500 })
     }
 
