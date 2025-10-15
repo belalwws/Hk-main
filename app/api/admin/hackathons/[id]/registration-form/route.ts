@@ -13,7 +13,7 @@ export async function GET(
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
     const payload = await verifyToken(token)
-    if (!payload || payload.role !== 'admin') {
+    if (!payload || !['admin', 'supervisor'].includes(payload.role)) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
@@ -63,7 +63,7 @@ export async function POST(
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
     const payload = await verifyToken(token)
-    if (!payload || payload.role !== 'admin') {
+    if (!payload || !['admin', 'supervisor'].includes(payload.role)) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 

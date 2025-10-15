@@ -26,7 +26,8 @@ import {
   Search,
   AlertCircle,
   RotateCcw,
-  Trash2
+  Trash2,
+  Loader2
 } from "lucide-react"
 
 interface EmailTemplate {
@@ -69,11 +70,14 @@ export default function SupervisorEmailManagementPage() {
   const [activeTab, setActiveTab] = useState('all')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [sendingTest, setSendingTest] = useState(false) // حالة إرسال الإيميل التجريبي
   const [searchQuery, setSearchQuery] = useState('')
   const [previewMode, setPreviewMode] = useState(false)
   const [simpleMode, setSimpleMode] = useState(true) // محرر بسيط أو متقدم
   const [simpleText, setSimpleText] = useState('') // النص البسيط للمحرر
   const [testEmail, setTestEmail] = useState('') // الإيميل التجريبي
+  const [showTestResultModal, setShowTestResultModal] = useState(false) // modal نتيجة الإرسال
+  const [testResultSuccess, setTestResultSuccess] = useState(false) // نجاح أو فشل
 
   // Custom email state
   const [customEmail, setCustomEmail] = useState({
@@ -432,6 +436,8 @@ export default function SupervisorEmailManagementPage() {
       return
     }
 
+    setSendingTest(true) // ✅ بدء التحميل
+
     try {
       console.log('📧 Sending test email for template:', template.templateKey)
       console.log('📧 Test email address:', testEmail.trim())
@@ -452,22 +458,27 @@ export default function SupervisorEmailManagementPage() {
         const data = await response.json()
         console.log('✅ Test email sent successfully:', data)
 
-        toast({
-          title: "✅ تم الإرسال",
-          description: `تم إرسال إيميل تجريبي إلى ${testEmail.trim()}`
-        })
+        // ✅ عرض modal النجاح
+        setTestResultSuccess(true)
+        setShowTestResultModal(true)
       } else {
         const errorData = await response.json().catch(() => ({}))
         console.error('❌ Test email failed:', response.status, errorData)
+
+        // ✅ عرض modal الفشل
+        setTestResultSuccess(false)
+        setShowTestResultModal(true)
+
         throw new Error(errorData.error || 'Failed to send test email')
       }
     } catch (error) {
       console.error('❌ Error sending test email:', error)
-      toast({
-        title: "خطأ",
-        description: error instanceof Error ? error.message : "فشل إرسال الإيميل التجريبي",
-        variant: "destructive"
-      })
+
+      // ✅ عرض modal الفشل
+      setTestResultSuccess(false)
+      setShowTestResultModal(true)
+    } finally {
+      setSendingTest(false) // ✅ إنهاء التحميل
     }
   }
 
@@ -775,10 +786,20 @@ export default function SupervisorEmailManagementPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => sendTestEmail(selectedTemplate)}
+                        disabled={sendingTest}
                         className="border-slate-200"
                       >
-                        <Send className="w-4 h-4 ml-2" />
-                        إرسال تجريبي
+                        {sendingTest ? (
+                          <>
+                            <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                            جاري الإرسال...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 ml-2" />
+                            إرسال تجريبي
+                          </>
+                        )}
                       </Button>
                       <Button
                         variant="outline"
@@ -1047,6 +1068,47 @@ export default function SupervisorEmailManagementPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal نتيجة الإرسال التجريبي */}
+      {showTestResultModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowTestResultModal(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center">
+              {testResultSuccess ? (
+                <>
+                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                    <CheckCircle2 className="h-10 w-10 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    تم الإرسال بنجاح! ✅
+                  </h3>
+                  <p className="text-slate-600 mb-6">
+                    تم إرسال الإيميل التجريبي إلى <span className="font-semibold text-slate-800">{testEmail}</span>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                    <XCircle className="h-10 w-10 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    فشل الإرسال ❌
+                  </h3>
+                  <p className="text-slate-600 mb-6">
+                    تعذر إرسال الإيميل التجريبي. يرجى التحقق من إعدادات البريد الإلكتروني (GMAIL_USER و GMAIL_PASS).
+                  </p>
+                </>
+              )}
+              <Button
+                onClick={() => setShowTestResultModal(false)}
+                className={testResultSuccess ? "bg-green-600 hover:bg-green-700 w-full" : "bg-red-600 hover:bg-red-700 w-full"}
+              >
+                حسناً
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
