@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { sendMail } from '@/lib/mailer'
+import { processEmailTemplate } from '@/lib/email-templates'
 
 const prisma = new PrismaClient()
 
@@ -73,7 +75,9 @@ export async function PATCH(
       data: {
         status: status as any,
         feedback: feedback || null,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        ...(status === 'approved' && { approvedAt: new Date() }),
+        ...(status === 'rejected' && { rejectedAt: new Date() })
       },
       include: {
         user: {
@@ -81,12 +85,49 @@ export async function PATCH(
             name: true,
             email: true
           }
+        },
+        hackathon: {
+          select: {
+            id: true,
+            title: true
+          }
         }
       }
     })
 
+    // Send email notification based on status
+    try {
+      let templateType: 'acceptance' | 'rejection' | null = null
+      
+      if (status === 'approved') {
+        templateType = 'acceptance'
+      } else if (status === 'rejected') {
+        templateType = 'rejection'
+      }
+
+      if (templateType) {
+        const emailContent = await processEmailTemplate(templateType, {
+          participantName: updatedParticipant.user.name,
+          hackathonTitle: updatedParticipant.hackathon.title,
+          feedback: feedback || ''
+        })
+
+        // Send email
+        await sendMail({
+          to: updatedParticipant.user.email,
+          subject: emailContent.subject,
+          html: emailContent.body
+        })
+
+        console.log(`Email sent to ${updatedParticipant.user.email} for ${status}`)
+      }
+    } catch (emailError) {
+      console.error('Error sending email notification:', emailError)
+      // Don't fail the request if email fails
+    }
+
     return NextResponse.json({
-      message: "تم تحديث حالة المشارك بنجاح",
+      message: "تم تحديث حالة المشارك بنجاح وإرسال إيميل الإشعار",
       participant: updatedParticipant
     })
 

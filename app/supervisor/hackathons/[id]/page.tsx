@@ -296,17 +296,17 @@ export default function SupervisorHackathonManagementPage() {
 
       const data = participantsWithDetails.filter(p => p !== null).map(p => {
         const row: any = {
-          name: p.user.name,
-          email: p.user.email,
-          phone: p.user.phone || '',
-          city: p.user.city || '',
-          nationality: p.user.nationality || '',
-          teamRole: p.teamRole || '',
-          status: p.status === 'approved' ? 'مقبول' : p.status === 'rejected' ? 'مرفوض' : 'في الانتظار',
-          registeredAt: new Date(p.registeredAt).toLocaleDateString('ar-SA')
+          'الاسم': p.user.name,
+          'البريد الإلكتروني': p.user.email,
+          'الهاتف': p.user.phone || '',
+          'المدينة': p.user.city || '',
+          'الجنسية': p.user.nationality || '',
+          'الدور المفضل': p.teamRole || '',
+          'الحالة': p.status === 'approved' ? 'مقبول' : p.status === 'rejected' ? 'مرفوض' : 'في الانتظار',
+          'تاريخ التسجيل': new Date(p.registeredAt).toLocaleDateString('ar-SA')
         }
 
-        // Add form data fields
+        // Add form data fields with their Arabic labels
         if (p.additionalInfo && typeof p.additionalInfo === 'object') {
           Object.entries(p.additionalInfo).forEach(([fieldId, fieldData]: [string, any]) => {
             if (fieldData && fieldData.label) {
@@ -314,10 +314,15 @@ export default function SupervisorHackathonManagementPage() {
               let value = fieldData.value
               if (Array.isArray(value)) {
                 value = value.join(', ')
-              } else if (typeof value === 'object') {
+              } else if (typeof value === 'object' && value !== null) {
                 value = JSON.stringify(value)
+              } else if (value === null || value === undefined) {
+                value = ''
+              } else {
+                value = String(value)
               }
-              row[fieldData.label] = value || ''
+              // Use the Arabic label as the column name
+              row[fieldData.label] = value
             }
           })
         }
@@ -326,25 +331,18 @@ export default function SupervisorHackathonManagementPage() {
       })
 
       // Get all unique column names from the data
-      const allColumns = new Set<string>()
+      const allColumnNames = new Set<string>()
       data.forEach(row => {
-        Object.keys(row).forEach(key => allColumns.add(key))
+        Object.keys(row).forEach(key => allColumnNames.add(key))
       })
 
-      // Create columns array
+      // Create columns array with all headers
+      const baseColumns = ['الاسم', 'البريد الإلكتروني', 'الهاتف', 'المدينة', 'الجنسية', 'الدور المفضل', 'الحالة', 'تاريخ التسجيل']
+      const dynamicColumns = Array.from(allColumnNames).filter(col => !baseColumns.includes(col))
+      
       const columns = [
-        { key: 'name', header: 'الاسم', width: 20 },
-        { key: 'email', header: 'البريد الإلكتروني', width: 25 },
-        { key: 'phone', header: 'الهاتف', width: 15 },
-        { key: 'city', header: 'المدينة', width: 15 },
-        { key: 'nationality', header: 'الجنسية', width: 15 },
-        { key: 'teamRole', header: 'الدور المفضل', width: 20 },
-        { key: 'status', header: 'الحالة', width: 15 },
-        { key: 'registeredAt', header: 'تاريخ التسجيل', width: 15 },
-        // Add dynamic columns for form fields
-        ...Array.from(allColumns)
-          .filter(col => !['name', 'email', 'phone', 'city', 'nationality', 'teamRole', 'status', 'registeredAt'].includes(col))
-          .map(col => ({ key: col, header: col, width: 25 }))
+        ...baseColumns.map(col => ({ key: col, header: col, width: 25 })),
+        ...dynamicColumns.map(col => ({ key: col, header: col, width: 30 }))
       ]
 
       await ExcelExporter.exportToExcel({
