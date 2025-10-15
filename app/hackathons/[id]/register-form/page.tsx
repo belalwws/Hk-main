@@ -56,9 +56,9 @@ interface RegistrationForm {
 export default function HackathonRegisterFormPage() {
   const params = useParams()
   const router = useRouter()
-  const hackathonId = params.id as string
   const searchParams = useSearchParams()
   const isPreview = searchParams?.get('preview') === '1'
+  const hackathonId = params.id as string
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -90,7 +90,6 @@ export default function HackathonRegisterFormPage() {
       console.log('ℹ️ No custom design found, using default form')
     }
   }
-
   const fetchHackathon = async () => {
     try {
       const response = await fetch(`/api/hackathons/${hackathonId}`)
