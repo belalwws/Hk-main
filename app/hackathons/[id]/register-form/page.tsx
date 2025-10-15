@@ -21,7 +21,7 @@ import {
   Trophy
 } from 'lucide-react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 
 interface FormField {
   id: string
@@ -57,6 +57,8 @@ export default function HackathonRegisterFormPage() {
   const params = useParams()
   const router = useRouter()
   const hackathonId = params.id as string
+  const searchParams = useSearchParams()
+  const isPreview = searchParams?.get('preview') === '1'
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -440,14 +442,16 @@ export default function HackathonRegisterFormPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-4 mb-4">
-            <Link href={`/hackathons/${hackathonId}`}>
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                العودة
-              </Button>
-            </Link>
-          </div>
+          {!isPreview && (
+            <div className="flex items-center gap-4 mb-4">
+              <Link href={`/hackathons/${hackathonId}`}>
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  العودة
+                </Button>
+              </Link>
+            </div>
+          )}
           
           {hackathon && (
             <Card className="mb-6">

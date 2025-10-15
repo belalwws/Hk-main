@@ -712,7 +712,7 @@ export default function HackathonRegistrationFormPage() {
                 <CardTitle>الإجراءات</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Link href={`/hackathons/${hackathonId}/register-form`} target="_blank">
+                <Link href={`/hackathons/${hackathonId}/register-form?preview=1`} target="_blank">
                   <Button variant="outline" className="w-full">
                     <Eye className="w-4 h-4 mr-2" />
                     معاينة النموذج

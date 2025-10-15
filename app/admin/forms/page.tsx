@@ -404,7 +404,7 @@ export default function FormsManagement() {
                         <Button
                           variant="outline"
                           className="w-full"
-                          onClick={() => window.open(`/hackathons/${selectedHackathon}/register-form`, '_blank')}
+                          onClick={() => window.open(`/hackathons/${selectedHackathon}/register-form?preview=1`, '_blank')}
                         >
                           <ExternalLink className="w-4 h-4 ml-2" />
                           معاينة الفورم
