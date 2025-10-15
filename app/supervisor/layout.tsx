@@ -244,7 +244,7 @@ export default function SupervisorLayout({
               <Menu className="w-5 h-5" />
             </Button>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 relative z-10">
               <div className="text-right">
                 <p className="text-sm text-gray-600">مرحباً،</p>
                 <p className="font-semibold text-gray-900">{user?.name || 'مشرف'}</p>
@@ -253,10 +253,10 @@ export default function SupervisorLayout({
                 <img
                   src={profilePicture}
                   alt={user?.name || 'مشرف'}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-200"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-200 relative z-10"
                 />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center relative z-10">
                   <User className="w-6 h-6 text-white" />
                 </div>
               )}

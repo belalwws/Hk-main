@@ -8,6 +8,41 @@ export async function GET(
 ) {
   try {
     const { id: hackathonId } = await params
+    const userRole = request.headers.get("x-user-role")
+    const userId = request.headers.get("x-user-id")
+
+    // Allow both admin and supervisor
+    if (!["admin", "supervisor"].includes(userRole || "")) {
+      return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 403 })
+    }
+
+    // If supervisor, verify they're assigned to this hackathon
+    if (userRole === "supervisor") {
+      const supervisor = await prisma.supervisor.findFirst({
+        where: {
+          userId: userId!,
+          OR: [
+            { hackathonId: hackathonId },
+            { hackathonId: null } // General supervisor
+          ],
+          isActive: true
+        }
+      })
+
+      if (!supervisor) {
+        return NextResponse.json({
+          error: "لست مشرفاً على هذا الهاكاثون"
+        }, { status: 403 })
+      }
+
+      // Check permissions
+      const permissions = supervisor.permissions as any
+      if (permissions && permissions.canManageTeams === false) {
+        return NextResponse.json({
+          error: "ليس لديك صلاحية عرض الفرق"
+        }, { status: 403 })
+      }
+    }
 
     const teams = await prisma.team.findMany({
       where: {

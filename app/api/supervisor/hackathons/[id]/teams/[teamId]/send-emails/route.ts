@@ -128,7 +128,21 @@ export async function POST(
 
   } catch (error) {
     console.error('Error sending team emails:', error)
-    return NextResponse.json({ error: 'خطأ في إرسال الإيميلات' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف'
+
+    // Check if it's a mailer configuration error
+    if (errorMessage.includes('MAIL_USER') || errorMessage.includes('MAIL_PASS') || !process.env.MAIL_USER || !process.env.MAIL_PASS) {
+      return NextResponse.json({
+        error: 'البريد الإلكتروني غير مُعد بشكل صحيح. يرجى التحقق من إعدادات Gmail في ملف .env',
+        details: 'MAIL_USER و MAIL_PASS مطلوبان',
+        mailerConfigured: false
+      }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      error: 'خطأ في إرسال الإيميلات',
+      details: errorMessage
+    }, { status: 500 })
   }
 }
 
