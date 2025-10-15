@@ -89,25 +89,20 @@ export default function SupervisorEmailManagementPage() {
       const response = await fetch('/api/admin/email-templates', {
         credentials: 'include'
       })
-      
+
       if (response.ok) {
         const data = await response.json()
         if (data.templates && data.templates.length > 0) {
           setTemplates(data.templates)
           console.log('✅ Loaded templates:', data.templates.length)
         } else {
-          // إذا لم توجد قوالب، تحميل القوالب الافتراضية
-          console.log('⚠️ No templates found, initializing defaults...')
-          await initializeDefaultTemplates()
+          // إذا لم توجد قوالب، عرض رسالة للمستخدم
+          console.log('⚠️ No templates found')
+          setTemplates([])
         }
       } else {
         console.error('Failed to load templates:', response.status)
-        toast({
-          title: "تنبيه",
-          description: "فشل تحميل قوالب الإيميلات. سيتم تهيئة القوالب الافتراضية.",
-          variant: "destructive"
-        })
-        await initializeDefaultTemplates()
+        setTemplates([])
       }
     } catch (error) {
       console.error('Error loading templates:', error)
@@ -116,7 +111,7 @@ export default function SupervisorEmailManagementPage() {
         description: "فشل تحميل قوالب الإيميلات",
         variant: "destructive"
       })
-      await initializeDefaultTemplates()
+      setTemplates([])
     } finally {
       setLoading(false)
     }
@@ -125,6 +120,12 @@ export default function SupervisorEmailManagementPage() {
   const initializeDefaultTemplates = async () => {
     try {
       console.log('🔄 Initializing default templates...')
+
+      toast({
+        title: "جاري التهيئة...",
+        description: "يتم الآن تحميل القوالب الافتراضية"
+      })
+
       const response = await fetch('/api/admin/email-templates/initialize', {
         method: 'POST',
         credentials: 'include'
@@ -135,18 +136,23 @@ export default function SupervisorEmailManagementPage() {
         setTemplates(data.templates || [])
         console.log('✅ Initialized templates:', data.templates?.length)
         toast({
-          title: "تم التهيئة",
-          description: `تم تحميل ${data.templates?.length || 0} قالب افتراضي بنجاح`
+          title: "✅ تم التهيئة بنجاح",
+          description: `تم تحميل ${data.templates?.length || 0} قالب افتراضي. يمكنك الآن تعديلها حسب احتياجاتك.`
         })
       } else {
-        console.error('Failed to initialize templates:', response.status)
-        throw new Error('Failed to initialize')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Failed to initialize templates:', response.status, errorData)
+        toast({
+          title: "خطأ في التهيئة",
+          description: errorData.error || "فشل تهيئة القوالب الافتراضية",
+          variant: "destructive"
+        })
       }
     } catch (error) {
       console.error('Error initializing templates:', error)
       toast({
         title: "خطأ",
-        description: "فشل تهيئة القوالب الافتراضية",
+        description: "فشل تهيئة القوالب الافتراضية. تأكد من اتصالك بالإنترنت.",
         variant: "destructive"
       })
     }
@@ -317,7 +323,7 @@ export default function SupervisorEmailManagementPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Search */}
+        {/* Search and Actions */}
         <div className="flex items-center gap-4">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -328,20 +334,84 @@ export default function SupervisorEmailManagementPage() {
               className="pr-10 border-slate-200"
             />
           </div>
-          <Button onClick={() => initializeDefaultTemplates()} variant="outline" className="border-slate-200">
-            <RefreshCw className="w-4 h-4 ml-2" />
-            إعادة تحميل القوالب
-          </Button>
+          {templates.length === 0 ? (
+            <Button
+              onClick={() => initializeDefaultTemplates()}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              <RefreshCw className="w-4 h-4 ml-2" />
+              تهيئة القوالب الافتراضية
+            </Button>
+          ) : (
+            <Button
+              onClick={() => initializeDefaultTemplates()}
+              variant="outline"
+              className="border-slate-200"
+            >
+              <RefreshCw className="w-4 h-4 ml-2" />
+              إعادة تحميل القوالب
+            </Button>
+          )}
         </div>
 
         {/* Templates List */}
         {activeTab !== 'custom' && (
           <TabsContent value={activeTab} className="space-y-4">
-            {filteredTemplates.length === 0 && !loading && (
+            {templates.length === 0 && !loading && (
+              <Card className="border-2 border-dashed border-indigo-300 bg-indigo-50/30">
+                <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                  <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+                    <Mail className="w-10 h-10 text-indigo-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-3">
+                    لا توجد قوالب إيميلات حالياً
+                  </h3>
+                  <p className="text-slate-600 mb-6 max-w-md leading-relaxed">
+                    لم يتم تهيئة قوالب الإيميلات بعد. اضغط على الزر أدناه لتحميل القوالب الافتراضية التي تشمل:
+                  </p>
+                  <div className="bg-white rounded-lg p-4 mb-6 text-right w-full max-w-md">
+                    <ul className="space-y-2 text-sm text-slate-700">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span>تأكيد التسجيل - يُرسل تلقائياً عند تسجيل مشارك</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span>قبول المشاركة - يُرسل عند قبول طلب المشارك</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span>رفض المشاركة - يُرسل عند رفض الطلب</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span>تكوين الفريق - يُرسل عند تشكيل الفرق</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span>وقوالب أخرى للشهادات والتذكيرات</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <Button
+                    onClick={() => initializeDefaultTemplates()}
+                    size="lg"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-6 text-lg"
+                  >
+                    <RefreshCw className="w-5 h-5 ml-2" />
+                    تهيئة القوالب الافتراضية الآن
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-4">
+                    💡 بعد التهيئة، يمكنك تعديل جميع القوالب حسب احتياجاتك
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            {filteredTemplates.length === 0 && templates.length > 0 && !loading && (
               <Alert className="border-amber-200 bg-amber-50">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-700">
-                  لا توجد قوالب. اضغط على "إعادة تحميل القوالب" لتهيئة القوالب الافتراضية.
+                  لا توجد قوالب تطابق البحث أو الفئة المحددة.
                 </AlertDescription>
               </Alert>
             )}
