@@ -11,12 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Mail, 
-  Send, 
-  Save, 
-  Eye, 
-  Users, 
+import {
+  Mail,
+  Send,
+  Save,
+  Eye,
+  Users,
   RefreshCw,
   FileText,
   Sparkles,
@@ -24,7 +24,9 @@ import {
   XCircle,
   Filter,
   Search,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  Trash2
 } from "lucide-react"
 
 interface EmailTemplate {
@@ -69,6 +71,17 @@ export default function SupervisorEmailManagementPage() {
   const [saving, setSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [previewMode, setPreviewMode] = useState(false)
+  const [simpleMode, setSimpleMode] = useState(true) // محرر بسيط أو متقدم
+
+  // Simple editor state (for non-technical users)
+  const [simpleContent, setSimpleContent] = useState({
+    greeting: '',
+    mainMessage: '',
+    additionalInfo: '',
+    closing: '',
+    buttonText: '',
+    buttonUrl: ''
+  })
 
   // Custom email state
   const [customEmail, setCustomEmail] = useState({
@@ -96,9 +109,9 @@ export default function SupervisorEmailManagementPage() {
           setTemplates(data.templates)
           console.log('✅ Loaded templates:', data.templates.length)
         } else {
-          // إذا لم توجد قوالب، عرض رسالة للمستخدم
-          console.log('⚠️ No templates found')
-          setTemplates([])
+          // إذا لم توجد قوالب، تهيئتها تلقائياً
+          console.log('⚠️ No templates found - Auto-initializing...')
+          await autoInitializeTemplates()
         }
       } else {
         console.error('Failed to load templates:', response.status)
@@ -114,6 +127,31 @@ export default function SupervisorEmailManagementPage() {
       setTemplates([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const autoInitializeTemplates = async () => {
+    try {
+      console.log('🔄 Auto-initializing default templates...')
+
+      const response = await fetch('/api/admin/email-templates/initialize', {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setTemplates(data.templates || [])
+        console.log('✅ Auto-initialized templates:', data.templates?.length)
+        toast({
+          title: "✅ تم التحميل التلقائي",
+          description: `تم تحميل ${data.templates?.length || 0} قالب افتراضي بنجاح`
+        })
+      } else {
+        console.error('Failed to auto-initialize templates')
+      }
+    } catch (error) {
+      console.error('Error auto-initializing templates:', error)
     }
   }
 
@@ -184,6 +222,132 @@ export default function SupervisorEmailManagementPage() {
       })
     } finally {
       setSaving(false)
+    }
+  }
+
+  // تحويل HTML إلى نص بسيط للمحرر
+  const htmlToSimpleText = (html: string): string => {
+    // إزالة HTML tags والحصول على النص فقط
+    const temp = document.createElement('div')
+    temp.innerHTML = html
+    return temp.textContent || temp.innerText || ''
+  }
+
+  // تحويل النص البسيط إلى HTML منسق
+  const simpleTextToHtml = (text: string, subject: string): string => {
+    // تقسيم النص إلى فقرات
+    const paragraphs = text.split('\n\n').filter(p => p.trim())
+
+    // بناء HTML بسيط ومنسق
+    const htmlParagraphs = paragraphs.map(p => {
+      const trimmed = p.trim()
+      // إذا كانت الفقرة تحتوي على نقاط (bullet points)
+      if (trimmed.includes('\n- ') || trimmed.startsWith('- ')) {
+        const items = trimmed.split('\n').filter(line => line.trim().startsWith('- '))
+        const listItems = items.map(item => `<li>${item.replace(/^-\s*/, '')}</li>`).join('')
+        return `<ul style="margin: 15px 0; padding-right: 20px;">${listItems}</ul>`
+      }
+      // فقرة عادية
+      return `<p style="margin: 15px 0; line-height: 1.6; color: #374151;">${trimmed}</p>`
+    }).join('')
+
+    // قالب HTML كامل
+    return `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">${subject}</h1>
+        </div>
+        <div style="background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          ${htmlParagraphs}
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 14px;">
+            <p>مع أطيب التحيات،<br>فريق المنصة</p>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
+  const resetSingleTemplate = async (templateKey: string) => {
+    // تأكيد من المستخدم
+    const confirmed = window.confirm(
+      'هل أنت متأكد من إعادة تعيين هذا القالب للوضع الافتراضي؟\n\nسيتم فقدان جميع التعديلات على هذا القالب.'
+    )
+
+    if (!confirmed) return
+
+    try {
+      const response = await fetch('/api/admin/email-templates/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateKey })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "✅ تم إعادة التعيين",
+          description: "تم إعادة القالب للوضع الافتراضي بنجاح"
+        })
+        await loadTemplates()
+        // إعادة تحديد القالب المحدث
+        if (selectedTemplate?.templateKey === templateKey) {
+          const updatedTemplate = data.template
+          setSelectedTemplate(updatedTemplate)
+        }
+      } else {
+        throw new Error('Failed to reset')
+      }
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "فشل إعادة تعيين القالب",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const resetAllTemplates = async () => {
+    // تأكيد مزدوج للأمان
+    const confirmed1 = window.confirm(
+      '⚠️ تحذير: هل أنت متأكد من إعادة تعيين جميع القوالب؟'
+    )
+
+    if (!confirmed1) return
+
+    const confirmed2 = window.confirm(
+      '⚠️ تأكيد نهائي: سيتم فقدان جميع التعديلات على كل القوالب!\n\nهل تريد المتابعة؟'
+    )
+
+    if (!confirmed2) return
+
+    try {
+      toast({
+        title: "جاري إعادة التعيين...",
+        description: "يتم الآن إعادة تعيين جميع القوالب"
+      })
+
+      const response = await fetch('/api/admin/email-templates/initialize', {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setTemplates(data.templates || [])
+        setSelectedTemplate(null)
+        toast({
+          title: "✅ تم إعادة التعيين",
+          description: `تم إعادة تعيين ${data.templates?.length || 0} قالب بنجاح`
+        })
+      } else {
+        throw new Error('Failed to reset all')
+      }
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "فشل إعادة تعيين القوالب",
+        variant: "destructive"
+      })
     }
   }
 
@@ -343,14 +507,24 @@ export default function SupervisorEmailManagementPage() {
               تهيئة القوالب الافتراضية
             </Button>
           ) : (
-            <Button
-              onClick={() => initializeDefaultTemplates()}
-              variant="outline"
-              className="border-slate-200"
-            >
-              <RefreshCw className="w-4 h-4 ml-2" />
-              إعادة تحميل القوالب
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => initializeDefaultTemplates()}
+                variant="outline"
+                className="border-slate-200"
+              >
+                <RefreshCw className="w-4 h-4 ml-2" />
+                إعادة تحميل القوالب
+              </Button>
+              <Button
+                onClick={() => resetAllTemplates()}
+                variant="outline"
+                className="border-red-200 text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 ml-2" />
+                إعادة تعيين جميع القوالب
+              </Button>
+            </div>
           )}
         </div>
 
@@ -500,6 +674,15 @@ export default function SupervisorEmailManagementPage() {
                         إرسال تجريبي
                       </Button>
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => resetSingleTemplate(selectedTemplate.templateKey)}
+                        className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                      >
+                        <RotateCcw className="w-4 h-4 ml-2" />
+                        إعادة للوضع الافتراضي
+                      </Button>
+                      <Button
                         size="sm"
                         onClick={() => saveTemplate(selectedTemplate)}
                         disabled={saving}
@@ -523,28 +706,104 @@ export default function SupervisorEmailManagementPage() {
                             subject: e.target.value
                           })}
                           className="mt-1 border-slate-200"
+                          placeholder="مثال: مبروك! تم قبولك في الهاكاثون"
                         />
                       </div>
-                      <div>
-                        <Label className="text-slate-700">محتوى HTML</Label>
-                        <Textarea
-                          value={selectedTemplate.bodyHtml}
-                          onChange={(e) => setSelectedTemplate({
-                            ...selectedTemplate,
-                            bodyHtml: e.target.value
-                          })}
-                          rows={20}
-                          className="mt-1 font-mono text-sm border-slate-200"
-                        />
+
+                      {/* محرر بسيط */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-slate-700 text-lg">محتوى الرسالة</Label>
+                          <div className="flex gap-2">
+                            <Button
+                              variant={simpleMode ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSimpleMode(true)}
+                              className={simpleMode ? "bg-indigo-600" : ""}
+                            >
+                              محرر بسيط
+                            </Button>
+                            <Button
+                              variant={!simpleMode ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSimpleMode(false)}
+                              className={!simpleMode ? "bg-indigo-600" : ""}
+                            >
+                              محرر متقدم (HTML)
+                            </Button>
+                          </div>
+                        </div>
+
+                        {simpleMode ? (
+                          <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <Alert className="bg-blue-50 border-blue-200">
+                              <AlertCircle className="h-4 w-4 text-blue-600" />
+                              <AlertDescription className="text-blue-800">
+                                💡 اكتب رسالتك بشكل طبيعي. استخدم سطرين فارغين للفصل بين الفقرات. استخدم "-" في بداية السطر لعمل قائمة نقطية.
+                              </AlertDescription>
+                            </Alert>
+
+                            <Textarea
+                              value={htmlToSimpleText(selectedTemplate.bodyHtml)}
+                              onChange={(e) => {
+                                const simpleText = e.target.value
+                                const htmlContent = simpleTextToHtml(simpleText, selectedTemplate.subject)
+                                setSelectedTemplate({
+                                  ...selectedTemplate,
+                                  bodyHtml: htmlContent
+                                })
+                              }}
+                              rows={15}
+                              className="mt-1 border-slate-200 text-base leading-relaxed"
+                              placeholder={`مثال:
+
+مرحباً {{participantName}}،
+
+نحن سعداء بإبلاغك أنه تم قبول طلبك للمشاركة في {{hackathonTitle}}!
+
+تفاصيل مهمة:
+- تاريخ البدء: 15 نوفمبر 2024
+- المكان: مركز الابتكار التقني
+- الوقت: 9:00 صباحاً
+
+يرجى التأكد من حضورك في الموعد المحدد.
+
+نتطلع لرؤيتك!`}
+                            />
+                          </div>
+                        ) : (
+                          <div>
+                            <Label className="text-slate-700">محتوى HTML (للمستخدمين المتقدمين)</Label>
+                            <Textarea
+                              value={selectedTemplate.bodyHtml}
+                              onChange={(e) => setSelectedTemplate({
+                                ...selectedTemplate,
+                                bodyHtml: e.target.value
+                              })}
+                              rows={20}
+                              className="mt-1 font-mono text-sm border-slate-200"
+                            />
+                          </div>
+                        )}
                       </div>
+
                       {selectedTemplate.variables && (
                         <div>
-                          <Label className="text-slate-700">المتغيرات المتاحة</Label>
+                          <Label className="text-slate-700">المتغيرات المتاحة (يمكنك استخدامها في الرسالة)</Label>
                           <div className="grid grid-cols-2 gap-2 mt-2">
                             {Object.entries(selectedTemplate.variables).map(([key, desc]) => (
-                              <div key={key} className="text-sm p-2 bg-slate-50 rounded border border-slate-200">
-                                <code className="text-indigo-600">{`{{${key}}}`}</code>
+                              <div key={key} className="text-sm p-3 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-indigo-200 hover:border-indigo-300 transition-colors cursor-pointer"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`{{${key}}}`)
+                                  toast({
+                                    title: "تم النسخ!",
+                                    description: `تم نسخ {{${key}}} إلى الحافظة`
+                                  })
+                                }}
+                              >
+                                <code className="text-indigo-600 font-semibold">{`{{${key}}}`}</code>
                                 <p className="text-xs text-slate-600 mt-1">{desc}</p>
+                                <p className="text-xs text-indigo-500 mt-1">اضغط للنسخ</p>
                               </div>
                             ))}
                           </div>
