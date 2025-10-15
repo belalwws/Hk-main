@@ -435,13 +435,13 @@ export default function HackathonRegisterFormPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          {!isPreview && (
+        {/* Header (hidden in preview mode) */}
+        {!isPreview && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
             <div className="flex items-center gap-4 mb-4">
               <Link href={`/hackathons/${hackathonId}`}>
                 <Button variant="outline" size="sm">
@@ -450,38 +450,38 @@ export default function HackathonRegisterFormPage() {
                 </Button>
               </Link>
             </div>
-          )}
-          
-          {hackathon && (
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <Trophy className="w-12 h-12 text-[#01645e] mt-1" />
-                  <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                      {hackathon.title}
-                    </h1>
-                    <p className="text-gray-600 mb-4">{hackathon.description}</p>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(hackathon.startDate).toLocaleDateString('ar-SA')}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {hackathon.location}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {hackathon.participantCount || 0} مشارك
+
+            {hackathon && (
+              <Card className="mb-6">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <Trophy className="w-12 h-12 text-[#01645e] mt-1" />
+                    <div className="flex-1">
+                      <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                        {hackathon.title}
+                      </h1>
+                      <p className="text-gray-600 mb-4">{hackathon.description}</p>
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(hackathon.startDate).toLocaleDateString('ar-SA')}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {hackathon.location}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          {hackathon.participantCount || 0} مشارك
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </motion.div>
+                </CardContent>
+              </Card>
+            )}
+          </motion.div>
+        )}
 
         {/* Registration Form */}
         <Card>
