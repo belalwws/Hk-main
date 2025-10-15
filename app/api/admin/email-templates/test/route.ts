@@ -4,8 +4,14 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
+    // Allow both admin and supervisor
+    const userRole = request.headers.get("x-user-role");
+    if (!["admin", "supervisor"].includes(userRole || "")) {
+      return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 403 });
+    }
+
     const { templateKey, testEmail } = await request.json()
-    
+
     if (!templateKey || !testEmail) {
       return NextResponse.json(
         { success: false, error: 'Template key and test email are required' },

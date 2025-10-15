@@ -19,7 +19,8 @@ import {
   Settings,
   FileText,
   ClipboardList,
-  Award
+  Award,
+  Mail
 } from "lucide-react"
 
 const sidebarItems = [
@@ -57,6 +58,11 @@ const sidebarItems = [
     title: "الشهادات",
     href: "/supervisor/certificates",
     icon: Award
+  },
+  {
+    title: "إدارة الإيميلات",
+    href: "/supervisor/email-management",
+    icon: Mail
   },
   {
     title: "التقارير",

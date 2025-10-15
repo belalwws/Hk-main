@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-const DEFAULT_TEMPLATES = [
+export async function POST(request: NextRequest) {
+  try {
+    // Allow both admin and supervisor
+    const userRole = request.headers.get("x-user-role");
+    if (!["admin", "supervisor"].includes(userRole || "")) {
+      return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 403 });
+    }
+
+    // Initialize default templates
+    const templates = await initializeTemplates();
+    return NextResponse.json({ success: true, templates });
+  } catch (error) {
+    console.error('Error initializing templates:', error);
+    return NextResponse.json({ success: false, error: 'Failed to initialize templates' }, { status: 500 });
+  }
+}
+
+async function initializeTemplates() {
+  const DEFAULT_TEMPLATES = [
   {
     templateKey: 'registration_confirmation',
     nameAr: 'تأكيد التسجيل',
@@ -110,45 +128,32 @@ const DEFAULT_TEMPLATES = [
     isSystem: true,
     isActive: true
   }
-]
+  ]
 
-export async function POST(request: NextRequest) {
-  try {
-    console.log('Initializing default email templates...')
-    
-    const createdTemplates = []
-    
-    for (const template of DEFAULT_TEMPLATES) {
-      try {
-        const existing = await prisma.emailTemplate.findUnique({
-          where: { templateKey: template.templateKey }
+  console.log('Initializing default email templates...')
+
+  const createdTemplates = []
+
+  for (const template of DEFAULT_TEMPLATES) {
+    try {
+      const existing = await prisma.emailTemplate.findUnique({
+        where: { templateKey: template.templateKey }
+      })
+
+      if (!existing) {
+        const created = await prisma.emailTemplate.create({
+          data: template
         })
-        
-        if (!existing) {
-          const created = await prisma.emailTemplate.create({
-            data: template
-          })
-          createdTemplates.push(created)
-          console.log(`✅ Created template: ${template.templateKey}`)
-        } else {
-          createdTemplates.push(existing)
-          console.log(`ℹ️ Template already exists: ${template.templateKey}`)
-        }
-      } catch (error) {
-        console.error(`Error creating template ${template.templateKey}:`, error)
+        createdTemplates.push(created)
+        console.log(`✅ Created template: ${template.templateKey}`)
+      } else {
+        createdTemplates.push(existing)
+        console.log(`ℹ️ Template already exists: ${template.templateKey}`)
       }
+    } catch (error) {
+      console.error(`Error creating template ${template.templateKey}:`, error)
     }
-    
-    return NextResponse.json({
-      success: true,
-      message: `Initialized ${createdTemplates.length} templates`,
-      templates: createdTemplates
-    })
-  } catch (error) {
-    console.error('Error initializing templates:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to initialize templates' },
-      { status: 500 }
-    )
   }
+
+  return createdTemplates
 }
