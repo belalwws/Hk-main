@@ -109,6 +109,7 @@ export default function SupervisorHackathonManagementPage() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [participantDetails, setParticipantDetails] = useState<any>(null)
   const [loadingDetails, setLoadingDetails] = useState(false)
+  const [exportingExcel, setExportingExcel] = useState(false)
   const [selectedMember, setSelectedMember] = useState<any>(null)
   const [memberDetailsDialogOpen, setMemberDetailsDialogOpen] = useState(false)
   const [draggedMember, setDraggedMember] = useState<{ participantId: string; sourceTeamId: string; memberName: string } | null>(null)
@@ -272,35 +273,93 @@ export default function SupervisorHackathonManagementPage() {
 
   const exportParticipantsToExcel = async () => {
     try {
-      const data = filteredParticipants.map(p => ({
-        name: p.user.name,
-        email: p.user.email,
-        phone: p.user.phone || '',
-        city: p.user.city || '',
-        nationality: p.user.nationality || '',
-        teamRole: p.teamRole || '',
-        status: p.status === 'approved' ? 'مقبول' : p.status === 'rejected' ? 'مرفوض' : 'في الانتظار',
-        registeredAt: new Date(p.registeredAt).toLocaleDateString('ar-SA')
-      }))
+      setExportingExcel(true)
+      
+      // First, fetch detailed data for all participants to include form data
+      const participantsWithDetails = await Promise.all(
+        filteredParticipants.map(async (p) => {
+          try {
+            const response = await fetch(`/api/supervisor/participants/${p.id}/details`, {
+              credentials: 'include'
+            })
+            if (response.ok) {
+              const data = await response.json()
+              return data.participant
+            }
+            return null
+          } catch (error) {
+            console.error(`Error fetching details for participant ${p.id}:`, error)
+            return null
+          }
+        })
+      )
+
+      const data = participantsWithDetails.filter(p => p !== null).map(p => {
+        const row: any = {
+          name: p.user.name,
+          email: p.user.email,
+          phone: p.user.phone || '',
+          city: p.user.city || '',
+          nationality: p.user.nationality || '',
+          teamRole: p.teamRole || '',
+          status: p.status === 'approved' ? 'مقبول' : p.status === 'rejected' ? 'مرفوض' : 'في الانتظار',
+          registeredAt: new Date(p.registeredAt).toLocaleDateString('ar-SA')
+        }
+
+        // Add form data fields
+        if (p.additionalInfo && typeof p.additionalInfo === 'object') {
+          Object.entries(p.additionalInfo).forEach(([fieldId, fieldData]: [string, any]) => {
+            if (fieldData && fieldData.label) {
+              // Format the value properly
+              let value = fieldData.value
+              if (Array.isArray(value)) {
+                value = value.join(', ')
+              } else if (typeof value === 'object') {
+                value = JSON.stringify(value)
+              }
+              row[fieldData.label] = value || ''
+            }
+          })
+        }
+
+        return row
+      })
+
+      // Get all unique column names from the data
+      const allColumns = new Set<string>()
+      data.forEach(row => {
+        Object.keys(row).forEach(key => allColumns.add(key))
+      })
+
+      // Create columns array
+      const columns = [
+        { key: 'name', header: 'الاسم', width: 20 },
+        { key: 'email', header: 'البريد الإلكتروني', width: 25 },
+        { key: 'phone', header: 'الهاتف', width: 15 },
+        { key: 'city', header: 'المدينة', width: 15 },
+        { key: 'nationality', header: 'الجنسية', width: 15 },
+        { key: 'teamRole', header: 'الدور المفضل', width: 20 },
+        { key: 'status', header: 'الحالة', width: 15 },
+        { key: 'registeredAt', header: 'تاريخ التسجيل', width: 15 },
+        // Add dynamic columns for form fields
+        ...Array.from(allColumns)
+          .filter(col => !['name', 'email', 'phone', 'city', 'nationality', 'teamRole', 'status', 'registeredAt'].includes(col))
+          .map(col => ({ key: col, header: col, width: 25 }))
+      ]
 
       await ExcelExporter.exportToExcel({
         filename: `${hackathon?.title}_participants.xlsx`,
         sheetName: 'المتقدمين',
-        columns: [
-          { key: 'name', header: 'الاسم', width: 20 },
-          { key: 'email', header: 'البريد الإلكتروني', width: 25 },
-          { key: 'phone', header: 'الهاتف', width: 15 },
-          { key: 'city', header: 'المدينة', width: 15 },
-          { key: 'nationality', header: 'الجنسية', width: 15 },
-          { key: 'teamRole', header: 'الدور المفضل', width: 20 },
-          { key: 'status', header: 'الحالة', width: 15 },
-          { key: 'registeredAt', header: 'تاريخ التسجيل', width: 15 }
-        ],
+        columns,
         data
       })
+
+      alert('✅ تم تصدير البيانات بنجاح!')
     } catch (error) {
       console.error('Error exporting participants:', error)
       alert('حدث خطأ في تصدير البيانات')
+    } finally {
+      setExportingExcel(false)
     }
   }
 
@@ -667,10 +726,20 @@ export default function SupervisorHackathonManagementPage() {
                     {permissions.canExportData && filteredParticipants.length > 0 && (
                       <Button
                         onClick={exportParticipantsToExcel}
+                        disabled={exportingExcel}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
-                        <Download className="w-4 h-4 ml-2" />
-                        تحميل كل المتقدمين
+                        {exportingExcel ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
+                            جاري التحميل...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4 ml-2" />
+                            تحميل كل المتقدمين
+                          </>
+                        )}
                       </Button>
                     )}
                   </div>
@@ -1342,17 +1411,30 @@ export default function SupervisorHackathonManagementPage() {
                       بيانات التسجيل الإضافية
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
-                      {Object.entries(participantDetails.additionalInfo).map(([fieldId, fieldData]: [string, any]) => (
-                        <div key={fieldId} className="border-b pb-3 last:border-b-0">
-                          <Label className="text-[#8b7632] text-sm">{fieldData.label}</Label>
-                          <p className="text-[#01645e] font-semibold mt-1">
-                            {Array.isArray(fieldData.value) 
-                              ? fieldData.value.join(', ')
-                              : fieldData.value?.toString() || 'غير محدد'
-                            }
-                          </p>
-                        </div>
-                      ))}
+                      {Object.entries(participantDetails.additionalInfo).map(([fieldId, fieldData]: [string, any]) => {
+                        // Format the value properly
+                        let displayValue = ''
+                        if (fieldData && fieldData.value !== undefined && fieldData.value !== null) {
+                          if (Array.isArray(fieldData.value)) {
+                            displayValue = fieldData.value.join(', ')
+                          } else if (typeof fieldData.value === 'object') {
+                            displayValue = JSON.stringify(fieldData.value, null, 2)
+                          } else {
+                            displayValue = String(fieldData.value)
+                          }
+                        } else {
+                          displayValue = 'غير محدد'
+                        }
+
+                        return (
+                          <div key={fieldId} className="border-b pb-3 last:border-b-0">
+                            <Label className="text-[#8b7632] text-sm font-semibold">{fieldData.label || fieldId}</Label>
+                            <p className="text-[#01645e] mt-1" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                              {displayValue}
+                            </p>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )}

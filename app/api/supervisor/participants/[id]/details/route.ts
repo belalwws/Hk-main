@@ -55,7 +55,19 @@ export async function GET(
     const formattedAdditionalInfo: { [key: string]: { label: string; value: any; type: string } } = {}
     if (participant.additionalInfo && typeof participant.additionalInfo === 'object') {
       const additionalInfo = participant.additionalInfo as { [key: string]: any }
-      Object.entries(additionalInfo).forEach(([fieldId, value]) => {
+      
+      // Check if there's formData inside additionalInfo and extract it
+      let dataToProcess = additionalInfo
+      if (additionalInfo.formData && typeof additionalInfo.formData === 'object') {
+        dataToProcess = additionalInfo.formData
+      }
+      
+      Object.entries(dataToProcess).forEach(([fieldId, value]) => {
+        // Skip meta fields
+        if (fieldId === 'submittedAt' || fieldId === 'registrationType' || fieldId === 'formData') {
+          return
+        }
+        
         const fieldMeta = fieldLabels[fieldId]
         if (fieldMeta) {
           formattedAdditionalInfo[fieldId] = {
