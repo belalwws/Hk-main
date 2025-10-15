@@ -391,8 +391,9 @@ model HackathonForm {
   title        String
   description  String?
   coverImage   String?  // Cover image URL from Cloudinary
+  colors       Json?    // Custom colors: {primary, secondary, accent, buttonText}
   isActive     Boolean  @default(true)
-  fields       String   // JSON string of form fields
+  fields       String   // JSON string of form fields (includes idNumber type)
   settings     String   // JSON string of form settings
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

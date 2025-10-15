@@ -19,7 +19,7 @@ import { useParams, useRouter } from 'next/navigation'
 
 interface FormField {
   id: string
-  type: 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'file'
+  type: 'text' | 'email' | 'phone' | 'idNumber' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'file'
   label: string
   placeholder?: string
   required: boolean
@@ -37,6 +37,12 @@ interface RegistrationForm {
   title: string
   description: string
   coverImage?: string
+  colors?: {
+    primary: string
+    secondary: string
+    accent: string
+    buttonText: string
+  }
   isActive: boolean
   fields: FormField[]
   settings: {
@@ -117,6 +123,10 @@ export default function HackathonRegisterFormPage() {
 
     if (field.type === 'phone' && value && !/^[\+]?[0-9\s\-\(\)]{10,}$/.test(value)) {
       return 'رقم الهاتف غير صحيح'
+    }
+
+    if (field.type === 'idNumber' && value && !/^[0-9]{10}$/.test(value)) {
+      return 'رقم الهوية يجب أن يكون 10 أرقام'
     }
 
     if (field.validation?.minLength && value && value.length < field.validation.minLength) {
@@ -210,6 +220,7 @@ export default function HackathonRegisterFormPage() {
       case 'text':
       case 'email':
       case 'phone':
+      case 'idNumber':
         return (
           <div key={field.id}>
             <Label htmlFor={field.id} className="text-base font-medium text-gray-700 mb-2 block">
@@ -217,10 +228,11 @@ export default function HackathonRegisterFormPage() {
             </Label>
             <Input
               id={field.id}
-              type={field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
+              type={field.type === 'email' ? 'email' : field.type === 'phone' || field.type === 'idNumber' ? 'tel' : 'text'}
               value={formData[field.id] || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder}
+              maxLength={field.type === 'idNumber' ? 10 : undefined}
               className={`mt-1 h-12 text-base ${error ? 'border-red-500' : 'border-gray-300'}`}
             />
             {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
@@ -526,7 +538,11 @@ export default function HackathonRegisterFormPage() {
                   type="submit"
                   disabled={submitting}
                   size="lg"
-                  className="bg-[#01645e] hover:bg-[#01645e]/90 text-white px-12 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                  style={{
+                    backgroundColor: form.colors?.primary || '#01645e',
+                    color: form.colors?.buttonText || '#ffffff'
+                  }}
+                  className="px-12 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:opacity-90"
                 >
                   {submitting ? (
                     <>

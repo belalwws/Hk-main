@@ -31,6 +31,7 @@ export async function GET(
             title: existingForm.title,
             description: existingForm.description,
             coverImage: (existingForm as any).coverImage,
+            colors: (existingForm as any).colors,
             isActive: existingForm.isActive,
             fields: JSON.parse(existingForm.fields),
             settings: JSON.parse(existingForm.settings)
@@ -67,7 +68,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { title, description, coverImage, isActive, fields, settings } = body
+    const { title, description, coverImage, colors, isActive, fields, settings } = body
 
     // Validate required fields
     if (!title?.trim()) {
@@ -120,6 +121,7 @@ export async function POST(
             title,
             description: description || '',
             coverImage: coverImage || null,
+            colors: colors || null,
             isActive: isActive ?? true,
             fields: fieldsJson,
             settings: settingsJson
@@ -140,6 +142,7 @@ export async function POST(
             title,
             description: description || '',
             coverImage: coverImage || null,
+            colors: colors || null,
             isActive: isActive ?? true,
             fields: fieldsJson,
             settings: settingsJson

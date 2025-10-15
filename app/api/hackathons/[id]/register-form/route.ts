@@ -220,6 +220,7 @@ export async function GET(
           title: existingForm.title,
           description: existingForm.description,
           coverImage: (existingForm as any).coverImage,
+          colors: (existingForm as any).colors,
           isActive: existingForm.isActive,
           fields: JSON.parse(existingForm.fields),
           settings: JSON.parse(existingForm.settings)
@@ -240,6 +241,7 @@ export async function GET(
           title: dynamicForm.title || 'نموذج التسجيل في الهاكاثون',
           description: dynamicForm.description || 'يرجى ملء البيانات المطلوبة للتسجيل في الهاكاثون',
           coverImage: dynamicForm.coverImage,
+          colors: dynamicForm.colors,
           isActive: dynamicForm.isActive,
           fields: dynamicForm.fields || [],
           settings: dynamicForm.settings || {

@@ -32,7 +32,9 @@ import {
   Clock,
   Upload,
   Image as ImageIcon,
-  X
+  X,
+  CreditCard,
+  Palette
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -41,7 +43,7 @@ import { Badge } from '@/components/ui/badge'
 
 interface FormField {
   id: string
-  type: 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'file'
+  type: 'text' | 'email' | 'phone' | 'idNumber' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'file'
   label: string
   placeholder?: string
   required: boolean
@@ -66,6 +68,12 @@ interface RegistrationForm {
     requireApproval: boolean
     sendConfirmationEmail: boolean
     redirectUrl?: string
+  }
+  colors?: {
+    primary: string
+    secondary: string
+    accent: string
+    buttonText: string
   }
 }
 
@@ -112,6 +120,12 @@ export default function HackathonRegistrationFormPage() {
       allowMultipleSubmissions: false,
       requireApproval: true,
       sendConfirmationEmail: true
+    },
+    colors: {
+      primary: '#01645e',
+      secondary: '#3ab666',
+      accent: '#f59e0b',
+      buttonText: '#ffffff'
     }
   })
 
@@ -365,6 +379,7 @@ export default function HackathonRegistrationFormPage() {
       case 'text': return User
       case 'email': return Mail
       case 'phone': return Phone
+      case 'idNumber': return CreditCard
       case 'textarea': return FileText
       case 'select': return List
       case 'checkbox': return ToggleLeft
@@ -379,6 +394,7 @@ export default function HackathonRegistrationFormPage() {
     { value: 'text', label: 'نص' },
     { value: 'email', label: 'بريد إلكتروني' },
     { value: 'phone', label: 'رقم هاتف' },
+    { value: 'idNumber', label: 'رقم الهوية' },
     { value: 'textarea', label: 'نص طويل' },
     { value: 'select', label: 'قائمة منسدلة' },
     { value: 'checkbox', label: 'مربع اختيار' },
@@ -517,6 +533,184 @@ export default function HackathonRegistrationFormPage() {
                   <Label htmlFor="isActive" className="mr-2">
                     النموذج مفعل
                   </Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Colors Customization */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-[#01645e]" />
+                  <div>
+                    <CardTitle>تخصيص الألوان</CardTitle>
+                    <CardDescription>تخصيص ألوان الفورم حسب هوية الهاكاثون</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="primaryColor" className="flex items-center gap-2 mb-2">
+                      اللون الأساسي
+                      <div 
+                        className="w-6 h-6 rounded border-2 border-gray-300"
+                        style={{ backgroundColor: form.colors?.primary || '#01645e' }}
+                      />
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="primaryColor"
+                        type="color"
+                        value={form.colors?.primary || '#01645e'}
+                        onChange={(e) => setForm(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors!, primary: e.target.value }
+                        }))}
+                        className="w-20 h-10"
+                      />
+                      <Input
+                        type="text"
+                        value={form.colors?.primary || '#01645e'}
+                        onChange={(e) => setForm(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors!, primary: e.target.value }
+                        }))}
+                        placeholder="#01645e"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="secondaryColor" className="flex items-center gap-2 mb-2">
+                      اللون الثانوي
+                      <div 
+                        className="w-6 h-6 rounded border-2 border-gray-300"
+                        style={{ backgroundColor: form.colors?.secondary || '#3ab666' }}
+                      />
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="secondaryColor"
+                        type="color"
+                        value={form.colors?.secondary || '#3ab666'}
+                        onChange={(e) => setForm(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors!, secondary: e.target.value }
+                        }))}
+                        className="w-20 h-10"
+                      />
+                      <Input
+                        type="text"
+                        value={form.colors?.secondary || '#3ab666'}
+                        onChange={(e) => setForm(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors!, secondary: e.target.value }
+                        }))}
+                        placeholder="#3ab666"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="accentColor" className="flex items-center gap-2 mb-2">
+                      لون التمييز
+                      <div 
+                        className="w-6 h-6 rounded border-2 border-gray-300"
+                        style={{ backgroundColor: form.colors?.accent || '#f59e0b' }}
+                      />
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="accentColor"
+                        type="color"
+                        value={form.colors?.accent || '#f59e0b'}
+                        onChange={(e) => setForm(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors!, accent: e.target.value }
+                        }))}
+                        className="w-20 h-10"
+                      />
+                      <Input
+                        type="text"
+                        value={form.colors?.accent || '#f59e0b'}
+                        onChange={(e) => setForm(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors!, accent: e.target.value }
+                        }))}
+                        placeholder="#f59e0b"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="buttonTextColor" className="flex items-center gap-2 mb-2">
+                      لون نص الأزرار
+                      <div 
+                        className="w-6 h-6 rounded border-2 border-gray-300"
+                        style={{ backgroundColor: form.colors?.buttonText || '#ffffff' }}
+                      />
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="buttonTextColor"
+                        type="color"
+                        value={form.colors?.buttonText || '#ffffff'}
+                        onChange={(e) => setForm(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors!, buttonText: e.target.value }
+                        }))}
+                        className="w-20 h-10"
+                      />
+                      <Input
+                        type="text"
+                        value={form.colors?.buttonText || '#ffffff'}
+                        onChange={(e) => setForm(prev => ({ 
+                          ...prev, 
+                          colors: { ...prev.colors!, buttonText: e.target.value }
+                        }))}
+                        placeholder="#ffffff"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Color Preview */}
+                <div className="mt-6 p-6 border-2 border-dashed rounded-lg bg-gray-50">
+                  <p className="text-sm font-medium text-gray-700 mb-4">معاينة الألوان:</p>
+                  <div className="flex flex-wrap gap-3">
+                    <Button 
+                      style={{ 
+                        backgroundColor: form.colors?.primary || '#01645e',
+                        color: form.colors?.buttonText || '#ffffff'
+                      }}
+                      className="shadow-md"
+                    >
+                      زر بالألوان الجديدة
+                    </Button>
+                    <div 
+                      className="px-4 py-2 rounded-md font-medium"
+                      style={{ 
+                        backgroundColor: form.colors?.secondary || '#3ab666',
+                        color: form.colors?.buttonText || '#ffffff'
+                      }}
+                    >
+                      اللون الثانوي
+                    </div>
+                    <div 
+                      className="px-4 py-2 rounded-md font-medium"
+                      style={{ 
+                        backgroundColor: form.colors?.accent || '#f59e0b',
+                        color: form.colors?.buttonText || '#ffffff'
+                      }}
+                    >
+                      لون التمييز
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -712,7 +906,7 @@ export default function HackathonRegistrationFormPage() {
                 <CardTitle>الإجراءات</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Link href={`/hackathons/${hackathonId}/register-form?preview=1`} target="_blank">
+                <Link href={`/hackathons/${hackathonId}/register-form`} target="_blank">
                   <Button variant="outline" className="w-full">
                     <Eye className="w-4 h-4 mr-2" />
                     معاينة النموذج
