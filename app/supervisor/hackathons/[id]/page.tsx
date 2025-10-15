@@ -308,6 +308,7 @@ export default function SupervisorHackathonManagementPage() {
 
         // Add form data fields with their Arabic labels
         if (p.additionalInfo && typeof p.additionalInfo === 'object') {
+          console.log('📊 Additional Info for participant:', p.user.name, p.additionalInfo)
           Object.entries(p.additionalInfo).forEach(([fieldId, fieldData]: [string, any]) => {
             if (fieldData && fieldData.label) {
               // Format the value properly
@@ -323,12 +324,18 @@ export default function SupervisorHackathonManagementPage() {
               }
               // Use the Arabic label as the column name
               row[fieldData.label] = value
+              console.log(`  ✅ Added field: ${fieldData.label} = ${value}`)
             }
           })
+        } else {
+          console.log('❌ No additionalInfo for participant:', p.user.name)
         }
 
         return row
       })
+
+      console.log('📋 Final data rows:', data.length)
+      console.log('📋 Sample row:', data[0])
 
       // Get all unique column names from the data
       const allColumnNames = new Set<string>()
@@ -336,14 +343,21 @@ export default function SupervisorHackathonManagementPage() {
         Object.keys(row).forEach(key => allColumnNames.add(key))
       })
 
+      console.log('📊 All column names:', Array.from(allColumnNames))
+
       // Create columns array with all headers
       const baseColumns = ['الاسم', 'البريد الإلكتروني', 'الهاتف', 'المدينة', 'الجنسية', 'الدور المفضل', 'الحالة', 'تاريخ التسجيل']
       const dynamicColumns = Array.from(allColumnNames).filter(col => !baseColumns.includes(col))
+      
+      console.log('🔢 Base columns:', baseColumns.length)
+      console.log('🔢 Dynamic columns:', dynamicColumns.length, dynamicColumns)
       
       const columns = [
         ...baseColumns.map(col => ({ key: col, header: col, width: 25 })),
         ...dynamicColumns.map(col => ({ key: col, header: col, width: 30 }))
       ]
+
+      console.log('📊 Total columns:', columns.length)
 
       await ExcelExporter.exportToExcel({
         filename: `${hackathon?.title}_participants.xlsx`,
