@@ -154,6 +154,29 @@ const DEFAULT_TEMPLATES = {
 
 مع أطيب التحيات,
 فريق الهاكاثون`
+  },
+  upload_link: {
+    subject: '🎉 رابط رفع العرض التقديمي - {{hackathonTitle}}',
+    body: `مرحباً {{participantName}},
+
+يسعدنا إبلاغك بأنه تم قبولك في {{hackathonTitle}}! 🎊
+
+تم تعيينك في فريق: {{teamName}}
+
+يمكنك الآن رفع العرض التقديمي الخاص بفريقك من خلال الرابط التالي:
+{{uploadLink}}
+
+⚠️ ملاحظات هامة:
+- هذا الرابط صالح حتى {{expiryDate}}
+- الرابط خاص بك ولا يجب مشاركته مع الآخرين
+- يمكنك رفع العرض التقديمي مرة واحدة فقط
+- الملفات المقبولة: PowerPoint (.ppt, .pptx) أو PDF
+- الحد الأقصى لحجم الملف: 10 ميجابايت
+
+نتمنى لك التوفيق! 🚀
+
+مع أطيب التحيات,
+فريق الهاكاثون`
   }
 }
 
@@ -171,6 +194,7 @@ export interface EmailTemplates {
   reminder: EmailTemplate
   welcome: EmailTemplate
   certificate_ready: EmailTemplate
+  upload_link: EmailTemplate
 }
 
 /**
