@@ -47,7 +47,45 @@ export async function GET(request: NextRequest) {
     const supervisor = supervisorAssignments.find(s => s.hackathonId === null) || supervisorAssignments[0]
 
     if (!supervisor || supervisorAssignments.length === 0) {
-      console.log('⚠️ No supervisor found for user:', userId)
+      console.log('⚠️ No supervisor assignment found for user:', userId)
+
+      // Get user data even if not assigned to any hackathon
+      const user = await prisma.user.findUnique({
+        where: { id: userId || '' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          city: true,
+          profilePicture: true,
+          bio: true,
+          linkedin: true,
+          skills: true,
+          experience: true
+        }
+      })
+
+      if (!user) {
+        return NextResponse.json({ error: 'المستخدم غير موجود' }, { status: 404 })
+      }
+
+      // Check if profile is complete
+      const profileFields = {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        city: user.city,
+        bio: user.bio,
+        linkedin: user.linkedin,
+        skills: user.skills,
+        experience: user.experience
+      }
+
+      const completedFields = Object.values(profileFields).filter(v => v && v.toString().trim() !== '').length
+      const totalFields = Object.keys(profileFields).length
+      const completionPercentage = Math.round((completedFields / totalFields) * 100)
+      const isProfileComplete = completionPercentage === 100
 
       return NextResponse.json({
         stats: {
@@ -61,15 +99,23 @@ export async function GET(request: NextRequest) {
         },
         recentActivity: [],
         supervisor: {
-          id: 'temp',
-          name: 'مشرف',
-          email: '',
-          phone: null,
-          city: null,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          city: user.city,
+          profilePicture: user.profilePicture,
+          bio: user.bio,
+          linkedin: user.linkedin,
+          skills: user.skills,
+          experience: user.experience,
           department: null,
           hackathons: [],
           permissions: null,
-          isProfileComplete: false
+          isProfileComplete,
+          completionPercentage,
+          assignmentCount: 0,
+          isGeneralSupervisor: false
         },
         message: 'لم يتم تعيينك كمشرف على أي هاكاثون بعد'
       })
