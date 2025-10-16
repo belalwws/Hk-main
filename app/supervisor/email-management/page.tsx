@@ -78,6 +78,8 @@ export default function SupervisorEmailManagementPage() {
   const [testEmail, setTestEmail] = useState('') // الإيميل التجريبي
   const [showTestResultModal, setShowTestResultModal] = useState(false) // modal نتيجة الإرسال
   const [testResultSuccess, setTestResultSuccess] = useState(false) // نجاح أو فشل
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false) // تعديلات غير محفوظة
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null) // مؤقت الحفظ التلقائي
 
   // Custom email state
   const [customEmail, setCustomEmail] = useState({
@@ -192,20 +194,24 @@ export default function SupervisorEmailManagementPage() {
     }
   }
 
-  const saveTemplate = async (template: EmailTemplate) => {
+  const saveTemplate = async (template: EmailTemplate, silent = false) => {
     try {
       setSaving(true)
       const response = await fetch('/api/admin/email-templates', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(template)
       })
 
       if (response.ok) {
-        toast({
-          title: "✅ تم الحفظ",
-          description: "تم حفظ القالب بنجاح"
-        })
+        if (!silent) {
+          toast({
+            title: "✅ تم الحفظ",
+            description: "تم حفظ القالب بنجاح"
+          })
+        }
+        setHasUnsavedChanges(false)
         await loadTemplates()
       } else {
         throw new Error('Failed to save')
@@ -219,6 +225,22 @@ export default function SupervisorEmailManagementPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // حفظ تلقائي بعد 2 ثانية من التوقف عن الكتابة
+  const autoSaveTemplate = (template: EmailTemplate) => {
+    // إلغاء المؤقت السابق
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
+    }
+
+    // تعيين مؤقت جديد
+    const timeout = setTimeout(() => {
+      console.log('🔄 Auto-saving template...')
+      saveTemplate(template, true) // حفظ صامت
+    }, 2000) // 2 ثانية
+
+    setAutoSaveTimeout(timeout)
   }
 
   // تحويل HTML إلى نص بسيط للمحرر
@@ -434,6 +456,20 @@ export default function SupervisorEmailManagementPage() {
         variant: "destructive"
       })
       return
+    }
+
+    // تحذير إذا كانت هناك تعديلات غير محفوظة
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        '⚠️ لديك تعديلات غير محفوظة!\n\nسيتم إرسال الإيميل التجريبي بالنسخة المحفوظة في قاعدة البيانات، وليس التعديلات الحالية.\n\nهل تريد حفظ التعديلات أولاً؟'
+      )
+
+      if (confirmed) {
+        // حفظ التعديلات أولاً
+        await saveTemplate(template)
+        // الانتظار قليلاً للتأكد من الحفظ
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
     }
 
     setSendingTest(true) // ✅ بدء التحميل
@@ -814,10 +850,13 @@ export default function SupervisorEmailManagementPage() {
                         size="sm"
                         onClick={() => saveTemplate(selectedTemplate)}
                         disabled={saving}
-                        className="bg-indigo-600 hover:bg-indigo-700"
+                        className="bg-indigo-600 hover:bg-indigo-700 relative"
                       >
                         <Save className="w-4 h-4 ml-2" />
-                        حفظ
+                        {saving ? 'جاري الحفظ...' : hasUnsavedChanges ? 'حفظ التعديلات' : 'حفظ'}
+                        {hasUnsavedChanges && !saving && (
+                          <span className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></span>
+                        )}
                       </Button>
                     </div>
                   </CardTitle>
@@ -829,10 +868,15 @@ export default function SupervisorEmailManagementPage() {
                         <Label className="text-slate-700">عنوان الإيميل</Label>
                         <Input
                           value={selectedTemplate.subject}
-                          onChange={(e) => setSelectedTemplate({
-                            ...selectedTemplate,
-                            subject: e.target.value
-                          })}
+                          onChange={(e) => {
+                            setHasUnsavedChanges(true)
+                            const updatedTemplate = {
+                              ...selectedTemplate,
+                              subject: e.target.value
+                            }
+                            setSelectedTemplate(updatedTemplate)
+                            autoSaveTemplate(updatedTemplate)
+                          }}
                           className="mt-1 border-slate-200"
                           placeholder="مثال: مبروك! تم قبولك في الهاكاثون"
                         />
@@ -876,12 +920,16 @@ export default function SupervisorEmailManagementPage() {
                               onChange={(e) => {
                                 const newText = e.target.value
                                 setSimpleText(newText)
-                                // تحديث HTML فقط عند التوقف عن الكتابة
+                                setHasUnsavedChanges(true)
+                                // تحديث HTML
                                 const htmlContent = simpleTextToHtml(newText, selectedTemplate.subject)
-                                setSelectedTemplate({
+                                const updatedTemplate = {
                                   ...selectedTemplate,
                                   bodyHtml: htmlContent
-                                })
+                                }
+                                setSelectedTemplate(updatedTemplate)
+                                // حفظ تلقائي
+                                autoSaveTemplate(updatedTemplate)
                               }}
                               rows={15}
                               className="mt-1 border-slate-200 text-base leading-relaxed font-['Segoe_UI',Tahoma,sans-serif]"
@@ -906,10 +954,15 @@ export default function SupervisorEmailManagementPage() {
                             <Label className="text-slate-700">محتوى HTML (للمستخدمين المتقدمين)</Label>
                             <Textarea
                               value={selectedTemplate.bodyHtml}
-                              onChange={(e) => setSelectedTemplate({
-                                ...selectedTemplate,
-                                bodyHtml: e.target.value
-                              })}
+                              onChange={(e) => {
+                                setHasUnsavedChanges(true)
+                                const updatedTemplate = {
+                                  ...selectedTemplate,
+                                  bodyHtml: e.target.value
+                                }
+                                setSelectedTemplate(updatedTemplate)
+                                autoSaveTemplate(updatedTemplate)
+                              }}
                               rows={20}
                               className="mt-1 font-mono text-sm border-slate-200"
                             />
