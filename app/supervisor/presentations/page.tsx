@@ -106,10 +106,11 @@ export default function SupervisorPresentationsPage() {
 
   const handleDownload = (team: Team) => {
     if (team.ideaFile) {
-      // Fix Cloudinary URL for PDF/PPT files - ensure we use /upload/ not /raw/upload/
+      // Fix Cloudinary URL for PDF/PPT files - convert /image/upload/ to /raw/upload/
       let fileUrl = team.ideaFile
-      if (fileUrl.includes('/raw/upload/')) {
-        fileUrl = fileUrl.replace('/raw/upload/', '/upload/')
+      if (fileUrl.includes('/image/upload/') && 
+          (fileUrl.endsWith('.pdf') || fileUrl.endsWith('.ppt') || fileUrl.endsWith('.pptx'))) {
+        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
       }
 
       // Create a temporary link to download the file
@@ -130,10 +131,11 @@ export default function SupervisorPresentationsPage() {
 
   const handleView = (team: Team) => {
     if (team.ideaFile) {
-      // Fix Cloudinary URL for PDF/PPT files - ensure we use /upload/ not /raw/upload/
+      // Fix Cloudinary URL for PDF/PPT files - convert /image/upload/ to /raw/upload/
       let fileUrl = team.ideaFile
-      if (fileUrl.includes('/raw/upload/')) {
-        fileUrl = fileUrl.replace('/raw/upload/', '/upload/')
+      if (fileUrl.includes('/image/upload/') && 
+          (fileUrl.endsWith('.pdf') || fileUrl.endsWith('.ppt') || fileUrl.endsWith('.pptx'))) {
+        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
       }
 
       window.open(fileUrl, '_blank')
@@ -233,7 +235,8 @@ export default function SupervisorPresentationsPage() {
         setDeleting(teamId)
         try {
           const response = await fetch(`/api/supervisor/teams/${teamId}/delete-presentation`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
           })
 
           if (response.ok) {

@@ -84,11 +84,8 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ File uploaded to Cloudinary:', cloudinaryResult.url)
     
-    // Fix Cloudinary URL for PDFs - replace /raw/upload with /upload for consistency
-    let fileUrl = cloudinaryResult.url
-    if (fileUrl.includes('/raw/upload/')) {
-      fileUrl = fileUrl.replace('/raw/upload/', '/upload/')
-    }
+    // Keep the URL as-is from Cloudinary - the client will fix it when needed
+    const fileUrl = cloudinaryResult.url
 
     // Update team in database
     await prisma.team.update({

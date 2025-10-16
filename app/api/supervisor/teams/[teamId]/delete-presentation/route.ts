@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { unlink } from 'fs/promises'
-import { join } from 'path'
+import { verifyToken } from '@/lib/auth'
+import { deleteFromCloudinary } from '@/lib/cloudinary'
 
 export async function DELETE(
   request: NextRequest,
@@ -9,11 +9,16 @@ export async function DELETE(
 ) {
   try {
     const params = await context.params
-    const userRole = request.headers.get("x-user-role")
-    const userId = request.headers.get("x-user-id")
+    
+    // Verify authentication
+    const token = request.cookies.get('auth-token')?.value
+    if (!token) {
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+    }
 
-    if (!["supervisor", "admin"].includes(userRole || "")) {
-      return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 403 })
+    const payload = await verifyToken(token)
+    if (!payload || !['admin', 'supervisor'].includes(payload.role)) {
+      return NextResponse.json({ error: 'غير مصرح بالوصول' }, { status: 403 })
     }
 
     // Get team
@@ -29,10 +34,10 @@ export async function DELETE(
     }
 
     // If supervisor, verify they have access to this hackathon
-    if (userRole === "supervisor" && userId) {
+    if (payload.role === 'supervisor') {
       const supervisorAssignment = await prisma.supervisor.findFirst({
         where: {
-          userId: userId,
+          userId: payload.userId,
           hackathonId: team.hackathonId,
           isActive: true
         }
@@ -53,13 +58,21 @@ export async function DELETE(
       return NextResponse.json({ error: "لا يوجد عرض تقديمي لحذفه" }, { status: 400 })
     }
 
-    // Delete file from filesystem
-    try {
-      const filePath = join(process.cwd(), 'public', team.ideaFile)
-      await unlink(filePath)
-    } catch (error) {
-      console.error('Error deleting file:', error)
-      // Continue even if file deletion fails
+    // Delete file from Cloudinary if it's a Cloudinary URL
+    if (team.ideaFile.includes('cloudinary.com')) {
+      try {
+        // Extract public_id from Cloudinary URL
+        // URL format: https://res.cloudinary.com/{cloud}/image/upload/v{version}/{public_id}.pdf
+        const urlParts = team.ideaFile.split('/')
+        const fileWithExt = urlParts[urlParts.length - 1]
+        const publicId = `presentations/${fileWithExt.split('.')[0]}`
+        
+        await deleteFromCloudinary(publicId, 'raw')
+        console.log('✅ Deleted from Cloudinary:', publicId)
+      } catch (error) {
+        console.error('⚠️ Error deleting from Cloudinary:', error)
+        // Continue even if Cloudinary deletion fails
+      }
     }
 
     // Update team in database
