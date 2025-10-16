@@ -17,14 +17,18 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10000") // Get all teams for presentations page
     const search = searchParams.get("search")
     const status = searchParams.get("status")
+    const hackathonId = searchParams.get("hackathonId") // Filter by specific hackathon
 
     const skip = (page - 1) * limit
 
     // Build where clause
     const where: any = {}
 
-    // If supervisor, only get teams from their assigned hackathons
-    if (userRole === "supervisor" && userId) {
+    // If hackathonId is provided, filter by it
+    if (hackathonId) {
+      where.hackathonId = hackathonId
+    } else if (userRole === "supervisor" && userId) {
+      // If supervisor and no specific hackathon, only get teams from their assigned hackathons
       const supervisorAssignments = await prisma.supervisor.findMany({
         where: {
           userId: userId,

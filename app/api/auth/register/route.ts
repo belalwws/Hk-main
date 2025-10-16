@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import nodemailer from 'nodemailer'
 import jwt from 'jsonwebtoken'
+// ✅ Removed nodemailer import - now using template system only
 
 // Lazy import prisma to avoid build-time errors
 let prisma: any = null
@@ -155,110 +155,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Send welcome email function
-async function sendWelcomeEmail(email: string, name: string) {
-  // Gmail credentials from environment variables
-  const gmailUser = process.env.GMAIL_USER
-  const gmailPass = process.env.GMAIL_PASS
-
-  if (!gmailUser || !gmailPass) {
-    console.log('⚠️ Gmail credentials not configured, skipping email')
-    return
-  }
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: gmailUser,
-      pass: gmailPass
-    }
-  })
-
-  const emailSubject = 'مرحباً بك في منصة هاكاثون الابتكار التقني! 🎉'
-  
-  const emailHtml = `
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مرحباً بك في منصة الهاكاثونات</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 20px;">
-    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
-        <div style="background: linear-gradient(135deg, #01645e 0%, #3ab666 50%, #c3e956 100%); color: white; padding: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">🎉 مرحباً بك في منصة الهاكاثونات!</h1>
-        </div>
-        <div style="padding: 30px;">
-            <p>مرحباً <strong>${name}</strong>,</p>
-            
-            <p>نرحب بك في <strong>منصة هاكاثون الابتكار التقني</strong>! 🚀</p>
-            
-            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #3ab666; margin-top: 0;">✨ ما يمكنك فعله الآن:</h3>
-                <ul style="margin: 0; padding-right: 20px;">
-                    <li>🔍 استكشاف الهاكاثونات المتاحة</li>
-                    <li>📝 التسجيل في الهاكاثونات التي تهمك</li>
-                    <li>👥 التواصل مع المطورين والمبدعين</li>
-                    <li>🏆 المشاركة في المسابقات والفوز بالجوائز</li>
-                    <li>📚 تطوير مهاراتك التقنية</li>
-                </ul>
-            </div>
-
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #01645e; margin-top: 0;">🎯 نصائح للبداية:</h3>
-                <p>1. <strong>أكمل ملفك الشخصي</strong> - أضف مهاراتك وخبراتك</p>
-                <p>2. <strong>تصفح الهاكاثونات</strong> - ابحث عن المسابقات المناسبة لك</p>
-                <p>3. <strong>انضم للمجتمع</strong> - تفاعل مع المطورين الآخرين</p>
-                <p>4. <strong>ابدأ مشروعك</strong> - شارك في أول هاكاثون لك!</p>
-            </div>
-
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.NEXTAUTH_URL || 'https://hackathon-platform-601l.onrender.com'}"
-                   style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; font-size: 16px;">
-                    🚀 ابدأ رحلتك الآن
-                </a>
-            </div>
-
-            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 0; color: #856404;"><strong>💡 نصيحة:</strong> تابع إيميلاتك للحصول على آخر الأخبار والهاكاثونات الجديدة!</p>
-            </div>
-
-            <p>إذا كان لديك أي أسئلة، لا تتردد في التواصل معنا.</p>
-            
-            <p>مع أطيب التحيات،<br>
-            <strong>فريق منصة هاكاثون الابتكار التقني</strong></p>
-        </div>
-        <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
-            <p style="margin: 0; color: #666; font-size: 14px;">© 2024 منصة هاكاثون الابتكار التقني. جميع الحقوق محفوظة.</p>
-        </div>
-    </div>
-</body>
-</html>
-  `
-
-  const emailText = `مرحباً ${name},
-
-نرحب بك في منصة هاكاثون الابتكار التقني! 🚀
-
-ما يمكنك فعله الآن:
-- استكشاف الهاكاثونات المتاحة
-- التسجيل في الهاكاثونات التي تهمك
-- التواصل مع المطورين والمبدعين
-- المشاركة في المسابقات والفوز بالجوائز
-
-ابدأ رحلتك: ${process.env.NEXTAUTH_URL || 'https://hackathon-platform-601l.onrender.com'}
-
-مع أطيب التحيات،
-فريق منصة هاكاثون الابتكار التقني`
-
-  await transporter.sendMail({
-    from: `منصة هاكاثون الابتكار التقني <${gmailUser}>`,
-    to: email,
-    subject: emailSubject,
-    text: emailText,
-    html: emailHtml
-  })
-}
+// ✅ Removed unused sendWelcomeEmail function - now using template system only
 
 export const dynamic = 'force-dynamic'

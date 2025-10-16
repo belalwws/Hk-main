@@ -609,12 +609,652 @@ export default function SupervisorCertificateManagementPage() {
                     </CardContent>
                   </Card>
 
-                  {/* Certificate Template Upload - Will continue in next chunk */}
+                  {/* Certificate Template Upload */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>رفع قالب الشهادة</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          رفع قالب جديد (PNG, JPG, SVG)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+
+                            setUploadingCertificate(true)
+                            try {
+                              const formData = new FormData()
+                              formData.append('certificateImage', file)
+                              formData.append('hackathonId', selectedHackathon)
+
+                              const response = await fetch('/api/supervisor/certificate-template/upload', {
+                                method: 'POST',
+                                credentials: 'include',
+                                body: formData
+                              })
+
+                              if (response.ok) {
+                                const data = await response.json()
+                                setCertificateImageSrc(data.url)
+                                setSettings(prev => ({ ...prev, certificateTemplate: data.url }))
+                                toast({
+                                  title: '✅ تم رفع القالب بنجاح',
+                                  description: 'تم رفع قالب الشهادة على Cloudinary'
+                                })
+                              } else {
+                                throw new Error('فشل رفع القالب')
+                              }
+                            } catch (error) {
+                              console.error('Error uploading certificate:', error)
+                              toast({
+                                title: '❌ خطأ',
+                                description: 'فشل رفع قالب الشهادة',
+                                variant: 'destructive'
+                              })
+                            } finally {
+                              setUploadingCertificate(false)
+                            }
+                          }}
+                          className="w-full"
+                          disabled={uploadingCertificate}
+                        />
+                        {uploadingCertificate && (
+                          <div className="flex items-center gap-2 mt-2 text-blue-600">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span className="text-sm">جاري الرفع...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Save Settings Button */}
+                      <Button
+                        onClick={async () => {
+                          setSaving(true)
+                          try {
+                            const response = await fetch(`/api/admin/hackathons/${selectedHackathon}/certificate-settings`, {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                ...settings,
+                                hackathonId: selectedHackathon,
+                                updatedBy: 'supervisor'
+                              })
+                            })
+
+                            if (response.ok) {
+                              toast({
+                                title: '✅ تم الحفظ بنجاح',
+                                description: 'تم حفظ إعدادات الشهادة'
+                              })
+                            } else {
+                              throw new Error('فشل الحفظ')
+                            }
+                          } catch (error) {
+                            console.error('Error saving settings:', error)
+                            toast({
+                              title: '❌ خطأ',
+                              description: 'فشل حفظ الإعدادات',
+                              variant: 'destructive'
+                            })
+                          } finally {
+                            setSaving(false)
+                          }
+                        }}
+                        disabled={saving}
+                        className="w-full bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014d48] hover:to-[#2d8f52]"
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                            جاري الحفظ...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 ml-2" />
+                            حفظ الإعدادات
+                          </>
+                        )}
+                      </Button>
+
+                      {/* Reset Button */}
+                      <Button
+                        onClick={() => {
+                          setSettings({
+                            namePositionY: 0.52,
+                            namePositionX: 0.50,
+                            nameFont: 'bold 48px Arial',
+                            nameColor: '#1a472a'
+                          })
+                          setCertificateImageSrc('/row-certificat.svg')
+                          loadCertificateImage()
+                        }}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <RotateCcw className="w-4 h-4 ml-2" />
+                        إعادة تعيين
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </TabsContent>
 
-            {/* Other tabs will be added in next chunks */}
+            {/* Participants Tab */}
+            <TabsContent value="participants">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>شهادات المشاركين</CardTitle>
+                    <Button
+                      onClick={async () => {
+                        if (!confirm('هل تريد إرسال الشهادات لجميع المشاركين المقبولين؟')) return
+
+                        setSendingCertificates(true)
+                        try {
+                          const response = await fetch(`/api/admin/hackathons/${selectedHackathon}/send-certificates`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ sendToAll: true })
+                          })
+
+                          if (response.ok) {
+                            const data = await response.json()
+                            toast({
+                              title: '✅ تم الإرسال بنجاح',
+                              description: `تم إرسال ${data.sent} شهادة`
+                            })
+                            loadParticipants()
+                          } else {
+                            throw new Error('فشل الإرسال')
+                          }
+                        } catch (error) {
+                          console.error('Error sending certificates:', error)
+                          toast({
+                            title: '❌ خطأ',
+                            description: 'فشل إرسال الشهادات',
+                            variant: 'destructive'
+                          })
+                        } finally {
+                          setSendingCertificates(false)
+                        }
+                      }}
+                      disabled={sendingCertificates || participants.length === 0}
+                      className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
+                    >
+                      {sendingCertificates ? (
+                        <>
+                          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                          جاري الإرسال...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="w-4 h-4 ml-2" />
+                          إرسال جماعي للشهادات
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {participants.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p>لا يوجد مشاركين في هذا الهاكاثون</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-right p-3">الاسم</th>
+                            <th className="text-right p-3">البريد الإلكتروني</th>
+                            <th className="text-right p-3">الفريق</th>
+                            <th className="text-right p-3">الحالة</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {participants.filter(p => p.status === 'ACCEPTED').map((participant) => (
+                            <tr key={participant.id} className="border-b hover:bg-gray-50">
+                              <td className="p-3">{participant.user.name}</td>
+                              <td className="p-3 text-sm text-gray-600">{participant.user.email}</td>
+                              <td className="p-3">
+                                {participant.team ? (
+                                  <Badge variant="outline">{participant.team.name}</Badge>
+                                ) : (
+                                  <span className="text-gray-400">لا يوجد فريق</span>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                <Badge className="bg-green-100 text-green-700">
+                                  <CheckCircle2 className="w-3 h-3 ml-1" />
+                                  مقبول
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Judges Tab */}
+            <TabsContent value="judges">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>شهادات المحكمين</CardTitle>
+                    <Button
+                      onClick={async () => {
+                        if (!confirm('هل تريد إرسال الشهادات لجميع المحكمين؟')) return
+
+                        setSendingCertificates(true)
+                        try {
+                          let sent = 0
+                          for (const judge of judges) {
+                            if (!judge.certificateUrl) continue
+
+                            const response = await fetch('/api/supervisor/certificates/send', {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: judge.id, type: 'judge' })
+                            })
+
+                            if (response.ok) sent++
+                          }
+
+                          toast({
+                            title: '✅ تم الإرسال بنجاح',
+                            description: `تم إرسال ${sent} شهادة`
+                          })
+                          loadJudges()
+                        } catch (error) {
+                          console.error('Error sending certificates:', error)
+                          toast({
+                            title: '❌ خطأ',
+                            description: 'فشل إرسال الشهادات',
+                            variant: 'destructive'
+                          })
+                        } finally {
+                          setSendingCertificates(false)
+                        }
+                      }}
+                      disabled={sendingCertificates || judges.length === 0}
+                      className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
+                    >
+                      {sendingCertificates ? (
+                        <>
+                          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                          جاري الإرسال...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="w-4 h-4 ml-2" />
+                          إرسال جماعي للشهادات
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {judges.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Award className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p>لا يوجد محكمين في هذا الهاكاثون</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-right p-3">الاسم</th>
+                            <th className="text-right p-3">البريد الإلكتروني</th>
+                            <th className="text-right p-3">الشهادة</th>
+                            <th className="text-right p-3">الحالة</th>
+                            <th className="text-right p-3">الإجراءات</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {judges.map((judge) => (
+                            <tr key={judge.id} className="border-b hover:bg-gray-50">
+                              <td className="p-3">{judge.user.name}</td>
+                              <td className="p-3 text-sm text-gray-600">{judge.user.email}</td>
+                              <td className="p-3">
+                                {judge.certificateUrl ? (
+                                  <Badge className="bg-green-100 text-green-700">
+                                    <CheckCircle2 className="w-3 h-3 ml-1" />
+                                    تم الرفع
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-gray-500">
+                                    لم يتم الرفع
+                                  </Badge>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                {judge.certificateSent ? (
+                                  <Badge className="bg-blue-100 text-blue-700">
+                                    <Mail className="w-3 h-3 ml-1" />
+                                    تم الإرسال
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-gray-500">
+                                    لم يتم الإرسال
+                                  </Badge>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                <div className="flex gap-2">
+                                  {/* Upload Certificate */}
+                                  <label className="cursor-pointer">
+                                    <input
+                                      type="file"
+                                      accept="image/*,application/pdf"
+                                      className="hidden"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0]
+                                        if (!file) return
+
+                                        try {
+                                          const formData = new FormData()
+                                          formData.append('certificate', file)
+                                          formData.append('id', judge.id)
+                                          formData.append('type', 'judge')
+
+                                          const response = await fetch('/api/supervisor/certificates/upload', {
+                                            method: 'POST',
+                                            credentials: 'include',
+                                            body: formData
+                                          })
+
+                                          if (response.ok) {
+                                            toast({
+                                              title: '✅ تم الرفع بنجاح',
+                                              description: 'تم رفع الشهادة'
+                                            })
+                                            loadJudges()
+                                          } else {
+                                            throw new Error('فشل الرفع')
+                                          }
+                                        } catch (error) {
+                                          console.error('Error uploading certificate:', error)
+                                          toast({
+                                            title: '❌ خطأ',
+                                            description: 'فشل رفع الشهادة',
+                                            variant: 'destructive'
+                                          })
+                                        }
+                                      }}
+                                    />
+                                    <Button size="sm" variant="outline">
+                                      <Upload className="w-3 h-3 ml-1" />
+                                      رفع
+                                    </Button>
+                                  </label>
+
+                                  {/* Send Certificate */}
+                                  {judge.certificateUrl && !judge.certificateSent && (
+                                    <Button
+                                      size="sm"
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch('/api/supervisor/certificates/send', {
+                                            method: 'POST',
+                                            credentials: 'include',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ id: judge.id, type: 'judge' })
+                                          })
+
+                                          if (response.ok) {
+                                            toast({
+                                              title: '✅ تم الإرسال بنجاح',
+                                              description: 'تم إرسال الشهادة'
+                                            })
+                                            loadJudges()
+                                          } else {
+                                            throw new Error('فشل الإرسال')
+                                          }
+                                        } catch (error) {
+                                          console.error('Error sending certificate:', error)
+                                          toast({
+                                            title: '❌ خطأ',
+                                            description: 'فشل إرسال الشهادة',
+                                            variant: 'destructive'
+                                          })
+                                        }
+                                      }}
+                                      className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
+                                    >
+                                      <Send className="w-3 h-3 ml-1" />
+                                      إرسال
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Supervisors Tab */}
+            <TabsContent value="supervisors">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>شهادات المشرفين</CardTitle>
+                    <Button
+                      onClick={async () => {
+                        if (!confirm('هل تريد إرسال الشهادات لجميع المشرفين؟')) return
+
+                        setSendingCertificates(true)
+                        try {
+                          let sent = 0
+                          for (const supervisor of supervisors) {
+                            if (!supervisor.certificateUrl) continue
+
+                            const response = await fetch('/api/supervisor/certificates/send', {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: supervisor.id, type: 'supervisor' })
+                            })
+
+                            if (response.ok) sent++
+                          }
+
+                          toast({
+                            title: '✅ تم الإرسال بنجاح',
+                            description: `تم إرسال ${sent} شهادة`
+                          })
+                          loadSupervisors()
+                        } catch (error) {
+                          console.error('Error sending certificates:', error)
+                          toast({
+                            title: '❌ خطأ',
+                            description: 'فشل إرسال الشهادات',
+                            variant: 'destructive'
+                          })
+                        } finally {
+                          setSendingCertificates(false)
+                        }
+                      }}
+                      disabled={sendingCertificates || supervisors.length === 0}
+                      className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
+                    >
+                      {sendingCertificates ? (
+                        <>
+                          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                          جاري الإرسال...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="w-4 h-4 ml-2" />
+                          إرسال جماعي للشهادات
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {supervisors.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p>لا يوجد مشرفين في هذا الهاكاثون</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-right p-3">الاسم</th>
+                            <th className="text-right p-3">البريد الإلكتروني</th>
+                            <th className="text-right p-3">الشهادة</th>
+                            <th className="text-right p-3">الحالة</th>
+                            <th className="text-right p-3">الإجراءات</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {supervisors.map((supervisor) => (
+                            <tr key={supervisor.id} className="border-b hover:bg-gray-50">
+                              <td className="p-3">{supervisor.user.name}</td>
+                              <td className="p-3 text-sm text-gray-600">{supervisor.user.email}</td>
+                              <td className="p-3">
+                                {supervisor.certificateUrl ? (
+                                  <Badge className="bg-green-100 text-green-700">
+                                    <CheckCircle2 className="w-3 h-3 ml-1" />
+                                    تم الرفع
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-gray-500">
+                                    لم يتم الرفع
+                                  </Badge>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                {supervisor.certificateSent ? (
+                                  <Badge className="bg-blue-100 text-blue-700">
+                                    <Mail className="w-3 h-3 ml-1" />
+                                    تم الإرسال
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-gray-500">
+                                    لم يتم الإرسال
+                                  </Badge>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                <div className="flex gap-2">
+                                  {/* Upload Certificate */}
+                                  <label className="cursor-pointer">
+                                    <input
+                                      type="file"
+                                      accept="image/*,application/pdf"
+                                      className="hidden"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0]
+                                        if (!file) return
+
+                                        try {
+                                          const formData = new FormData()
+                                          formData.append('certificate', file)
+                                          formData.append('id', supervisor.id)
+                                          formData.append('type', 'supervisor')
+
+                                          const response = await fetch('/api/supervisor/certificates/upload', {
+                                            method: 'POST',
+                                            credentials: 'include',
+                                            body: formData
+                                          })
+
+                                          if (response.ok) {
+                                            toast({
+                                              title: '✅ تم الرفع بنجاح',
+                                              description: 'تم رفع الشهادة'
+                                            })
+                                            loadSupervisors()
+                                          } else {
+                                            throw new Error('فشل الرفع')
+                                          }
+                                        } catch (error) {
+                                          console.error('Error uploading certificate:', error)
+                                          toast({
+                                            title: '❌ خطأ',
+                                            description: 'فشل رفع الشهادة',
+                                            variant: 'destructive'
+                                          })
+                                        }
+                                      }}
+                                    />
+                                    <Button size="sm" variant="outline">
+                                      <Upload className="w-3 h-3 ml-1" />
+                                      رفع
+                                    </Button>
+                                  </label>
+
+                                  {/* Send Certificate */}
+                                  {supervisor.certificateUrl && !supervisor.certificateSent && (
+                                    <Button
+                                      size="sm"
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch('/api/supervisor/certificates/send', {
+                                            method: 'POST',
+                                            credentials: 'include',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ id: supervisor.id, type: 'supervisor' })
+                                          })
+
+                                          if (response.ok) {
+                                            toast({
+                                              title: '✅ تم الإرسال بنجاح',
+                                              description: 'تم إرسال الشهادة'
+                                            })
+                                            loadSupervisors()
+                                          } else {
+                                            throw new Error('فشل الإرسال')
+                                          }
+                                        } catch (error) {
+                                          console.error('Error sending certificate:', error)
+                                          toast({
+                                            title: '❌ خطأ',
+                                            description: 'فشل إرسال الشهادة',
+                                            variant: 'destructive'
+                                          })
+                                        }
+                                      }}
+                                      className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
+                                    >
+                                      <Send className="w-3 h-3 ml-1" />
+                                      إرسال
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         )}
       </div>

@@ -27,57 +27,69 @@ const sidebarItems = [
   {
     title: "الرئيسية",
     href: "/supervisor/dashboard",
-    icon: Home
+    icon: Home,
+    description: "لوحة التحكم الرئيسية"
   },
   {
     title: "الهاكاثونات",
     href: "/supervisor/hackathons",
-    icon: Trophy
+    icon: Trophy,
+    description: "إدارة الهاكاثونات المسندة"
   },
   {
     title: "المشاركون",
     href: "/supervisor/participants",
-    icon: Users
+    icon: Users,
+    description: "متابعة المتقدمين"
   },
   {
     title: "الفرق",
     href: "/supervisor/teams",
-    icon: BarChart3
+    icon: BarChart3,
+    description: "إدارة الفرق"
   },
   {
     title: "العروض التقديمية",
     href: "/supervisor/presentations",
-    icon: FileText
+    icon: FileText,
+    description: "متابعة وإرسال روابط العروض",
+    badge: "جديد"
   },
   {
     title: "الفورمات",
     href: "/supervisor/forms",
-    icon: ClipboardList
+    icon: ClipboardList,
+    description: "نماذج التسجيل"
   },
   {
     title: "الشهادات",
     href: "/supervisor/certificates",
-    icon: Award
+    icon: Award,
+    description: "إصدار الشهادات"
   },
   {
     title: "إدارة الإيميلات",
     href: "/supervisor/email-management",
-    icon: Mail
+    icon: Mail,
+    description: "قوالب الإيميلات التلقائية"
   },
   {
     title: "التقارير",
     href: "/supervisor/reports",
-    icon: BarChart3
+    icon: BarChart3,
+    description: "التقارير والإحصائيات"
   },
   {
     title: "الرسائل",
     href: "/supervisor/messages",
-    icon: MessageSquare
+    icon: MessageSquare,
+    description: "الرسائل والإشعارات"
   },
   {
     title: "الملف الشخصي",
     href: "/supervisor/profile",
-    icon: User
+    icon: User,
+    description: "إعدادات الحساب"
   }
 ]
 
@@ -210,11 +222,18 @@ export default function SupervisorLayout({
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                      className="flex items-center justify-between px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors group"
                       onClick={() => setSidebarOpen(false)}
                     >
-                      <Icon className="w-5 h-5" />
-                      <span>{item.title}</span>
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-5 h-5" />
+                        <span>{item.title}</span>
+                      </div>
+                      {item.badge && (
+                        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                          {item.badge}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 )

@@ -38,6 +38,7 @@ export default function SupervisorPresentationsPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [sendingLink, setSendingLink] = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState<'all' | 'uploaded' | 'pending'>('all')
   const { showSuccess, showError, showConfirm } = useModal()
   const { toast } = useToast()
 
@@ -50,7 +51,9 @@ export default function SupervisorPresentationsPage() {
       setLoading(true)
       
       // Fetch hackathons assigned to supervisor
-      const hackathonsRes = await fetch('/api/supervisor/hackathons')
+      const hackathonsRes = await fetch('/api/supervisor/hackathons', {
+        credentials: 'include'
+      })
       if (hackathonsRes.ok) {
         const data = await hackathonsRes.json()
         const hackathonsArray = data.hackathons || []
@@ -72,19 +75,31 @@ export default function SupervisorPresentationsPage() {
       // Fetch teams based on selected hackathon
       const teamsUrl = `/api/supervisor/teams?hackathonId=${selectedHackathon}`
       
-      const teamsRes = await fetch(teamsUrl)
+      const teamsRes = await fetch(teamsUrl, {
+        credentials: 'include'
+      })
       if (teamsRes.ok) {
         const data = await teamsRes.json()
         setTeams(data.teams || [])
+        console.log('📊 Loaded teams:', data.teams?.length || 0)
       }
     } catch (error) {
       console.error('Error fetching data:', error)
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ في تحميل البيانات",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredTeams = teams
+  const filteredTeams = filterStatus === 'all' 
+    ? teams 
+    : filterStatus === 'uploaded' 
+    ? teams.filter(t => t.ideaFile)
+    : teams.filter(t => !t.ideaFile)
 
   const teamsWithPresentation = filteredTeams.filter(t => t.ideaFile)
   const teamsWithoutPresentation = filteredTeams.filter(t => !t.ideaFile)
@@ -219,23 +234,25 @@ export default function SupervisorPresentationsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          متابعة العروض التقديمية
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-8 text-white">
+        <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
+          <FileText className="w-10 h-10" />
+          نظام متابعة العروض التقديمية
         </h1>
-        <p className="text-gray-600">
-          تتبع الفرق التي رفعت عروضها التقديمية
+        <p className="text-blue-100 text-lg">
+          متابعة وإدارة العروض التقديمية للفرق مع إمكانية إرسال روابط الرفع تلقائياً
         </p>
       </div>
 
-      {/* Filter */}
+      {/* Filter & Actions */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Hackathon Filter */}
+            <div className="space-y-2">
               <label className="text-gray-700 font-medium">اختر الهاكاثون:</label>
               <Select value={selectedHackathon} onValueChange={setSelectedHackathon}>
-                <SelectTrigger className="w-64">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="اختر هاكاثون" />
                 </SelectTrigger>
                 <SelectContent>
@@ -246,196 +263,296 @@ export default function SupervisorPresentationsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {selectedHackathon && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  {hackathons.find(h => h.id === selectedHackathon)?.title}
-                </Badge>
-              )}
             </div>
 
-            {teamsWithoutPresentation.length > 0 && (
-              <Button
-                onClick={sendBulkUploadLinks}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Send className="w-4 h-4 ml-2" />
-                إرسال جماعي للروابط ({teamsWithoutPresentation.length})
-              </Button>
-            )}
+            {/* Status Filter */}
+            <div className="space-y-2">
+              <label className="text-gray-700 font-medium">حالة الرفع:</label>
+              <Select value={filterStatus} onValueChange={(val) => setFilterStatus(val as any)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل ({teams.length})</SelectItem>
+                  <SelectItem value="uploaded">تم الرفع ({teams.filter(t => t.ideaFile).length})</SelectItem>
+                  <SelectItem value="pending">لم يرفع ({teams.filter(t => !t.ideaFile).length})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Bulk Action */}
+            <div className="space-y-2 flex items-end">
+              {teamsWithoutPresentation.length > 0 && (
+                <Button
+                  onClick={sendBulkUploadLinks}
+                  className="bg-blue-600 hover:bg-blue-700 w-full"
+                >
+                  <Send className="w-4 h-4 ml-2" />
+                  إرسال جماعي للروابط ({teamsWithoutPresentation.length})
+                </Button>
+              )}
+            </div>
           </div>
+
+          {selectedHackathon && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>الهاكاثون الحالي:</strong> {hackathons.find(h => h.id === selectedHackathon)?.title}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="border-l-4 border-l-blue-600">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">إجمالي الفرق</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              إجمالي الفرق
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">{filteredTeams.length}</div>
+            <p className="text-xs text-gray-500 mt-1">من أصل {teams.length} فريق</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-green-600">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">رفعوا العروض</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              رفعوا العروض
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">{teamsWithPresentation.length}</div>
+            <p className="text-xs text-gray-500 mt-1">
+              {teams.length > 0 ? Math.round((teamsWithPresentation.length / teams.length) * 100) : 0}% نسبة الإنجاز
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-red-600">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">لم يرفعوا</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <XCircle className="w-4 h-4" />
+              لم يرفعوا
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-600">{teamsWithoutPresentation.length}</div>
+            <p className="text-xs text-gray-500 mt-1">بحاجة لمتابعة</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-purple-600">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              الملفات
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-purple-600">{teamsWithPresentation.length}</div>
+            <p className="text-xs text-gray-500 mt-1">ملف متاح للعرض</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Teams with presentations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
-            الفرق التي رفعت العروض ({teamsWithPresentation.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {teamsWithPresentation.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">لا توجد فرق رفعت عروضها بعد</p>
-          ) : (
-            <div className="space-y-4">
-              {teamsWithPresentation.map((team) => (
-                <motion.div
-                  key={team.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-lg text-gray-900">{team.name}</h3>
-                        <Badge className="bg-green-100 text-green-800">تم الرفع</Badge>
+      {filterStatus !== 'pending' && (
+        <Card className="border-t-4 border-t-green-600">
+          <CardHeader className="bg-green-50">
+            <CardTitle className="flex items-center gap-2 text-green-900">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+              الفرق التي رفعت العروض ({teamsWithPresentation.length})
+            </CardTitle>
+            <CardDescription className="text-green-700">
+              يمكنك عرض وتحميل وحذف العروض التقديمية المرفوعة
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {teamsWithPresentation.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">لا توجد فرق رفعت عروضها بعد</p>
+                <p className="text-gray-400 text-sm mt-2">سيظهر هنا الفرق بعد رفع العروض التقديمية</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {teamsWithPresentation.map((team, index) => (
+                  <motion.div
+                    key={team.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="border border-green-200 rounded-lg p-5 hover:shadow-lg transition-all bg-gradient-to-r from-green-50 to-white"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {team.teamNumber || index + 1}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg text-gray-900">{team.name}</h3>
+                            <Badge className="bg-green-100 text-green-800 border-green-200">
+                              ✅ تم الرفع
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                          <p className="text-gray-600">
+                            <strong className="text-gray-800">الهاكاثون:</strong> {team.hackathon.title}
+                          </p>
+                          {team.ideaTitle && (
+                            <p className="text-gray-600">
+                              <strong className="text-gray-800">عنوان الفكرة:</strong> {team.ideaTitle}
+                            </p>
+                          )}
+                          <p className="text-gray-600 flex items-center gap-2">
+                            <Users className="w-4 h-4 text-gray-500" />
+                            <strong>{team.participants.length}</strong> أعضاء
+                          </p>
+                          {team.ideaDescription && (
+                            <p className="text-gray-600 col-span-2">
+                              <strong className="text-gray-800">الوصف:</strong> {team.ideaDescription}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-1">
-                        <strong>الهاكاثون:</strong> {team.hackathon.title}
-                      </p>
-                      {team.ideaTitle && (
-                        <p className="text-sm text-gray-600 mb-1">
-                          <strong>عنوان الفكرة:</strong> {team.ideaTitle}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Users className="w-4 h-4" />
-                        <span>{team.participants.length} أعضاء</span>
+                      <div className="flex gap-2 mr-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleView(team.id)}
+                          className="gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
+                        >
+                          <Eye className="w-4 h-4" />
+                          عرض
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownload(team.id, team.name)}
+                          className="gap-2 border-green-300 text-green-700 hover:bg-green-50"
+                        >
+                          <Download className="w-4 h-4" />
+                          تحميل
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(team.id, team.name)}
+                          disabled={deleting === team.id}
+                          className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                        >
+                          {deleting === team.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                          حذف
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleView(team.id)}
-                        className="gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        عرض
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(team.id, team.name)}
-                        className="gap-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        تحميل
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(team.id, team.name)}
-                        disabled={deleting === team.id}
-                        className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        حذف
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Teams without presentations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <XCircle className="w-5 h-5 text-red-600" />
-            الفرق التي لم ترفع العروض ({teamsWithoutPresentation.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {teamsWithoutPresentation.length === 0 ? (
-            <p className="text-center text-green-600 py-8">جميع الفرق رفعت عروضها! 🎉</p>
-          ) : (
-            <div className="space-y-4">
-              {teamsWithoutPresentation.map((team) => (
-                <motion.div
-                  key={team.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="border border-gray-200 rounded-lg p-4 bg-red-50"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-lg text-gray-900">{team.name}</h3>
-                        <Badge className="bg-red-100 text-red-800">لم يرفع</Badge>
+      {filterStatus !== 'uploaded' && (
+        <Card className="border-t-4 border-t-red-600">
+          <CardHeader className="bg-red-50">
+            <CardTitle className="flex items-center gap-2 text-red-900">
+              <XCircle className="w-6 h-6 text-red-600" />
+              الفرق التي لم ترفع العروض ({teamsWithoutPresentation.length})
+            </CardTitle>
+            <CardDescription className="text-red-700">
+              تواصل مع الفرق وأرسل لهم روابط الرفع
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {teamsWithoutPresentation.length === 0 ? (
+              <div className="text-center py-12">
+                <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                <p className="text-green-600 text-lg font-semibold">جميع الفرق رفعت عروضها! 🎉</p>
+                <p className="text-gray-500 text-sm mt-2">ممتاز! كل الفرق أكملت رفع العروض التقديمية</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {teamsWithoutPresentation.map((team, index) => (
+                  <motion.div
+                    key={team.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="border border-red-200 rounded-lg p-5 bg-gradient-to-r from-red-50 to-white hover:shadow-lg transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {team.teamNumber || index + 1}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg text-gray-900">{team.name}</h3>
+                            <Badge className="bg-red-100 text-red-800 border-red-200">
+                              ⏳ لم يرفع بعد
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                          <p className="text-gray-600">
+                            <strong className="text-gray-800">الهاكاثون:</strong> {team.hackathon.title}
+                          </p>
+                          <p className="text-gray-600 flex items-center gap-2">
+                            <Users className="w-4 h-4 text-gray-500" />
+                            <strong>{team.participants.length}</strong> أعضاء
+                          </p>
+                          {team.participants.length > 0 && (
+                            <p className="text-gray-600 col-span-2">
+                              <Mail className="w-4 h-4 inline ml-1" />
+                              <strong className="text-gray-800">البريد:</strong> {team.participants[0].user.email}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-1">
-                        <strong>الهاكاثون:</strong> {team.hackathon.title}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Users className="w-4 h-4" />
-                        <span>{team.participants.length} أعضاء</span>
-                      </div>
-                    </div>
 
-                    {team.participants.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-blue-600 hover:text-blue-700 border-blue-600 hover:bg-blue-50"
-                        onClick={() => sendUploadLink(team.participants[0].id, team.name)}
-                        disabled={sendingLink === team.participants[0].id}
-                      >
-                        {sendingLink === team.participants[0].id ? (
-                          <>
-                            <Loader2 className="w-4 h-4 ml-1 animate-spin" />
-                            جاري الإرسال...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4 ml-1" />
-                            إرسال رابط الرفع
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      {team.participants.length > 0 && (
+                        <Button
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white mr-4"
+                          onClick={() => sendUploadLink(team.participants[0].id, team.name)}
+                          disabled={sendingLink === team.participants[0].id}
+                        >
+                          {sendingLink === team.participants[0].id ? (
+                            <>
+                              <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                              جاري الإرسال...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4 ml-2" />
+                              إرسال رابط الرفع
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
