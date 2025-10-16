@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import * as nodemailer from 'nodemailer'
+import nodemailer from 'nodemailer'
 
 const prisma = new PrismaClient()
 
@@ -13,7 +13,7 @@ function getTransporter() {
     throw new Error('Gmail credentials not configured')
   }
 
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: gmailUser,
@@ -21,8 +21,6 @@ function getTransporter() {
     }
   })
 }
-
-const transporter = getTransporter()
 
 // POST /api/supervisor/hackathons/[id]/teams/confirm-transfers - Confirm all transfers and send emails
 export async function POST(
@@ -110,6 +108,9 @@ export async function POST(
 
     let emailsSent = 0
     const emailErrors: string[] = []
+
+    // Get transporter
+    const transporter = getTransporter()
 
     // Send emails to moved participants
     for (const participant of movedParticipants) {

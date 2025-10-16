@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import * as nodemailer from 'nodemailer'
+import nodemailer from 'nodemailer'
 
 const prisma = new PrismaClient()
 
@@ -13,7 +13,7 @@ function getTransporter() {
     throw new Error('Gmail credentials not configured')
   }
 
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: gmailUser,
