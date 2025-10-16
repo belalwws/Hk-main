@@ -8,8 +8,8 @@ export default function SupervisionSubmissionsRedirect() {
   const router = useRouter()
 
   useEffect(() => {
-    // Redirect to the correct URL
-    router.replace(`/supervisor/hackathons/${params.id}/form-submissions`)
+    // Redirect to admin supervision submissions page
+    router.replace(`/admin/supervision-submissions/${params.id}`)
   }, [params.id, router])
 
   return (

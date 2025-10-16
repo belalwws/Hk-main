@@ -107,8 +107,12 @@ export default function SupervisorPresentationsPage() {
 
   const handleDownload = (team: Team) => {
     if (team.ideaFile) {
-      // Use URL directly from Cloudinary
-      const fileUrl = team.ideaFile
+      // Fix URL if it's using /image/upload/ instead of /raw/upload/
+      let fileUrl = team.ideaFile
+      if (fileUrl.includes('/image/upload/')) {
+        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
+        console.log('⚠️ Fixed URL for download:', fileUrl)
+      }
 
       // Create a temporary link to download the file
       const link = document.createElement('a')
@@ -128,8 +132,12 @@ export default function SupervisorPresentationsPage() {
 
   const handleView = (team: Team) => {
     if (team.ideaFile) {
-      // Use URL directly from Cloudinary
-      const fileUrl = team.ideaFile
+      // Fix URL if it's using /image/upload/ instead of /raw/upload/
+      let fileUrl = team.ideaFile
+      if (fileUrl.includes('/image/upload/')) {
+        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
+        console.log('⚠️ Fixed URL for view:', fileUrl)
+      }
 
       window.open(fileUrl, '_blank')
       toast({
