@@ -250,3 +250,9 @@ function getRejectionEmailContent(userName: string, hackathonTitle: string) {
     `
   }
 }
+
+
+// Also support POST method
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  return PATCH(request, context)
+}
