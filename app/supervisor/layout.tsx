@@ -7,7 +7,6 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import ErrorBoundary from "@/components/ErrorBoundary"
 import {
-  Users,
   Trophy,
   BarChart3,
   MessageSquare,
@@ -35,12 +34,6 @@ const sidebarItems = [
     href: "/supervisor/hackathons",
     icon: Trophy,
     description: "إدارة الهاكاثونات المسندة"
-  },
-  {
-    title: "المشاركون",
-    href: "/supervisor/participants",
-    icon: Users,
-    description: "متابعة المتقدمين"
   },
   {
     title: "الفرق",

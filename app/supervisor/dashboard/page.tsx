@@ -16,7 +16,8 @@ import {
   MessageSquare,
   Target,
   BarChart3,
-  UserCircle
+  UserCircle,
+  Award
 } from "lucide-react"
 import {
   Dialog,
@@ -308,12 +309,22 @@ export default function SupervisorDashboard() {
       {/* Welcome Section */}
       <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-8 border border-slate-200 shadow-sm">
         <div className="flex items-center gap-5 mb-4">
-          <div className="w-20 h-20 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-md">
-            {supervisor?.name?.charAt(0).toUpperCase() || 'م'}
-          </div>
+          {/* Profile Picture or Initial */}
+          {supervisor?.profilePicture ? (
+            <img
+              src={supervisor.profilePicture}
+              alt={supervisor?.name || user?.name || 'مشرف'}
+              className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-300 shadow-md"
+            />
+          ) : (
+            <div className="w-20 h-20 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-md">
+              {supervisor?.name?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || 'م'}
+            </div>
+          )}
+          
           <div>
             <h1 className="text-3xl font-bold mb-2 text-slate-800">
-              مرحباً {supervisor?.name || 'بك'} 👋
+              مرحباً {supervisor?.name || user?.name || 'بك'} 👋
             </h1>
             <p className="text-slate-600 text-lg">
               {supervisor?.hackathons && supervisor.hackathons.length > 0
@@ -334,6 +345,11 @@ export default function SupervisorDashboard() {
           <Badge className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border-0 px-3 py-1.5 font-medium">
             👨‍🏫 مشرف معتمد
           </Badge>
+          {supervisor?.city && (
+            <Badge className="bg-sky-100 hover:bg-sky-200 text-sky-700 border-0 px-3 py-1.5 font-medium">
+              🏙️ {supervisor.city}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -555,14 +571,6 @@ export default function SupervisorDashboard() {
             <div className="grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
-                className="h-24 flex-col gap-2 hover:bg-slate-50 hover:border-slate-300 border-slate-200 transition-all"
-                onClick={() => router.push('/supervisor/participants')}
-              >
-                <Users className="w-7 h-7 text-slate-600" />
-                <span className="text-sm font-medium text-slate-700">مراجعة المشاركين</span>
-              </Button>
-              <Button
-                variant="outline"
                 className="h-24 flex-col gap-2 hover:bg-indigo-50 hover:border-indigo-300 border-slate-200 transition-all"
                 onClick={() => router.push('/supervisor/teams')}
               >
@@ -584,6 +592,14 @@ export default function SupervisorDashboard() {
               >
                 <BarChart3 className="w-7 h-7 text-emerald-600" />
                 <span className="text-sm font-medium text-slate-700">عرض التقارير</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-24 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300 border-slate-200 transition-all"
+                onClick={() => router.push('/supervisor/certificates')}
+              >
+                <Award className="w-7 h-7 text-purple-600" />
+                <span className="text-sm font-medium text-slate-700">إدارة الشهادات</span>
               </Button>
             </div>
           </CardContent>

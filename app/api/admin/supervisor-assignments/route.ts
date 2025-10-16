@@ -109,18 +109,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if assignment already exists
-    const existingAssignment = await prisma.supervisor.findUnique({
+    const existingAssignment = await prisma.supervisor.findFirst({
       where: {
-        userId_hackathonId: {
-          userId,
-          hackathonId: hackathonId || null
-        }
+        userId,
+        hackathonId: hackathonId || null
       }
     })
 
     if (existingAssignment) {
-      return NextResponse.json({ 
-        error: 'المشرف معين بالفعل لهذا الهاكاثون' 
+      return NextResponse.json({
+        error: hackathonId
+          ? 'المشرف معين بالفعل لهذا الهاكاثون'
+          : 'المشرف معين بالفعل كمشرف عام'
       }, { status: 400 })
     }
 
@@ -129,8 +129,8 @@ export async function POST(request: NextRequest) {
       data: {
         userId,
         hackathonId: hackathonId || null,
-        department,
-        permissions,
+        department: department || null,
+        permissions: permissions || null,
         isActive: true
       },
       include: {
@@ -141,13 +141,13 @@ export async function POST(request: NextRequest) {
             email: true
           }
         },
-        hackathon: {
+        hackathon: hackathonId ? {
           select: {
             id: true,
             title: true,
             status: true
           }
-        }
+        } : undefined
       }
     })
 
