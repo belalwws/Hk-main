@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { uploadToCloudinary } from '@/lib/cloudinary'
+import { uploadRawToCloudinary } from '@/lib/cloudinary'
 
 // POST /api/upload-presentation/upload - رفع العرض التقديمي
 export async function POST(request: NextRequest) {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now()
     const fileName = `team-${uploadToken.team.id}-${timestamp}`
 
-    const cloudinaryResult = await uploadToCloudinary(buffer, 'presentations', fileName)
+    const cloudinaryResult = await uploadRawToCloudinary(buffer, 'presentations', fileName)
 
     console.log('✅ [upload-presentation] File uploaded to Cloudinary:', cloudinaryResult.url)
 
