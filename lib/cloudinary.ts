@@ -79,6 +79,59 @@ export async function uploadToCloudinary(
 }
 
 /**
+ * Upload raw files (PDFs, documents) to Cloudinary
+ * @param file - File buffer
+ * @param folder - Folder name in Cloudinary
+ * @param filename - Optional filename
+ * @returns Cloudinary upload result with secure_url
+ */
+export async function uploadRawToCloudinary(
+  file: Buffer,
+  folder: string = 'hackathon',
+  filename?: string
+) {
+  try {
+    const base64 = file.toString('base64')
+    
+    // Detect file type from filename
+    let mimeType = 'application/octet-stream'
+    if (filename) {
+      const ext = filename.split('.').pop()?.toLowerCase()
+      const mimeTypes: Record<string, string> = {
+        'pdf': 'application/pdf',
+        'ppt': 'application/vnd.ms-powerpoint',
+        'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'doc': 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      }
+      mimeType = mimeTypes[ext || ''] || 'application/octet-stream'
+    }
+
+    const dataUri = `data:${mimeType};base64,${base64}`
+
+    const result = await cloudinary.uploader.upload(
+      dataUri,
+      {
+        folder: folder,
+        public_id: filename,
+        resource_type: 'raw',
+        overwrite: true,
+        invalidate: true,
+      }
+    )
+
+    return {
+      url: result.secure_url,
+      publicId: result.public_id,
+      format: result.format,
+    }
+  } catch (error) {
+    console.error('Cloudinary raw upload error:', error)
+    throw new Error('Failed to upload raw file to Cloudinary')
+  }
+}
+
+/**
  * Delete file from Cloudinary
  * @param publicId - Public ID of the file
  * @param resourceType - Type of resource (image, video, raw, auto)
