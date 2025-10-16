@@ -12,14 +12,15 @@ Next.js لا يسمح باستخدام أسماء مختلفة للـ dynamic pa
 
 **التضارب كان:**
 - ✅ `app/api/supervisor/participants/[id]` - يستخدم `[id]`
-- ❌ `app/api/participants/[participantId]` - يستخدم `[participantId]`
-- ❌ `app/certificate/[participantId]` - يستخدم `[participantId]`
+- ❌ `app/api/participants/[participantId]` - يستخدم `[participantId]` ⚠️
+- ❌ `app/api/admin/participants/[participantId]` - يستخدم `[participantId]` ⚠️
+- ❌ `app/certificate/[participantId]` - يستخدم `[participantId]` ⚠️
 
 ---
 
 ## 🔧 الحل المطبق:
 
-### **1. تغيير API Route:**
+### **1. تغيير API Route للشهادات:**
 
 **قبل:**
 ```
@@ -56,7 +57,44 @@ export async function GET(
 
 ---
 
-### **2. تغيير صفحة الشهادة:**
+### **2. تغيير API Route لتحديث الحالة:**
+
+**قبل:**
+```
+app/api/admin/participants/[participantId]/status/route.ts
+```
+
+**بعد:**
+```
+app/api/admin/participants/[id]/status/route.ts
+```
+
+**التعديلات في الكود:**
+```typescript
+// قبل
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ participantId: string }> }
+) {
+  const params = await context.params
+  const participantId = params.participantId
+  // ...
+}
+
+// بعد
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const params = await context.params
+  const participantId = params.id
+  // ...
+}
+```
+
+---
+
+### **3. تغيير صفحة الشهادة:**
 
 **قبل:**
 ```
@@ -83,10 +121,16 @@ const participantId = params.id as string
 
 ## 📊 المسارات الموحدة الآن:
 
-### **API Routes:**
+### **API Routes (تم توحيدها):**
 - ✅ `app/api/participants/[id]/certificate/route.ts`
+- ✅ `app/api/admin/participants/[id]/status/route.ts`
+- ✅ `app/api/admin/participants/[id]/send-upload-link/route.ts`
 - ✅ `app/api/supervisor/participants/[id]/details/route.ts`
-- ✅ `app/api/admin/participants/[participantId]/...` (مختلف - لا تضارب)
+
+### **API Routes (مستويات مختلفة - لا تضارب):**
+- ✅ `app/api/admin/hackathons/[id]/participants/[participantId]/route.ts`
+- ✅ `app/api/admin/hackathons/[id]/teams/[teamId]/members/[participantId]/route.ts`
+- ✅ `app/api/supervisor/hackathons/[id]/teams/[teamId]/members/[participantId]/route.ts`
 
 ### **Pages:**
 - ✅ `app/certificate/[id]/page.tsx`

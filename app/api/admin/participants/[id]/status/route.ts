@@ -5,14 +5,14 @@ import { sendTemplatedEmail } from '@/lib/mailer'
 
 const prisma = new PrismaClient()
 
-// PUT /api/admin/participants/[participantId]/status - Update participant status
+// PUT /api/admin/participants/[id]/status - Update participant status
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ participantId: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params
-    const participantId = params.participantId
+    const participantId = params.id
 
     // Verify admin authentication
     const token = request.cookies.get('auth-token')?.value
@@ -132,3 +132,4 @@ export async function PUT(
 }
 
 export const dynamic = 'force-dynamic'
+
