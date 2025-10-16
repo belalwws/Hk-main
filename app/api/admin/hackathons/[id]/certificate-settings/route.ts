@@ -11,6 +11,10 @@ export async function GET(
   try {
     const params = await context.params
     const { id: hackathonId } = params
+    
+    // Get certificate type from query params
+    const { searchParams } = new URL(request.url)
+    const certificateType = searchParams.get('type') || 'participant'
 
     // Check if hackathon exists and get certificate template
     const hackathon = await prisma.hackathon.findUnique({
@@ -26,21 +30,19 @@ export async function GET(
       return NextResponse.json({ error: 'الهاكاثون غير موجود' }, { status: 404 })
     }
 
-    // Try to get existing certificate settings for this hackathon
-    let settings = []
+    // Try to get existing certificate settings for this hackathon and type
+    const settingsKey = `certificate_settings_${hackathonId}_${certificateType}`
+    let settingsRecord = null
+    
     try {
-      settings = await prisma.$queryRaw`
-        SELECT * FROM certificate_settings
-        WHERE id = ${hackathonId}
-        ORDER BY "createdAt" DESC
-        LIMIT 1
-      ` as any[]
+      settingsRecord = await prisma.globalSettings.findUnique({
+        where: { key: settingsKey }
+      })
     } catch (dbError) {
-      console.log('Certificate settings table might not exist, using defaults')
-      settings = []
+      console.log('Certificate settings might not exist, using defaults')
     }
 
-    if (settings.length === 0) {
+    if (!settingsRecord || !settingsRecord.value) {
       // Return default settings if none exist
       return NextResponse.json({
         namePositionY: 0.52,
@@ -48,32 +50,22 @@ export async function GET(
         nameFont: 'bold 48px Arial',
         nameColor: '#1a472a',
         hackathonId: hackathonId,
-        certificateTemplate: hackathon.certificateTemplate || null
+        certificateTemplate: null
       })
     }
 
-    const setting = settings[0]
-    let parsedSettings = {
-      namePositionY: 0.52,
-      namePositionX: 0.50,
-      nameFont: 'bold 48px Arial',
-      nameColor: '#1a472a',
+    const parsedSettings = typeof settingsRecord.value === 'string' 
+      ? JSON.parse(settingsRecord.value as string)
+      : settingsRecord.value
+
+    return NextResponse.json({
+      namePositionY: parsedSettings.namePositionY || 0.52,
+      namePositionX: parsedSettings.namePositionX || 0.50,
+      nameFont: parsedSettings.nameFont || 'bold 48px Arial',
+      nameColor: parsedSettings.nameColor || '#1a472a',
       hackathonId: hackathonId,
-      certificateTemplate: hackathon.certificateTemplate || null
-    }
-
-    try {
-      if (setting.settings) {
-        const parsed = typeof setting.settings === 'string' ? JSON.parse(setting.settings) : setting.settings
-        parsedSettings = { ...parsedSettings, ...parsed }
-        // Make sure certificateTemplate from hackathon table takes precedence
-        parsedSettings.certificateTemplate = hackathon.certificateTemplate || parsedSettings.certificateTemplate || null
-      }
-    } catch (parseError) {
-      console.error('Error parsing certificate settings:', parseError)
-    }
-
-    return NextResponse.json(parsedSettings)
+      certificateTemplate: parsedSettings.certificateTemplate || null
+    })
 
   } catch (error) {
     console.error('Error loading certificate settings:', error)
@@ -106,8 +98,11 @@ export async function POST(
       nameFont,
       nameColor,
       certificateTemplate,
+      type,
       updatedBy
     } = body
+    
+    const certificateType = type || 'participant'
 
     // Validate required fields
     if (namePositionY === undefined || namePositionX === undefined || !nameFont || !nameColor) {
@@ -121,20 +116,23 @@ export async function POST(
       nameColor,
       certificateTemplate,
       hackathonId,
+      certificateType,
       lastUpdated: new Date().toISOString(),
       updatedBy: updatedBy || 'admin'
     }
 
-    // Save settings to database using Prisma model
+    // Save settings to database using unique key per hackathon and certificate type
+    const settingsKey = `certificate_settings_${hackathonId}_${certificateType}`
+    
     try {
       await prisma.globalSettings.upsert({
-        where: { key: `certificate_settings_${hackathonId}` },
+        where: { key: settingsKey },
         update: {
           value: settingsData,
           updatedAt: new Date()
         },
         create: {
-          key: `certificate_settings_${hackathonId}`,
+          key: settingsKey,
           value: settingsData,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -142,18 +140,10 @@ export async function POST(
       })
     } catch (upsertError) {
       console.error('Error upserting certificate settings:', upsertError)
-      // Fallback to raw SQL if needed
-      await prisma.$executeRaw`
-        INSERT INTO certificate_settings (id, settings, "createdAt", "updatedAt")
-        VALUES (${hackathonId}, ${JSON.stringify(settingsData)}, NOW(), NOW())
-        ON CONFLICT (id)
-        DO UPDATE SET
-          settings = ${JSON.stringify(settingsData)},
-          "updatedAt" = NOW()
-      `
+      return NextResponse.json({ error: 'خطأ في حفظ إعدادات الشهادة' }, { status: 500 })
     }
 
-    console.log('✅ Certificate settings saved for hackathon:', hackathonId)
+    console.log(`✅ Certificate settings saved for hackathon: ${hackathonId}, type: ${certificateType}`)
 
     return NextResponse.json({
       message: 'تم حفظ إعدادات الشهادة بنجاح',
