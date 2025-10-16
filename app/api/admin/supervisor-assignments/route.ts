@@ -18,7 +18,27 @@ export async function GET(request: NextRequest) {
     // Get all supervisors with their assignments
     const supervisors = await prisma.supervisor.findMany({
       include: {
-        user: true,  // Get all user fields
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            city: true,
+            profilePicture: true,
+            bio: true,
+            skills: true,
+            github: true,
+            linkedin: true,
+            portfolio: true,
+            university: true,
+            major: true,
+            graduationYear: true,
+            workExperience: true,
+            createdAt: true,
+            isActive: true
+          }
+        },
         hackathon: {
           select: {
             id: true,
@@ -61,8 +81,11 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error("Error fetching supervisor assignments:", error)
+    console.error("Full error details:", JSON.stringify(error, null, 2))
+    
     return NextResponse.json({ 
-      error: "حدث خطأ في جلب تعيينات المشرفين" 
+      error: "حدث خطأ في جلب تعيينات المشرفين",
+      details: error instanceof Error ? error.message : String(error)
     }, { status: 500 })
   }
 }
