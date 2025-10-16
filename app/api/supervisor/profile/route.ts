@@ -15,9 +15,26 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user profile with supervisor data
+    // Only select fields that exist in production database
     const user = await prisma.user.findUnique({
       where: { id: userId! },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        city: true,
+        bio: true,
+        profilePicture: true,
+        skills: true,
+        experience: true,
+        github: true,
+        linkedin: true,
+        portfolio: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        isActive: true,
         supervisorAssignments: {
           include: {
             hackathon: {
@@ -35,10 +52,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 })
     }
 
-    // Remove password from response
-    const { password, ...userProfile } = user
-
-    return NextResponse.json({ profile: userProfile })
+    return NextResponse.json({ profile: user })
 
   } catch (error) {
     console.error("Error fetching supervisor profile:", error)

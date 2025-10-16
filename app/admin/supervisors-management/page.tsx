@@ -52,7 +52,7 @@ interface SupervisorUser {
   currentJob?: string
   company?: string
   yearsOfExperience?: string
-  skills?: string[]
+  skills?: string
   linkedin?: string
   github?: string
   website?: string
@@ -1119,7 +1119,7 @@ export default function SupervisorsManagement() {
               )}
 
               {/* Skills */}
-              {selectedSupervisor.skills && selectedSupervisor.skills.length > 0 && (
+              {selectedSupervisor.skills && selectedSupervisor.skills.trim().length > 0 && (
                 <Card>
                   <CardHeader className="bg-gray-50">
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -1129,9 +1129,9 @@ export default function SupervisorsManagement() {
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="flex flex-wrap gap-2">
-                      {selectedSupervisor.skills.map((skill, index) => (
+                      {selectedSupervisor.skills.split(',').map((skill, index) => (
                         <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {skill}
+                          {skill.trim()}
                         </Badge>
                       ))}
                     </div>
