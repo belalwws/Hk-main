@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Shuffle, AlertCircle, Shield, Send, Plus, Crown, RefreshCw, GripVertical, Phone, User, Loader2, Sliders, X, Check } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Shuffle, AlertCircle, Shield, Send, Plus, Crown, RefreshCw, GripVertical, Phone, User, Loader2, Sliders, X, Check, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -458,6 +458,45 @@ export default function SupervisorHackathonManagementPage() {
       }
     } catch (error) {
       console.error('Error bulk updating participants:', error)
+      alert('حدث خطأ في تحديث حالة المشاركين')
+    }
+  }
+
+  // Bulk update for filtered participants (advanced filter)
+  const bulkUpdateFilteredStatus = async (status: 'approved' | 'rejected', filterAction: 'accept' | 'reject' | 'highlight') => {
+    const targetParticipants = filteredParticipants.filter(
+      p => p.status === 'pending' && (p as any)._filterAction === filterAction
+    )
+
+    if (targetParticipants.length === 0) {
+      alert(`لا يوجد مشاركين ${filterAction === 'accept' ? 'للقبول' : filterAction === 'reject' ? 'للرفض' : 'مميزين'}`)
+      return
+    }
+
+    const actionText = filterAction === 'accept' ? 'المقبولين بالفلترة' : 
+                       filterAction === 'reject' ? 'المرفوضين بالفلترة' : 
+                       'المميزين بالفلترة'
+    
+    const confirmMessage = `هل أنت متأكد من ${status === 'approved' ? 'قبول' : 'رفض'} ${targetParticipants.length} مشارك من ${actionText}؟`
+    if (!confirm(confirmMessage)) return
+
+    try {
+      const participantIds = targetParticipants.map(p => p.id)
+      const response = await fetch(`/api/admin/hackathons/${params.id}/participants/bulk-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ participantIds, status }),
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        alert(`تم ${status === 'approved' ? 'قبول' : 'رفض'} ${targetParticipants.length} مشارك من ${actionText} بنجاح`)
+        fetchHackathon()
+      } else {
+        alert('فشل في تحديث حالة المشاركين')
+      }
+    } catch (error) {
+      console.error('Error bulk updating filtered participants:', error)
       alert('حدث خطأ في تحديث حالة المشاركين')
     }
   }
@@ -1140,6 +1179,129 @@ export default function SupervisorHackathonManagementPage() {
                       </Select>
                     </div>
                   </div>
+
+                  {/* Advanced Filter Actions */}
+                  {filterEnabled && filterRules.length > 0 && (permissions.canApproveParticipants || permissions.canRejectParticipants) && (
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-300 rounded-lg p-4 mb-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-purple-900 mb-1 flex items-center gap-2">
+                              <Filter className="w-5 h-5" />
+                              إجراءات الفلترة المتقدمة
+                            </h3>
+                            <p className="text-sm text-purple-700">
+                              تطبيق إجراءات جماعية على المشاركين المفلترين حسب القواعد المحددة
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Accept Filter Actions */}
+                          {filteredParticipants.filter(p => p.status === 'pending' && (p as any)._filterAction === 'accept').length > 0 && (
+                            <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                <h4 className="font-semibold text-green-900">مقبولين بالفلترة</h4>
+                              </div>
+                              <p className="text-sm text-green-700 mb-3">
+                                {filteredParticipants.filter(p => p.status === 'pending' && (p as any)._filterAction === 'accept').length} مشارك
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => bulkUpdateFilteredStatus('approved', 'accept')}
+                                  className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                                  size="sm"
+                                >
+                                  <UserCheck className="w-4 h-4 ml-1" />
+                                  قبول
+                                </Button>
+                                <Button
+                                  onClick={() => bulkUpdateFilteredStatus('rejected', 'accept')}
+                                  variant="outline"
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                  size="sm"
+                                >
+                                  <UserX className="w-4 h-4 ml-1" />
+                                  رفض
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Reject Filter Actions */}
+                          {filteredParticipants.filter(p => p.status === 'pending' && (p as any)._filterAction === 'reject').length > 0 && (
+                            <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <XCircle className="w-5 h-5 text-red-600" />
+                                <h4 className="font-semibold text-red-900">مرفوضين بالفلترة</h4>
+                              </div>
+                              <p className="text-sm text-red-700 mb-3">
+                                {filteredParticipants.filter(p => p.status === 'pending' && (p as any)._filterAction === 'reject').length} مشارك
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => bulkUpdateFilteredStatus('rejected', 'reject')}
+                                  className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                                  size="sm"
+                                >
+                                  <UserX className="w-4 h-4 ml-1" />
+                                  رفض
+                                </Button>
+                                <Button
+                                  onClick={() => bulkUpdateFilteredStatus('approved', 'reject')}
+                                  variant="outline"
+                                  className="text-green-600 border-green-600 hover:bg-green-50"
+                                  size="sm"
+                                >
+                                  <UserCheck className="w-4 h-4 ml-1" />
+                                  قبول
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Highlight Filter Actions */}
+                          {filteredParticipants.filter(p => p.status === 'pending' && (p as any)._filterAction === 'highlight').length > 0 && (
+                            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Eye className="w-5 h-5 text-blue-600" />
+                                <h4 className="font-semibold text-blue-900">مميزين بالفلترة</h4>
+                              </div>
+                              <p className="text-sm text-blue-700 mb-3">
+                                {filteredParticipants.filter(p => p.status === 'pending' && (p as any)._filterAction === 'highlight').length} مشارك
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => bulkUpdateFilteredStatus('approved', 'highlight')}
+                                  className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                                  size="sm"
+                                >
+                                  <UserCheck className="w-4 h-4 ml-1" />
+                                  قبول
+                                </Button>
+                                <Button
+                                  onClick={() => bulkUpdateFilteredStatus('rejected', 'highlight')}
+                                  variant="outline"
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                  size="sm"
+                                >
+                                  <UserX className="w-4 h-4 ml-1" />
+                                  رفض
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {filteredParticipants.filter(p => p.status === 'pending' && (p as any)._filterAction).length === 0 && (
+                          <div className="text-center py-4 text-purple-600">
+                            <p className="text-sm">لا توجد نتائج فلترة متطابقة مع القواعد المحددة</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Bulk Actions */}
                   {(permissions.canApproveParticipants || permissions.canRejectParticipants) && filteredParticipants.filter(p => p.status === 'pending').length > 0 && (
