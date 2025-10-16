@@ -1,129 +1,156 @@
-'use client'
+"use client"
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, FileText, Download, Eye, Users, Calendar, CheckCircle2, XCircle, UserCheck, Mail, Phone, MapPin } from 'lucide-react'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { 
+  ArrowLeft, 
+  Loader2, 
+  Eye, 
+  CheckCircle, 
+  XCircle, 
+  Clock,
+  Download,
+  Filter,
+  Search
+} from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { useAuth } from '@/contexts/auth-context'
 
-interface SupervisorApplication {
+interface Submission {
   id: string
-  userId: string
-  hackathonId: string
-  status: 'pending' | 'approved' | 'rejected'
-  experience: string
-  motivation: string
-  availability: string
+  name: string
+  email: string
+  phone?: string
+  formData: string
+  attachments?: string
+  status: string
   createdAt: string
-  user: {
-    name: string
-    email: string
-    phone: string
-    city: string
-  }
-}
-
-interface Hackathon {
-  id: string
-  title: string
-  description: string
+  reviewedBy?: string
+  reviewNotes?: string
+  rejectionReason?: string
 }
 
 export default function SupervisionSubmissionsPage() {
   const params = useParams()
   const router = useRouter()
-  const [hackathon, setHackathon] = useState<Hackathon | null>(null)
-  const [applications, setApplications] = useState<SupervisorApplication[]>([])
+  const { user } = useAuth()
+  const hackathonId = params.hackathonId as string
+
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
-  const [selectedApp, setSelectedApp] = useState<SupervisorApplication | null>(null)
-  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [filteredSubmissions, setFilteredSubmissions] = useState<Submission[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
 
   useEffect(() => {
-    fetchData()
-  }, [params.id])
+    if (!user || user.role !== 'admin') {
+      router.push('/login')
+      return
+    }
+    loadSubmissions()
+  }, [user, hackathonId])
 
-  const fetchData = async () => {
+  useEffect(() => {
+    filterSubmissions()
+  }, [submissions, searchQuery, statusFilter])
+
+  const loadSubmissions = async () => {
     try {
-      setLoading(true)
-      
-      // Fetch hackathon details
-      const hackathonRes = await fetch(`/api/supervisor/hackathons/${params.id}`, {
-        credentials: 'include'
-      })
-      
-      if (hackathonRes.ok) {
-        const data = await hackathonRes.json()
-        setHackathon(data.hackathon)
-      }
-
-      // Fetch supervision applications
-      const appsRes = await fetch(`/api/admin/supervision-applications?hackathonId=${params.id}`, {
-        credentials: 'include'
-      })
-
-      if (appsRes.ok) {
-        const data = await appsRes.json()
-        setApplications(data.applications || [])
+      const response = await fetch(`/api/supervision-forms/submit?hackathonId=${hackathonId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSubmissions(data)
       }
     } catch (error) {
-      console.error('Error fetching data:', error)
+      console.error('Error loading submissions:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const updateStatus = async (appId: string, status: 'approved' | 'rejected') => {
-    if (!confirm(`هل أنت متأكد من ${status === 'approved' ? 'قبول' : 'رفض'} هذا الطلب؟`)) return
+  const filterSubmissions = () => {
+    let filtered = [...submissions]
 
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(s => s.status === statusFilter)
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(s => 
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.email.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    setFilteredSubmissions(filtered)
+  }
+
+  const updateStatus = async (id: string, status: string) => {
     try {
-      const response = await fetch(`/api/admin/supervision-applications/${appId}`, {
-        method: 'PATCH',
+      const response = await fetch(`/api/supervision-forms/submissions/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-        credentials: 'include'
+        body: JSON.stringify({
+          status,
+          reviewedBy: user?.id
+        })
       })
 
       if (response.ok) {
-        alert(`تم ${status === 'approved' ? 'قبول' : 'رفض'} الطلب بنجاح`)
-        fetchData()
-      } else {
-        alert('فشل في تحديث حالة الطلب')
+        loadSubmissions()
+        alert('تم تحديث الحالة بنجاح')
       }
     } catch (error) {
       console.error('Error updating status:', error)
-      alert('حدث خطأ في تحديث حالة الطلب')
+      alert('حدث خطأ في تحديث الحالة')
     }
   }
 
-  const viewDetails = (app: SupervisorApplication) => {
-    setSelectedApp(app)
-    setDetailsOpen(true)
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-yellow-500"><Clock className="w-3 h-3 ml-1" /> قيد المراجعة</Badge>
+      case 'approved':
+        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 ml-1" /> مقبول</Badge>
+      case 'rejected':
+        return <Badge className="bg-red-500"><XCircle className="w-3 h-3 ml-1" /> مرفوض</Badge>
+      default:
+        return <Badge>{status}</Badge>
+    }
   }
 
-  const filteredApplications = applications.filter(app => {
-    if (filter === 'all') return true
-    return app.status === filter
-  })
+  const exportToCSV = () => {
+    const headers = ['الاسم', 'البريد الإلكتروني', 'رقم الهاتف', 'الحالة', 'تاريخ الإرسال']
+    const rows = filteredSubmissions.map(s => [
+      s.name,
+      s.email,
+      s.phone || '-',
+      s.status,
+      new Date(s.createdAt).toLocaleDateString('ar-SA')
+    ])
 
-  const stats = {
-    total: applications.length,
-    pending: applications.filter(a => a.status === 'pending').length,
-    approved: applications.filter(a => a.status === 'approved').length,
-    rejected: applications.filter(a => a.status === 'rejected').length
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `supervision-submissions-${hackathonId}.csv`
+    link.click()
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#c3e956]/10 to-[#3ab666]/10 p-6 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#01645e]/20 border-t-[#01645e] rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#01645e] font-semibold">جاري التحميل...</p>
+          <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4 text-[#01645e]" />
+          <p className="text-[#01645e] font-semibold">جاري تحميل الطلبات...</p>
         </div>
       </div>
     )
@@ -136,265 +163,263 @@ export default function SupervisionSubmissionsPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-4 mb-8"
+          className="mb-8"
         >
-          <Link href="/supervisor/forms">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 ml-2" />
-              العودة
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/admin/forms')}
+                className="text-[#01645e]"
+              >
+                <ArrowLeft className="w-5 h-5 ml-2" />
+                رجوع
+              </Button>
+              <div>
+                <h1 className="text-4xl font-bold text-[#01645e]">
+                  طلبات الإشراف
+                </h1>
+                <p className="text-[#8b7632] text-lg mt-1">
+                  {filteredSubmissions.length} طلب
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={exportToCSV}
+              className="bg-gradient-to-r from-[#01645e] to-[#3ab666]"
+            >
+              <Download className="w-4 h-4 ml-2" />
+              تصدير CSV
             </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold text-[#01645e]">طلبات الإشراف</h1>
-            <p className="text-[#8b7632] text-lg">{hackathon?.title}</p>
           </div>
+
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Input
+                      placeholder="بحث بالاسم أو البريد الإلكتروني..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pr-10"
+                    />
+                  </div>
+                </div>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  <option value="all">جميع الحالات</option>
+                  <option value="pending">قيد المراجعة</option>
+                  <option value="approved">مقبول</option>
+                  <option value="rejected">مرفوض</option>
+                </select>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {[
-            { title: 'إجمالي الطلبات', value: stats.total, icon: FileText, color: 'from-purple-500 to-pink-500' },
-            { title: 'قيد المراجعة', value: stats.pending, icon: Calendar, color: 'from-yellow-500 to-orange-500' },
-            { title: 'مقبولة', value: stats.approved, icon: CheckCircle2, color: 'from-green-500 to-teal-500' },
-            { title: 'مرفوضة', value: stats.rejected, icon: XCircle, color: 'from-red-500 to-pink-500' }
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="relative overflow-hidden">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-[#8b7632] mb-1">{stat.title}</p>
-                      <p className="text-3xl font-bold text-[#01645e]">{stat.value}</p>
-                    </div>
-                    <div className={`p-3 rounded-full bg-gradient-to-br ${stat.color}`}>
-                      <stat.icon className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-                <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color}`}></div>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+        {/* Submissions List */}
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="all">
+              الكل ({submissions.length})
+            </TabsTrigger>
+            <TabsTrigger value="pending">
+              قيد المراجعة ({submissions.filter(s => s.status === 'pending').length})
+            </TabsTrigger>
+            <TabsTrigger value="approved">
+              مقبول ({submissions.filter(s => s.status === 'approved').length})
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              مرفوض ({submissions.filter(s => s.status === 'rejected').length})
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Filter Buttons */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex gap-2">
-              <Button
-                variant={filter === 'all' ? 'default' : 'outline'}
-                onClick={() => setFilter('all')}
-                size="sm"
-              >
-                الكل ({stats.total})
-              </Button>
-              <Button
-                variant={filter === 'pending' ? 'default' : 'outline'}
-                onClick={() => setFilter('pending')}
-                size="sm"
-              >
-                قيد المراجعة ({stats.pending})
-              </Button>
-              <Button
-                variant={filter === 'approved' ? 'default' : 'outline'}
-                onClick={() => setFilter('approved')}
-                size="sm"
-              >
-                مقبولة ({stats.approved})
-              </Button>
-              <Button
-                variant={filter === 'rejected' ? 'default' : 'outline'}
-                onClick={() => setFilter('rejected')}
-                size="sm"
-              >
-                مرفوضة ({stats.rejected})
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="all" className="space-y-4">
+            {filteredSubmissions.map((submission, index) => (
+              <SubmissionCard
+                key={submission.id}
+                submission={submission}
+                index={index}
+                onStatusChange={updateStatus}
+                onView={setSelectedSubmission}
+              />
+            ))}
+          </TabsContent>
 
-        {/* Applications List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>طلبات الانضمام للإشراف</CardTitle>
-            <CardDescription>
-              عرض وإدارة طلبات الإشراف للهاكاثون
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredApplications.length === 0 ? (
-              <div className="text-center py-12">
-                <UserCheck className="w-16 h-16 text-[#8b7632] mx-auto mb-4 opacity-50" />
-                <h3 className="text-xl font-semibold text-[#01645e] mb-2">لا توجد طلبات</h3>
-                <p className="text-[#8b7632]">لا توجد طلبات تطابق الفلتر المحدد</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredApplications.map((app) => (
-                  <div
-                    key={app.id}
-                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-[#01645e]">
-                            {app.user.name}
-                          </h3>
-                          <Badge className={
-                            app.status === 'approved' ? 'bg-green-500' :
-                            app.status === 'rejected' ? 'bg-red-500' :
-                            'bg-yellow-500'
-                          }>
-                            {app.status === 'approved' ? 'مقبول' :
-                             app.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-[#8b7632] space-y-1">
-                          <p className="flex items-center gap-2">
-                            <Mail className="w-4 h-4" />
-                            {app.user.email}
-                          </p>
-                          {app.user.phone && (
-                            <p className="flex items-center gap-2">
-                              <Phone className="w-4 h-4" />
-                              {app.user.phone}
-                            </p>
-                          )}
-                          {app.user.city && (
-                            <p className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4" />
-                              {app.user.city}
-                            </p>
-                          )}
-                          <p className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(app.createdAt).toLocaleDateString('ar-SA')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => viewDetails(app)}
-                        >
-                          <Eye className="w-4 h-4 ml-2" />
-                          عرض
-                        </Button>
-                        {app.status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700"
-                              onClick={() => updateStatus(app.id, 'approved')}
-                            >
-                              <CheckCircle2 className="w-4 h-4 ml-2" />
-                              قبول
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 border-red-600 hover:bg-red-50"
-                              onClick={() => updateStatus(app.id, 'rejected')}
-                            >
-                              <XCircle className="w-4 h-4 ml-2" />
-                              رفض
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <TabsContent value="pending" className="space-y-4">
+            {filteredSubmissions.filter(s => s.status === 'pending').map((submission, index) => (
+              <SubmissionCard
+                key={submission.id}
+                submission={submission}
+                index={index}
+                onStatusChange={updateStatus}
+                onView={setSelectedSubmission}
+              />
+            ))}
+          </TabsContent>
 
-        {/* Details Dialog */}
-        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>تفاصيل الطلب</DialogTitle>
-              <DialogDescription>
-                معلومات تفصيلية عن طلب الانضمام للإشراف
-              </DialogDescription>
-            </DialogHeader>
-            {selectedApp && (
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <div className="border rounded-lg p-4 bg-blue-50">
-                  <h3 className="text-lg font-semibold text-[#01645e] mb-3">المعلومات الأساسية</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-[#8b7632]">الاسم</Label>
-                      <p className="text-[#01645e] font-semibold">{selectedApp.user.name}</p>
-                    </div>
-                    <div>
-                      <Label className="text-[#8b7632]">البريد الإلكتروني</Label>
-                      <p className="text-[#01645e] font-semibold">{selectedApp.user.email}</p>
-                    </div>
-                    {selectedApp.user.phone && (
-                      <div>
-                        <Label className="text-[#8b7632]">الهاتف</Label>
-                        <p className="text-[#01645e] font-semibold">{selectedApp.user.phone}</p>
-                      </div>
-                    )}
-                    {selectedApp.user.city && (
-                      <div>
-                        <Label className="text-[#8b7632]">المدينة</Label>
-                        <p className="text-[#01645e] font-semibold">{selectedApp.user.city}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          <TabsContent value="approved" className="space-y-4">
+            {filteredSubmissions.filter(s => s.status === 'approved').map((submission, index) => (
+              <SubmissionCard
+                key={submission.id}
+                submission={submission}
+                index={index}
+                onStatusChange={updateStatus}
+                onView={setSelectedSubmission}
+              />
+            ))}
+          </TabsContent>
 
-                {/* Application Details */}
-                <div className="border rounded-lg p-4 bg-green-50">
-                  <h3 className="text-lg font-semibold text-[#01645e] mb-3">تفاصيل الطلب</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-[#8b7632]">الخبرة</Label>
-                      <p className="text-[#01645e]">{selectedApp.experience || 'لم يتم التحديد'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-[#8b7632]">الدافع للمشاركة</Label>
-                      <p className="text-[#01645e]">{selectedApp.motivation || 'لم يتم التحديد'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-[#8b7632]">التفرغ</Label>
-                      <p className="text-[#01645e]">{selectedApp.availability || 'لم يتم التحديد'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-[#8b7632]">تاريخ التقديم</Label>
-                      <p className="text-[#01645e]">{new Date(selectedApp.createdAt).toLocaleDateString('ar-SA')}</p>
-                    </div>
-                  </div>
-                </div>
+          <TabsContent value="rejected" className="space-y-4">
+            {filteredSubmissions.filter(s => s.status === 'rejected').map((submission, index) => (
+              <SubmissionCard
+                key={submission.id}
+                submission={submission}
+                index={index}
+                onStatusChange={updateStatus}
+                onView={setSelectedSubmission}
+              />
+            ))}
+          </TabsContent>
+        </Tabs>
 
-                {/* Status */}
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <h3 className="text-lg font-semibold text-[#01645e] mb-3">الحالة</h3>
-                  <Badge className={
-                    selectedApp.status === 'approved' ? 'bg-green-500' :
-                    selectedApp.status === 'rejected' ? 'bg-red-500' :
-                    'bg-yellow-500'
-                  }>
-                    {selectedApp.status === 'approved' ? 'مقبول' :
-                     selectedApp.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
-                  </Badge>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        {filteredSubmissions.length === 0 && (
+          <Card className="text-center p-12">
+            <p className="text-gray-500 text-lg">لا توجد طلبات</p>
+          </Card>
+        )}
       </div>
     </div>
   )
+}
+
+function SubmissionCard({ 
+  submission, 
+  index, 
+  onStatusChange, 
+  onView 
+}: { 
+  submission: Submission
+  index: number
+  onStatusChange: (id: string, status: string) => void
+  onView: (submission: Submission) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const formData = JSON.parse(submission.formData || '{}')
+  const attachments = submission.attachments ? JSON.parse(submission.attachments) : []
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+    >
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-xl text-[#01645e]">{submission.name}</CardTitle>
+              <CardDescription className="flex items-center gap-4 mt-1">
+                <span>{submission.email}</span>
+                {submission.phone && <span>• {submission.phone}</span>}
+                <span>• {new Date(submission.createdAt).toLocaleDateString('ar-SA')}</span>
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {getStatusBadge(submission.status)}
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setExpanded(!expanded)}
+            >
+              <Eye className="w-4 h-4 ml-1" />
+              {expanded ? 'إخفاء' : 'عرض'} التفاصيل
+            </Button>
+
+            {submission.status === 'pending' && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-green-500 text-green-600 hover:bg-green-50"
+                  onClick={() => onStatusChange(submission.id, 'approved')}
+                >
+                  <CheckCircle className="w-4 h-4 ml-1" />
+                  قبول
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500 text-red-600 hover:bg-red-50"
+                  onClick={() => onStatusChange(submission.id, 'rejected')}
+                >
+                  <XCircle className="w-4 h-4 ml-1" />
+                  رفض
+                </Button>
+              </>
+            )}
+          </div>
+
+          {expanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-4 p-4 bg-gray-50 rounded-lg space-y-2"
+            >
+              <h4 className="font-semibold text-[#01645e] mb-2">البيانات المرسلة:</h4>
+              {Object.entries(formData).map(([key, value]) => (
+                <div key={key} className="flex gap-2">
+                  <span className="font-medium text-gray-700">{key}:</span>
+                  <span className="text-gray-600">{String(value)}</span>
+                </div>
+              ))}
+
+              {attachments.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold text-[#01645e] mb-2">المرفقات:</h4>
+                  {attachments.map((att: any, i: number) => (
+                    <a
+                      key={i}
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-blue-600 hover:underline"
+                    >
+                      📎 {att.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'pending':
+      return <Badge className="bg-yellow-500"><Clock className="w-3 h-3 ml-1" /> قيد المراجعة</Badge>
+    case 'approved':
+      return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 ml-1" /> مقبول</Badge>
+    case 'rejected':
+      return <Badge className="bg-red-500"><XCircle className="w-3 h-3 ml-1" /> مرفوض</Badge>
+    default:
+      return <Badge>{status}</Badge>
+  }
 }
