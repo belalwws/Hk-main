@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Shuffle, AlertCircle, Shield, Send, Plus, Crown, RefreshCw, GripVertical, Phone, User, Loader2 } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Shuffle, AlertCircle, Shield, Send, Plus, Crown, RefreshCw, GripVertical, Phone, User, Loader2, Sliders, X, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -94,6 +94,30 @@ interface SupervisorPermissions {
   canSendMessages: boolean
 }
 
+interface FormField {
+  id: string
+  label: string
+  type: string
+  options?: string[]
+  required?: boolean
+}
+
+interface FilterRule {
+  id: string
+  fieldId: string
+  fieldLabel: string
+  fieldType: string
+  operator: 'equals' | 'contains' | 'not_equals' | 'greater_than' | 'less_than' | 'in' | 'not_in'
+  value: string | string[]
+  action: 'accept' | 'reject' | 'highlight'
+}
+
+interface AdvancedFilterSettings {
+  enabled: boolean
+  rules: FilterRule[]
+  autoApply: boolean
+}
+
 export default function SupervisorHackathonManagementPage() {
   const params = useParams()
   const router = useRouter()
@@ -132,6 +156,14 @@ export default function SupervisorHackathonManagementPage() {
   const [confirmTransfersDialogOpen, setConfirmTransfersDialogOpen] = useState(false)
   const [confirmingTransfers, setConfirmingTransfers] = useState(false)
   const [teamSuccess, setTeamSuccess] = useState("")
+
+  // Advanced Filter States
+  const [advancedFilterDialogOpen, setAdvancedFilterDialogOpen] = useState(false)
+  const [formFields, setFormFields] = useState<FormField[]>([])
+  const [filterRules, setFilterRules] = useState<FilterRule[]>([])
+  const [filterEnabled, setFilterEnabled] = useState(false)
+  const [autoApplyFilter, setAutoApplyFilter] = useState(false)
+  const [loadingFormFields, setLoadingFormFields] = useState(false)
 
   const stats = hackathon?.stats || {
     totalParticipants: 0,
@@ -178,6 +210,119 @@ export default function SupervisorHackathonManagementPage() {
       }
     } catch (error) {
       console.error('Error checking teams:', error)
+    }
+  }
+
+  // Load form fields for advanced filtering
+  const loadFormFields = async () => {
+    try {
+      setLoadingFormFields(true)
+      const response = await fetch(`/api/admin/hackathons/${params.id}/registration-form`, {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.form?.fields) {
+          setFormFields(data.form.fields)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading form fields:', error)
+    } finally {
+      setLoadingFormFields(false)
+    }
+  }
+
+  // Add a new filter rule
+  const addFilterRule = (field: FormField) => {
+    const newRule: FilterRule = {
+      id: `rule_${Date.now()}`,
+      fieldId: field.id,
+      fieldLabel: field.label,
+      fieldType: field.type,
+      operator: field.type === 'select' || field.type === 'radio' ? 'equals' : 'contains',
+      value: '',
+      action: 'highlight'
+    }
+    setFilterRules(prev => [...prev, newRule])
+  }
+
+  // Remove a filter rule
+  const removeFilterRule = (ruleId: string) => {
+    setFilterRules(prev => prev.filter(r => r.id !== ruleId))
+  }
+
+  // Update a filter rule
+  const updateFilterRule = (ruleId: string, updates: Partial<FilterRule>) => {
+    setFilterRules(prev => prev.map(r => r.id === ruleId ? { ...r, ...updates } : r))
+  }
+
+  // Apply advanced filter to participants
+  const applyAdvancedFilter = (participants: Participant[]) => {
+    if (!filterEnabled || filterRules.length === 0) {
+      return participants
+    }
+
+    return participants.map(participant => {
+      let matchedAction: 'accept' | 'reject' | 'highlight' | null = null
+
+      for (const rule of filterRules) {
+        const fieldValue = getParticipantFieldValue(participant, rule.fieldId)
+        const matches = evaluateRule(fieldValue, rule)
+
+        if (matches) {
+          matchedAction = rule.action
+          break // First matching rule wins
+        }
+      }
+
+      return {
+        ...participant,
+        _filterAction: matchedAction
+      }
+    })
+  }
+
+  // Get participant field value from additionalInfo
+  const getParticipantFieldValue = (participant: any, fieldId: string): any => {
+    try {
+      if (participant.additionalInfo) {
+        const info = typeof participant.additionalInfo === 'string'
+          ? JSON.parse(participant.additionalInfo)
+          : participant.additionalInfo
+
+        return info.formData?.[fieldId] || info[fieldId] || ''
+      }
+      return ''
+    } catch (error) {
+      return ''
+    }
+  }
+
+  // Evaluate if a value matches a rule
+  const evaluateRule = (value: any, rule: FilterRule): boolean => {
+    const strValue = String(value || '').toLowerCase()
+    const ruleValue = String(rule.value || '').toLowerCase()
+
+    switch (rule.operator) {
+      case 'equals':
+        return strValue === ruleValue
+      case 'not_equals':
+        return strValue !== ruleValue
+      case 'contains':
+        return strValue.includes(ruleValue)
+      case 'greater_than':
+        return parseFloat(strValue) > parseFloat(ruleValue)
+      case 'less_than':
+        return parseFloat(strValue) < parseFloat(ruleValue)
+      case 'in':
+        const inValues = Array.isArray(rule.value) ? rule.value : [rule.value]
+        return inValues.some(v => String(v).toLowerCase() === strValue)
+      case 'not_in':
+        const notInValues = Array.isArray(rule.value) ? rule.value : [rule.value]
+        return !notInValues.some(v => String(v).toLowerCase() === strValue)
+      default:
+        return false
     }
   }
 
@@ -678,7 +823,7 @@ export default function SupervisorHackathonManagementPage() {
     })
   }
 
-  const filteredParticipants = hackathon?.participants.filter(participant => {
+  let filteredParticipants = hackathon?.participants.filter(participant => {
     // Status filter
     if (filter !== 'all' && participant.status.toLowerCase() !== filter) return false
 
@@ -690,6 +835,9 @@ export default function SupervisorHackathonManagementPage() {
 
     return true
   }) || []
+
+  // Apply advanced filter
+  filteredParticipants = applyAdvancedFilter(filteredParticipants)
 
   // Get unique cities and nationalities for filters
   const uniqueCities = [...new Set(
@@ -826,25 +974,43 @@ export default function SupervisorHackathonManagementPage() {
                       <CardTitle className="text-2xl text-[#01645e]">إدارة المتقدمين</CardTitle>
                       <CardDescription>مراجعة وقبول أو رفض المتقدمين مع إمكانية التصفية</CardDescription>
                     </div>
-                    {permissions.canExportData && filteredParticipants.length > 0 && (
+                    <div className="flex gap-2">
                       <Button
-                        onClick={exportParticipantsToExcel}
-                        disabled={exportingExcel}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => {
+                          setAdvancedFilterDialogOpen(true)
+                          if (formFields.length === 0) {
+                            loadFormFields()
+                          }
+                        }}
+                        variant="outline"
+                        className="border-blue-600 text-blue-600 hover:bg-blue-50"
                       >
-                        {exportingExcel ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
-                            جاري التحميل...
-                          </>
-                        ) : (
-                          <>
-                            <Download className="w-4 h-4 ml-2" />
-                            تحميل كل المتقدمين
-                          </>
+                        <Sliders className="w-4 h-4 ml-2" />
+                        فلترة متقدمة
+                        {filterEnabled && filterRules.length > 0 && (
+                          <Badge className="mr-2 bg-blue-600">{filterRules.length}</Badge>
                         )}
                       </Button>
-                    )}
+                      {permissions.canExportData && filteredParticipants.length > 0 && (
+                        <Button
+                          onClick={exportParticipantsToExcel}
+                          disabled={exportingExcel}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {exportingExcel ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
+                              جاري التحميل...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4 ml-2" />
+                              تحميل كل المتقدمين
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -952,20 +1118,40 @@ export default function SupervisorHackathonManagementPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {filteredParticipants.map((participant) => (
-                        <div key={participant.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-lg font-bold text-[#01645e]">{participant.user.name}</h3>
-                                <Badge className={`${
-                                  participant.status === 'approved' ? 'bg-green-500' :
-                                  participant.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'
-                                } text-white`}>
-                                  {participant.status === 'approved' ? 'مقبول' :
-                                   participant.status === 'rejected' ? 'مرفوض' : 'في الانتظار'}
-                                </Badge>
-                              </div>
+                      {filteredParticipants.map((participant: any) => {
+                        const filterAction = participant._filterAction
+                        const borderColor = filterAction === 'accept' ? 'border-green-500 border-2' :
+                                          filterAction === 'reject' ? 'border-red-500 border-2' :
+                                          filterAction === 'highlight' ? 'border-blue-500 border-2' : 'border'
+                        const bgColor = filterAction === 'accept' ? 'bg-green-50' :
+                                       filterAction === 'reject' ? 'bg-red-50' :
+                                       filterAction === 'highlight' ? 'bg-blue-50' : ''
+
+                        return (
+                          <div key={participant.id} className={`${borderColor} ${bgColor} rounded-lg p-4 hover:shadow-md transition-shadow`}>
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h3 className="text-lg font-bold text-[#01645e]">{participant.user.name}</h3>
+                                  <Badge className={`${
+                                    participant.status === 'approved' ? 'bg-green-500' :
+                                    participant.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'
+                                  } text-white`}>
+                                    {participant.status === 'approved' ? 'مقبول' :
+                                     participant.status === 'rejected' ? 'مرفوض' : 'في الانتظار'}
+                                  </Badge>
+                                  {filterAction && (
+                                    <Badge className={`${
+                                      filterAction === 'accept' ? 'bg-green-100 text-green-800' :
+                                      filterAction === 'reject' ? 'bg-red-100 text-red-800' :
+                                      'bg-blue-100 text-blue-800'
+                                    }`}>
+                                      {filterAction === 'accept' ? '✓ مقترح للقبول' :
+                                       filterAction === 'reject' ? '✗ مقترح للرفض' :
+                                       '★ مميز'}
+                                    </Badge>
+                                  )}
+                                </div>
 
                               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm mb-3">
                                 <div>
@@ -1036,7 +1222,8 @@ export default function SupervisorHackathonManagementPage() {
                             )}
                           </div>
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -1837,6 +2024,212 @@ export default function SupervisorHackathonManagementPage() {
                   )}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Advanced Filter Dialog */}
+        <Dialog open={advancedFilterDialogOpen} onOpenChange={setAdvancedFilterDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                <Sliders className="w-6 h-6 text-blue-600" />
+                إعدادات الفلترة المتقدمة
+              </DialogTitle>
+              <DialogDescription>
+                قم بإنشاء قواعد فلترة بناءً على حقول النموذج المخصص لقبول أو رفض أو تمييز المشاركين تلقائياً
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* Enable Filter Toggle */}
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div>
+                  <h3 className="font-semibold text-blue-900">تفعيل الفلترة المتقدمة</h3>
+                  <p className="text-sm text-blue-700">تطبيق قواعد الفلترة على المشاركين</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filterEnabled}
+                    onChange={(e) => setFilterEnabled(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              {/* Filter Rules */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">قواعد الفلترة ({filterRules.length})</h3>
+                  {filterRules.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFilterRules([])}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4 ml-1" />
+                      حذف الكل
+                    </Button>
+                  )}
+                </div>
+
+                {filterRules.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <Filter className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 font-medium">لا توجد قواعد فلترة</p>
+                    <p className="text-sm text-gray-500">اختر حقل من الأسفل لإضافة قاعدة جديدة</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filterRules.map((rule, index) => (
+                      <div key={rule.id} className="p-4 bg-white border rounded-lg shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 space-y-3">
+                            <div className="grid grid-cols-3 gap-3">
+                              {/* Field */}
+                              <div>
+                                <Label className="text-xs">الحقل</Label>
+                                <Input
+                                  value={rule.fieldLabel}
+                                  disabled
+                                  className="bg-gray-50"
+                                />
+                              </div>
+
+                              {/* Operator */}
+                              <div>
+                                <Label className="text-xs">المعامل</Label>
+                                <Select
+                                  value={rule.operator}
+                                  onValueChange={(value) => updateFilterRule(rule.id, { operator: value as any })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="equals">يساوي</SelectItem>
+                                    <SelectItem value="not_equals">لا يساوي</SelectItem>
+                                    <SelectItem value="contains">يحتوي على</SelectItem>
+                                    {rule.fieldType === 'number' && (
+                                      <>
+                                        <SelectItem value="greater_than">أكبر من</SelectItem>
+                                        <SelectItem value="less_than">أصغر من</SelectItem>
+                                      </>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Value */}
+                              <div>
+                                <Label className="text-xs">القيمة</Label>
+                                <Input
+                                  value={rule.value as string}
+                                  onChange={(e) => updateFilterRule(rule.id, { value: e.target.value })}
+                                  placeholder="أدخل القيمة"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              {/* Action */}
+                              <div>
+                                <Label className="text-xs">الإجراء</Label>
+                                <Select
+                                  value={rule.action}
+                                  onValueChange={(value) => updateFilterRule(rule.id, { action: value as any })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="highlight">تمييز فقط</SelectItem>
+                                    <SelectItem value="accept">قبول تلقائي</SelectItem>
+                                    <SelectItem value="reject">رفض تلقائي</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Remove Button */}
+                              <div className="flex items-end">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => removeFilterRule(rule.id)}
+                                  className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="w-4 h-4 ml-1" />
+                                  حذف القاعدة
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Available Fields */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900">الحقول المتاحة</h3>
+                {loadingFormFields ? (
+                  <div className="text-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
+                    <p className="text-gray-600">جاري تحميل الحقول...</p>
+                  </div>
+                ) : formFields.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                    <FormInput className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 font-medium">لا توجد حقول مخصصة</p>
+                    <p className="text-sm text-gray-500">قم بإنشاء نموذج تسجيل مخصص أولاً</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {formFields.map((field) => (
+                      <Button
+                        key={field.id}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addFilterRule(field)}
+                        className="justify-start"
+                        disabled={filterRules.some(r => r.fieldId === field.id)}
+                      >
+                        <Plus className="w-4 h-4 ml-1" />
+                        {field.label}
+                        {field.required && <span className="text-red-500 mr-1">*</span>}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setAdvancedFilterDialogOpen(false)}
+              >
+                إغلاق
+              </Button>
+              <Button
+                onClick={() => {
+                  setAdvancedFilterDialogOpen(false)
+                  // Refresh participants list to apply filter
+                  fetchHackathon()
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Check className="w-4 h-4 ml-1" />
+                تطبيق الفلترة
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

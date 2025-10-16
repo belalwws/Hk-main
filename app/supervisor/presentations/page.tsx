@@ -106,11 +106,10 @@ export default function SupervisorPresentationsPage() {
 
   const handleDownload = (team: Team) => {
     if (team.ideaFile) {
-      // Fix Cloudinary URL for PDF/PPT files
+      // Fix Cloudinary URL for PDF/PPT files - ensure we use /upload/ not /raw/upload/
       let fileUrl = team.ideaFile
-      if (fileUrl.includes('/image/upload/') &&
-          (fileUrl.endsWith('.pdf') || fileUrl.endsWith('.ppt') || fileUrl.endsWith('.pptx'))) {
-        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
+      if (fileUrl.includes('/raw/upload/')) {
+        fileUrl = fileUrl.replace('/raw/upload/', '/upload/')
       }
 
       // Create a temporary link to download the file
@@ -131,11 +130,10 @@ export default function SupervisorPresentationsPage() {
 
   const handleView = (team: Team) => {
     if (team.ideaFile) {
-      // Fix Cloudinary URL for PDF/PPT files
+      // Fix Cloudinary URL for PDF/PPT files - ensure we use /upload/ not /raw/upload/
       let fileUrl = team.ideaFile
-      if (fileUrl.includes('/image/upload/') &&
-          (fileUrl.endsWith('.pdf') || fileUrl.endsWith('.ppt') || fileUrl.endsWith('.pptx'))) {
-        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
+      if (fileUrl.includes('/raw/upload/')) {
+        fileUrl = fileUrl.replace('/raw/upload/', '/upload/')
       }
 
       window.open(fileUrl, '_blank')

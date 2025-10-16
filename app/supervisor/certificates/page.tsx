@@ -206,11 +206,11 @@ export default function SupervisorCertificatesPage() {
         }))
         setCertificateImageSrc(newUrl)
         
-        // Force reload the image with cache busting
+        // Force reload the image with cache busting - longer delay to ensure Cloudinary has the image
         setImageLoaded(false)
         setTimeout(() => {
           loadCertificateImage(newUrl)
-        }, 100)
+        }, 500)
         
         toast({
           title: 'نجح',
@@ -235,18 +235,27 @@ export default function SupervisorCertificatesPage() {
   const handleSave = async () => {
     try {
       setSaving(true)
+      // Update settings object with current certificateImageSrc before saving
+      const settingsToSave = {
+        ...settings,
+        certificateTemplate: certificateImageSrc,
+        type: certificateType
+      }
+      
       const response = await fetch(`/api/admin/hackathons/${selectedHackathon}/certificate-settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...settings,
-          certificateTemplate: certificateImageSrc,
-          type: certificateType
-        }),
+        body: JSON.stringify(settingsToSave),
         credentials: 'include'
       })
 
       if (response.ok) {
+        // Update the settings state with the saved template URL
+        setSettings(prev => ({
+          ...prev,
+          certificateTemplate: certificateImageSrc
+        }))
+        
         toast({
           title: 'نجح',
           description: `تم حفظ إعدادات ${CERTIFICATE_TYPES.find(t => t.value === certificateType)?.label} بنجاح`

@@ -83,12 +83,18 @@ export async function POST(request: NextRequest) {
     const cloudinaryResult = await uploadToCloudinary(buffer, 'presentations', fileName)
 
     console.log('✅ File uploaded to Cloudinary:', cloudinaryResult.url)
+    
+    // Fix Cloudinary URL for PDFs - replace /raw/upload with /upload for consistency
+    let fileUrl = cloudinaryResult.url
+    if (fileUrl.includes('/raw/upload/')) {
+      fileUrl = fileUrl.replace('/raw/upload/', '/upload/')
+    }
 
     // Update team in database
     await prisma.team.update({
       where: { id: participant.team.id },
       data: {
-        ideaFile: cloudinaryResult.url,
+        ideaFile: fileUrl,
         ideaTitle: title,
         ideaDescription: description || null
       }
