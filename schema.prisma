@@ -70,6 +70,7 @@ model Hackathon {
   formDesign         HackathonFormDesign?
   feedbackForm       HackathonFeedbackForm?
   feedbacks          HackathonFeedback[]
+  uploadTokens       UploadToken[]
 
   @@map("hackathons")
 }
@@ -172,6 +173,7 @@ model Participant {
   hackathon    Hackathon       @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
   team         Team?           @relation(fields: [teamId], references: [id])
   teamId       String?
+  uploadTokens UploadToken[]
 
   @@unique([userId, hackathonId])
   @@map("participants")
@@ -282,6 +284,7 @@ model Team {
   hackathon   Hackathon     @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
   participants Participant[]
   scores      Score[]
+  uploadTokens UploadToken[]
 
   @@unique([hackathonId, teamNumber])
   @@map("teams")
@@ -705,4 +708,27 @@ model EmailTemplate {
   updatedAt     DateTime @updatedAt
 
   @@map("email_templates")
+}
+
+// Upload Token - للسماح للمشاركين برفع العروض التقديمية عبر رابط سحري
+model UploadToken {
+  id            String   @id @default(cuid())
+  token         String   @unique
+  participantId String
+  teamId        String
+  hackathonId   String
+  expiresAt     DateTime
+  used          Boolean  @default(false)
+  usedAt        DateTime?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  team          Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  hackathon     Hackathon   @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([participantId])
+  @@index([teamId])
+  @@map("upload_tokens")
 }

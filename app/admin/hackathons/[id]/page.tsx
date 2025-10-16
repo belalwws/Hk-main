@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -390,6 +390,30 @@ export default function HackathonManagementPage() {
     } catch (error) {
       console.error('Error updating participant status:', error)
       alert('حدث خطأ في تحديث حالة المشارك')
+    }
+  }
+
+  const sendUploadLink = async (participantId: string) => {
+    try {
+      const response = await fetch(`/api/admin/participants/${participantId}/send-upload-link`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        if (data.emailSent) {
+          alert('✅ تم إرسال رابط رفع العرض التقديمي بنجاح!')
+        } else {
+          alert(`⚠️ تم إنشاء الرابط ولكن لم يتم إرسال الإيميل (SMTP غير مفعل)\n\nالرابط: ${data.uploadLink}`)
+        }
+      } else {
+        alert(`❌ ${data.error || 'فشل في إرسال الرابط'}`)
+      }
+    } catch (error) {
+      console.error('Error sending upload link:', error)
+      alert('❌ حدث خطأ في إرسال الرابط')
     }
   }
 
@@ -1114,28 +1138,42 @@ export default function HackathonManagementPage() {
                                 </div>
                               )}
                             </div>
-                            
-                            {participant.status === 'pending' && (
-                              <div className="flex gap-2 mr-4">
-                                <Button
-                                  size="sm"
-                                  className="bg-green-500 hover:bg-green-600 text-white"
-                                  onClick={() => updateParticipantStatus(participant.id, 'approved')}
-                                >
-                                  <UserCheck className="w-4 h-4 ml-1" />
-                                  قبول
-                                </Button>
+
+                            <div className="flex gap-2 mr-4">
+                              {participant.status === 'pending' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-500 hover:bg-green-600 text-white"
+                                    onClick={() => updateParticipantStatus(participant.id, 'approved')}
+                                  >
+                                    <UserCheck className="w-4 h-4 ml-1" />
+                                    قبول
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 hover:text-red-700 border-red-600"
+                                    onClick={() => updateParticipantStatus(participant.id, 'rejected')}
+                                  >
+                                    <UserX className="w-4 h-4 ml-1" />
+                                    رفض
+                                  </Button>
+                                </>
+                              )}
+
+                              {participant.status === 'approved' && participant.teamId && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-red-600 hover:text-red-700 border-red-600"
-                                  onClick={() => updateParticipantStatus(participant.id, 'rejected')}
+                                  className="text-blue-600 hover:text-blue-700 border-blue-600 hover:bg-blue-50"
+                                  onClick={() => sendUploadLink(participant.id)}
                                 >
-                                  <UserX className="w-4 h-4 ml-1" />
-                                  رفض
+                                  <Send className="w-4 h-4 ml-1" />
+                                  إرسال رابط الرفع
                                 </Button>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
