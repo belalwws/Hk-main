@@ -61,9 +61,19 @@ export async function GET(
       return NextResponse.json({ error: 'غير مصرح بالوصول لهذا الملف' }, { status: 403 })
     }
 
-    // If it's a Cloudinary URL, redirect to it
+    // If it's a Cloudinary URL, fix it if needed and redirect
     if (team.ideaFile.includes('cloudinary.com')) {
-      return NextResponse.redirect(team.ideaFile)
+      let fileUrl = team.ideaFile
+
+      // Fix Cloudinary URL for PDF/PPT files
+      // Change /image/upload/ to /raw/upload/ for non-image files
+      if (fileUrl.includes('/image/upload/') &&
+          (fileUrl.endsWith('.pdf') || fileUrl.endsWith('.ppt') || fileUrl.endsWith('.pptx'))) {
+        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
+        console.log('🔧 Fixed Cloudinary URL:', fileUrl)
+      }
+
+      return NextResponse.redirect(fileUrl)
     }
 
     // If it's a local file, serve it through the uploads endpoint

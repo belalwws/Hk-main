@@ -106,15 +106,22 @@ export default function SupervisorPresentationsPage() {
 
   const handleDownload = (team: Team) => {
     if (team.ideaFile) {
+      // Fix Cloudinary URL for PDF/PPT files
+      let fileUrl = team.ideaFile
+      if (fileUrl.includes('/image/upload/') &&
+          (fileUrl.endsWith('.pdf') || fileUrl.endsWith('.ppt') || fileUrl.endsWith('.pptx'))) {
+        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
+      }
+
       // Create a temporary link to download the file
       const link = document.createElement('a')
-      link.href = team.ideaFile
+      link.href = fileUrl
       link.download = `${team.name}_presentation.pdf`
       link.target = '_blank'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
+
       toast({
         title: "✅ جاري التحميل",
         description: `جاري تحميل عرض ${team.name}`
@@ -124,7 +131,14 @@ export default function SupervisorPresentationsPage() {
 
   const handleView = (team: Team) => {
     if (team.ideaFile) {
-      window.open(team.ideaFile, '_blank')
+      // Fix Cloudinary URL for PDF/PPT files
+      let fileUrl = team.ideaFile
+      if (fileUrl.includes('/image/upload/') &&
+          (fileUrl.endsWith('.pdf') || fileUrl.endsWith('.ppt') || fileUrl.endsWith('.pptx'))) {
+        fileUrl = fileUrl.replace('/image/upload/', '/raw/upload/')
+      }
+
+      window.open(fileUrl, '_blank')
       toast({
         title: "✅ تم الفتح",
         description: `تم فتح عرض ${team.name} في تبويب جديد`

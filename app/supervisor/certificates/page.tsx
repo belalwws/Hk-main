@@ -184,8 +184,9 @@ export default function SupervisorCertificatesPage() {
     try {
       setUploadingCertificate(true)
       const formData = new FormData()
-      formData.append('file', file)
-      formData.append('type', certificateType)
+      formData.append('certificateImage', file)
+      formData.append('hackathonId', selectedHackathon)
+      formData.append('certificateType', certificateType)
 
       const response = await fetch(`/api/supervisor/certificate-template/upload`, {
         method: 'POST',

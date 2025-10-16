@@ -20,8 +20,43 @@ export async function uploadToCloudinary(
   filename?: string
 ) {
   try {
+    // Determine the correct data URI based on file extension
+    let dataUri: string
+
+    if (file instanceof Buffer) {
+      const base64 = file.toString('base64')
+
+      // Detect file type from filename or use application/octet-stream
+      let mimeType = 'application/octet-stream'
+
+      if (filename) {
+        const ext = filename.split('.').pop()?.toLowerCase()
+
+        // Map extensions to MIME types
+        const mimeTypes: Record<string, string> = {
+          'pdf': 'application/pdf',
+          'ppt': 'application/vnd.ms-powerpoint',
+          'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'doc': 'application/msword',
+          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'gif': 'image/gif',
+          'svg': 'image/svg+xml',
+          'webp': 'image/webp'
+        }
+
+        mimeType = mimeTypes[ext || ''] || 'application/octet-stream'
+      }
+
+      dataUri = `data:${mimeType};base64,${base64}`
+    } else {
+      dataUri = file
+    }
+
     const result = await cloudinary.uploader.upload(
-      file instanceof Buffer ? `data:image/jpeg;base64,${file.toString('base64')}` : file,
+      dataUri,
       {
         folder: folder,
         public_id: filename,

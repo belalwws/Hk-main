@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('certificateImage') as File
     const hackathonId = formData.get('hackathonId') as string
+    const certificateType = formData.get('certificateType') as string
 
     if (!file) {
       console.log('❌ No file provided')
@@ -31,6 +32,11 @@ export async function POST(request: NextRequest) {
     if (!hackathonId) {
       console.log('❌ No hackathon ID provided')
       return NextResponse.json({ error: 'معرف الهاكاثون مطلوب' }, { status: 400 })
+    }
+
+    if (!certificateType || !['participant', 'judge', 'supervisor'].includes(certificateType)) {
+      console.log('❌ Invalid certificate type:', certificateType)
+      return NextResponse.json({ error: 'نوع الشهادة غير صحيح' }, { status: 400 })
     }
 
     console.log('📁 File details:', {
@@ -70,8 +76,8 @@ export async function POST(request: NextRequest) {
     console.log('☁️ Uploading to Cloudinary...')
     const uploadResult = await uploadToCloudinary(
       dataUrl,
-      `certificates/templates/${hackathonId}`,
-      `template-${Date.now()}`
+      `certificates/templates/${hackathonId}/${certificateType}`,
+      `template-${certificateType}-${Date.now()}`
     )
 
     console.log('✅ Upload successful:', uploadResult.url)
@@ -79,7 +85,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: 'تم رفع قالب الشهادة بنجاح',
       url: uploadResult.url,
-      publicId: uploadResult.public_id
+      publicId: uploadResult.publicId
     })
 
   } catch (error) {
