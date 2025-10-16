@@ -42,6 +42,20 @@ interface SupervisorUser {
   profilePicture?: string
   createdAt: string
   isActive: boolean
+  bio?: string
+  dateOfBirth?: string
+  gender?: string
+  education?: string
+  university?: string
+  major?: string
+  graduationYear?: string
+  currentJob?: string
+  company?: string
+  yearsOfExperience?: string
+  skills?: string[]
+  linkedin?: string
+  github?: string
+  website?: string
 }
 
 interface Hackathon {
@@ -87,6 +101,7 @@ export default function SupervisorsManagement() {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
 
   const [selectedSupervisor, setSelectedSupervisor] = useState<SupervisorUser | null>(null)
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
@@ -650,9 +665,23 @@ export default function SupervisorsManagement() {
                         </CardDescription>
                       </div>
                     </div>
-                    <Badge variant="outline">
-                      {group.assignments.length} تعيين
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {group.assignments.length} تعيين
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedSupervisor(group.user)
+                          setDetailsDialogOpen(true)
+                        }}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <UserCircle className="w-4 h-4 ml-1" />
+                        عرض التفاصيل
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -922,6 +951,279 @@ export default function SupervisorsManagement() {
             </Button>
             <Button onClick={updatePermissions} className="bg-blue-600 hover:bg-blue-700">
               حفظ الصلاحيات
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Supervisor Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">تفاصيل المشرف</DialogTitle>
+            <DialogDescription>
+              جميع البيانات الشخصية والمهنية للمشرف
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedSupervisor && (
+            <div className="space-y-6">
+              {/* Profile Section */}
+              <div className="flex items-start gap-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+                <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+                  <AvatarImage src={selectedSupervisor.profilePicture} alt={selectedSupervisor.name} />
+                  <AvatarFallback className="bg-blue-100 text-blue-600 text-2xl">
+                    {selectedSupervisor.name.substring(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-gray-900">{selectedSupervisor.name}</h3>
+                  <p className="text-gray-600 mt-1">{selectedSupervisor.email}</p>
+                  <div className="flex gap-2 mt-3">
+                    <Badge className={selectedSupervisor.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                      {selectedSupervisor.isActive ? "نشط" : "غير نشط"}
+                    </Badge>
+                    {selectedSupervisor.currentJob && (
+                      <Badge variant="outline" className="bg-white">
+                        {selectedSupervisor.currentJob}
+                      </Badge>
+                    )}
+                  </div>
+                  {selectedSupervisor.bio && (
+                    <p className="text-sm text-gray-700 mt-3 leading-relaxed">
+                      {selectedSupervisor.bio}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Personal Info */}
+              <Card>
+                <CardHeader className="bg-gray-50">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <User className="w-5 h-5 text-blue-600" />
+                    المعلومات الشخصية
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedSupervisor.phone && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">رقم الهاتف</p>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-400" />
+                          <p className="font-medium">{selectedSupervisor.phone}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedSupervisor.city && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">المدينة</p>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <p className="font-medium">{selectedSupervisor.city}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedSupervisor.dateOfBirth && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">تاريخ الميلاد</p>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <p className="font-medium">{new Date(selectedSupervisor.dateOfBirth).toLocaleDateString('ar-SA')}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedSupervisor.gender && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">الجنس</p>
+                        <p className="font-medium">{selectedSupervisor.gender === 'male' ? 'ذكر' : selectedSupervisor.gender === 'female' ? 'أنثى' : 'آخر'}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Education Info */}
+              {(selectedSupervisor.education || selectedSupervisor.university || selectedSupervisor.major) && (
+                <Card>
+                  <CardHeader className="bg-gray-50">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-purple-600" />
+                      المعلومات التعليمية
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedSupervisor.education && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">المؤهل العلمي</p>
+                          <p className="font-medium">{selectedSupervisor.education}</p>
+                        </div>
+                      )}
+                      {selectedSupervisor.university && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">الجامعة</p>
+                          <p className="font-medium">{selectedSupervisor.university}</p>
+                        </div>
+                      )}
+                      {selectedSupervisor.major && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">التخصص</p>
+                          <p className="font-medium">{selectedSupervisor.major}</p>
+                        </div>
+                      )}
+                      {selectedSupervisor.graduationYear && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">سنة التخرج</p>
+                          <p className="font-medium">{selectedSupervisor.graduationYear}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Professional Info */}
+              {(selectedSupervisor.currentJob || selectedSupervisor.company || selectedSupervisor.yearsOfExperience) && (
+                <Card>
+                  <CardHeader className="bg-gray-50">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-green-600" />
+                      المعلومات المهنية
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedSupervisor.currentJob && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">الوظيفة الحالية</p>
+                          <p className="font-medium">{selectedSupervisor.currentJob}</p>
+                        </div>
+                      )}
+                      {selectedSupervisor.company && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">الشركة</p>
+                          <p className="font-medium">{selectedSupervisor.company}</p>
+                        </div>
+                      )}
+                      {selectedSupervisor.yearsOfExperience && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">سنوات الخبرة</p>
+                          <p className="font-medium">{selectedSupervisor.yearsOfExperience} سنوات</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Skills */}
+              {selectedSupervisor.skills && selectedSupervisor.skills.length > 0 && (
+                <Card>
+                  <CardHeader className="bg-gray-50">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-orange-600" />
+                      المهارات
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedSupervisor.skills.map((skill, index) => (
+                        <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Social Links */}
+              {(selectedSupervisor.linkedin || selectedSupervisor.github || selectedSupervisor.website) && (
+                <Card>
+                  <CardHeader className="bg-gray-50">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Mail className="w-5 h-5 text-blue-600" />
+                      روابط التواصل
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="space-y-3">
+                      {selectedSupervisor.linkedin && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">LinkedIn</p>
+                          <a 
+                            href={selectedSupervisor.linkedin} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline break-all"
+                          >
+                            {selectedSupervisor.linkedin}
+                          </a>
+                        </div>
+                      )}
+                      {selectedSupervisor.github && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">GitHub</p>
+                          <a 
+                            href={selectedSupervisor.github} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline break-all"
+                          >
+                            {selectedSupervisor.github}
+                          </a>
+                        </div>
+                      )}
+                      {selectedSupervisor.website && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">الموقع الإلكتروني</p>
+                          <a 
+                            href={selectedSupervisor.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline break-all"
+                          >
+                            {selectedSupervisor.website}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Account Info */}
+              <Card>
+                <CardHeader className="bg-gray-50">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-gray-600" />
+                    معلومات الحساب
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">معرف المستخدم</p>
+                      <p className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{selectedSupervisor.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">تاريخ التسجيل</p>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <p className="font-medium">{new Date(selectedSupervisor.createdAt).toLocaleString('ar-SA')}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <div className="flex justify-end mt-6">
+            <Button onClick={() => setDetailsDialogOpen(false)} className="bg-blue-600 hover:bg-blue-700">
+              إغلاق
             </Button>
           </div>
         </DialogContent>
