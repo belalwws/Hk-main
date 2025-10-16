@@ -5,11 +5,11 @@ const prisma = new PrismaClient()
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ participantId: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params
-    const participantId = params.participantId
+    const participantId = params.id
 
     // Find participant with team and hackathon data
     const participant = await prisma.participant.findUnique({
@@ -110,3 +110,4 @@ export async function GET(
     return NextResponse.json({ error: 'حدث خطأ في الخادم' }, { status: 500 })
   }
 }
+

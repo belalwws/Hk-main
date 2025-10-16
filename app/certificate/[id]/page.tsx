@@ -17,7 +17,7 @@ interface ParticipantData {
 
 export default function CertificatePage() {
   const params = useParams()
-  const participantId = params.participantId as string
+  const participantId = params.id as string
   const [participant, setParticipant] = useState<ParticipantData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -217,3 +217,4 @@ export default function CertificatePage() {
     </div>
   )
 }
+
