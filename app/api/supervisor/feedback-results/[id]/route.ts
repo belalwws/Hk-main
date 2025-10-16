@@ -4,11 +4,11 @@ import { verifyToken } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ hackathonId: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params
-    const { hackathonId } = params
+    const { id: hackathonId } = params
 
     // Verify supervisor authentication
     const token = request.cookies.get('auth-token')?.value
