@@ -62,13 +62,26 @@ export async function DELETE(
     if (team.ideaFile.includes('cloudinary.com')) {
       try {
         // Extract public_id from Cloudinary URL
-        // URL format: https://res.cloudinary.com/{cloud}/image/upload/v{version}/{public_id}.pdf
-        const urlParts = team.ideaFile.split('/')
-        const fileWithExt = urlParts[urlParts.length - 1]
-        const publicId = `presentations/${fileWithExt.split('.')[0]}`
+        // URL formats:
+        // https://res.cloudinary.com/{cloud}/raw/upload/v{version}/presentations/{filename}.pdf
+        // https://res.cloudinary.com/{cloud}/image/upload/v{version}/presentations/{filename}.pdf
         
-        await deleteFromCloudinary(publicId, 'raw')
-        console.log('✅ Deleted from Cloudinary:', publicId)
+        const url = new URL(team.ideaFile)
+        const pathParts = url.pathname.split('/')
+        
+        // Find the 'presentations' folder and everything after it
+        const presentationsIndex = pathParts.indexOf('presentations')
+        if (presentationsIndex !== -1) {
+          // Reconstruct publicId: presentations/filename (without extension)
+          const filename = pathParts[pathParts.length - 1]
+          const filenameWithoutExt = filename.split('.')[0]
+          const publicId = `presentations/${filenameWithoutExt}`
+          
+          await deleteFromCloudinary(publicId, 'raw')
+          console.log('✅ Deleted from Cloudinary:', publicId)
+        } else {
+          console.warn('⚠️ Could not find presentations folder in URL:', team.ideaFile)
+        }
       } catch (error) {
         console.error('⚠️ Error deleting from Cloudinary:', error)
         // Continue even if Cloudinary deletion fails

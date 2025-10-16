@@ -155,9 +155,12 @@ export async function deleteFromCloudinary(publicId: string, resourceType: 'imag
     }
 
     console.warn('⚠️ Could not delete from Cloudinary:', publicId)
+    // Don't throw error - just log warning and continue
+    return { result: 'warning', message: 'Could not delete file' }
   } catch (error) {
     console.error('Cloudinary delete error:', error)
-    throw new Error('Failed to delete file from Cloudinary')
+    // Don't throw error - just log and return
+    return { result: 'error', message: 'Failed to delete file from Cloudinary' }
   }
 }
 
