@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FileText, Download, CheckCircle2, XCircle, Eye, Users, Trash2 } from 'lucide-react'
+import { FileText, Download, CheckCircle2, XCircle, Eye, Users, Trash2, Send, Loader2, Mail } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
 import { useModal } from '@/hooks/use-modal'
 
@@ -36,7 +37,9 @@ export default function SupervisorPresentationsPage() {
   const [selectedHackathon, setSelectedHackathon] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [sendingLink, setSendingLink] = useState<string | null>(null)
   const { showSuccess, showError, showConfirm } = useModal()
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchData()
@@ -92,6 +95,83 @@ export default function SupervisorPresentationsPage() {
 
   const handleView = (teamId: string) => {
     window.open(`/api/files/${teamId}`, '_blank')
+  }
+
+  const sendUploadLink = async (participantId: string, teamName: string) => {
+    try {
+      setSendingLink(participantId)
+      const response = await fetch(`/api/admin/participants/${participantId}/send-upload-link`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: "✅ تم الإرسال",
+          description: data.emailSent
+            ? `تم إرسال رابط رفع العرض التقديمي لفريق ${teamName}`
+            : "تم إنشاء الرابط ولكن لم يتم إرسال الإيميل (SMTP غير مفعل)"
+        })
+        fetchData() // Refresh data
+      } else {
+        toast({
+          title: "❌ خطأ",
+          description: data.error || 'فشل في إرسال الرابط',
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Error sending upload link:', error)
+      toast({
+        title: "❌ خطأ",
+        description: "حدث خطأ في إرسال الرابط",
+        variant: "destructive"
+      })
+    } finally {
+      setSendingLink(null)
+    }
+  }
+
+  const sendBulkUploadLinks = async () => {
+    const confirmMessage = `هل تريد إرسال روابط الرفع لجميع الفرق التي لم ترفع بعد؟\n\nسيتم الإرسال لـ ${teamsWithoutPresentation.length} فريق`
+
+    if (!confirm(confirmMessage)) return
+
+    toast({
+      title: "⏳ جاري الإرسال...",
+      description: `إرسال الروابط لـ ${teamsWithoutPresentation.length} فريق`
+    })
+
+    let successCount = 0
+    let failCount = 0
+
+    for (const team of teamsWithoutPresentation) {
+      if (team.participants.length > 0) {
+        try {
+          const response = await fetch(`/api/admin/participants/${team.participants[0].id}/send-upload-link`, {
+            method: 'POST',
+            credentials: 'include'
+          })
+
+          if (response.ok) {
+            successCount++
+          } else {
+            failCount++
+          }
+        } catch (error) {
+          failCount++
+        }
+      }
+    }
+
+    toast({
+      title: successCount > 0 ? "✅ تم الإرسال" : "❌ فشل الإرسال",
+      description: `تم إرسال ${successCount} رابط بنجاح${failCount > 0 ? ` وفشل ${failCount}` : ''}`
+    })
+
+    fetchData() // Refresh data
   }
 
   const handleDelete = async (teamId: string, teamName: string) => {
@@ -151,24 +231,36 @@ export default function SupervisorPresentationsPage() {
       {/* Filter */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <label className="text-gray-700 font-medium">اختر الهاكاثون:</label>
-            <Select value={selectedHackathon} onValueChange={setSelectedHackathon}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="اختر هاكاثون" />
-              </SelectTrigger>
-              <SelectContent>
-                {hackathons.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>
-                    {h.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedHackathon && (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                {hackathons.find(h => h.id === selectedHackathon)?.title}
-              </Badge>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <label className="text-gray-700 font-medium">اختر الهاكاثون:</label>
+              <Select value={selectedHackathon} onValueChange={setSelectedHackathon}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="اختر هاكاثون" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hackathons.map((h) => (
+                    <SelectItem key={h.id} value={h.id}>
+                      {h.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedHackathon && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  {hackathons.find(h => h.id === selectedHackathon)?.title}
+                </Badge>
+              )}
+            </div>
+
+            {teamsWithoutPresentation.length > 0 && (
+              <Button
+                onClick={sendBulkUploadLinks}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Send className="w-4 h-4 ml-2" />
+                إرسال جماعي للروابط ({teamsWithoutPresentation.length})
+              </Button>
             )}
           </div>
         </CardContent>
@@ -302,7 +394,7 @@ export default function SupervisorPresentationsPage() {
                   className="border border-gray-200 rounded-lg p-4 bg-red-50"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-semibold text-lg text-gray-900">{team.name}</h3>
                         <Badge className="bg-red-100 text-red-800">لم يرفع</Badge>
@@ -315,6 +407,28 @@ export default function SupervisorPresentationsPage() {
                         <span>{team.participants.length} أعضاء</span>
                       </div>
                     </div>
+
+                    {team.participants.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-blue-600 hover:text-blue-700 border-blue-600 hover:bg-blue-50"
+                        onClick={() => sendUploadLink(team.participants[0].id, team.name)}
+                        disabled={sendingLink === team.participants[0].id}
+                      >
+                        {sendingLink === team.participants[0].id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 ml-1 animate-spin" />
+                            جاري الإرسال...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 ml-1" />
+                            إرسال رابط الرفع
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </motion.div>
               ))}
