@@ -187,7 +187,7 @@ export default function SupervisorCertificatesPage() {
       formData.append('file', file)
       formData.append('type', certificateType)
 
-      const response = await fetch(`/api/admin/hackathons/${selectedHackathon}/upload-certificate`, {
+      const response = await fetch(`/api/supervisor/certificate-template/upload`, {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -195,19 +195,35 @@ export default function SupervisorCertificatesPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setCertificateImageSrc(data.url)
-        loadCertificateImage(data.url)
+        console.log('✅ Certificate uploaded:', data.url)
+        
+        // Update settings with new template URL
+        const newUrl = data.url
+        setSettings(prev => ({
+          ...prev,
+          certificateTemplate: newUrl
+        }))
+        setCertificateImageSrc(newUrl)
+        
+        // Force reload the image with cache busting
+        setImageLoaded(false)
+        setTimeout(() => {
+          loadCertificateImage(newUrl)
+        }, 100)
+        
         toast({
           title: 'نجح',
           description: 'تم رفع قالب الشهادة بنجاح'
         })
       } else {
-        throw new Error('فشل رفع الملف')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'فشل رفع الملف')
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Upload error:', error)
       toast({
         title: 'خطأ',
-        description: 'حدث خطأ أثناء رفع الملف',
+        description: error.message || 'حدث خطأ أثناء رفع الملف',
         variant: 'destructive'
       })
     } finally {

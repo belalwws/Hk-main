@@ -104,12 +104,32 @@ export default function SupervisorPresentationsPage() {
   const teamsWithPresentation = filteredTeams.filter(t => t.ideaFile)
   const teamsWithoutPresentation = filteredTeams.filter(t => !t.ideaFile)
 
-  const handleDownload = (teamId: string, teamName: string) => {
-    window.open(`/api/files/${teamId}`, '_blank')
+  const handleDownload = (team: Team) => {
+    if (team.ideaFile) {
+      // Create a temporary link to download the file
+      const link = document.createElement('a')
+      link.href = team.ideaFile
+      link.download = `${team.name}_presentation.pdf`
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast({
+        title: "✅ جاري التحميل",
+        description: `جاري تحميل عرض ${team.name}`
+      })
+    }
   }
 
-  const handleView = (teamId: string) => {
-    window.open(`/api/files/${teamId}`, '_blank')
+  const handleView = (team: Team) => {
+    if (team.ideaFile) {
+      window.open(team.ideaFile, '_blank')
+      toast({
+        title: "✅ تم الفتح",
+        description: `تم فتح عرض ${team.name} في تبويب جديد`
+      })
+    }
   }
 
   const sendUploadLink = async (teamId: string, teamName: string) => {
@@ -428,7 +448,7 @@ export default function SupervisorPresentationsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleView(team.id)}
+                          onClick={() => handleView(team)}
                           className="gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
                         >
                           <Eye className="w-4 h-4" />
@@ -437,7 +457,7 @@ export default function SupervisorPresentationsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDownload(team.id, team.name)}
+                          onClick={() => handleDownload(team)}
                           className="gap-2 border-green-300 text-green-700 hover:bg-green-50"
                         >
                           <Download className="w-4 h-4" />
