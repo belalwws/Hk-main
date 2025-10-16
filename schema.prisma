@@ -106,6 +106,16 @@ model User {
   major         String?
   graduationYear String?
   workExperience String?
+  
+  // Additional profile fields
+  dateOfBirth        String?
+  gender             String?
+  education          String?  // المؤهل العلمي
+  currentJob         String?  // الوظيفة الحالية
+  company            String?  // الشركة
+  yearsOfExperience  String?  // سنوات الخبرة
+  website            String?  // Personal website
+  
   lastLogin     DateTime?
   loginCount    Int      @default(0)
   createdAt     DateTime @default(now())

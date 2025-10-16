@@ -133,6 +133,7 @@ export default function SupervisorLayout({
 
     console.log('✅ [SupervisorLayout] User authenticated as supervisor:', user.email)
     setAllowAccess(true)
+    // @ts-ignore - profilePicture exists but TS doesn't recognize it
     setProfilePicture(user.profilePicture || null)
   }, [user, loading, router])
 
@@ -157,106 +158,126 @@ export default function SupervisorLayout({
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50" dir="rtl">
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-      {/* Sidebar */}
-      <div className={`
-        fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-30 lg:z-10
-        ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-      `}>
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <Settings className="w-6 h-6 text-white" />
+        {/* Sidebar */}
+        <div className={`
+          fixed top-0 right-0 h-full w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 
+          ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
+          md:translate-x-0 md:z-10
+        `}>
+          <div className="flex flex-col h-full overflow-y-auto">
+            {/* Header */}
+            <div className="p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Settings className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-lg text-blue-900">لوحة المشرف</h2>
+                    <p className="text-xs text-gray-600">{user?.name || 'مشرف'}</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="font-bold text-blue-800">لوحة المشرف</h2>
-                  <p className="text-sm text-gray-600">{user?.name || 'مشرف'}</p>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="md:hidden hover:bg-white/50"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
+              
+              {/* Profile Picture */}
+              {profilePicture && (
+                <div className="flex items-center gap-2 p-2 bg-white/60 rounded-lg">
+                  <img 
+                    src={profilePicture} 
+                    alt={user?.name || 'Profile'} 
+                    className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
+                  />
+                  <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 p-3 md:p-4">
+              <ul className="space-y-1">
+                {sidebarItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="flex items-center justify-between px-3 py-3 text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all group"
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="font-medium">{item.title}</span>
+                            {item.description && (
+                              <p className="text-xs text-gray-500 hidden lg:block">{item.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        {item.badge && (
+                          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs px-2.5 py-1 rounded-full shadow-sm">
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </nav>
+
+            {/* Footer */}
+            <div className="p-3 md:p-4 border-t border-gray-200 bg-gray-50">
               <Button
                 variant="ghost"
-                size="sm"
-                className="lg:hidden"
-                onClick={() => setSidebarOpen(false)}
+                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl py-6"
+                onClick={logout}
               >
-                <X className="w-5 h-5" />
+                <LogOut className="w-5 h-5 ml-3" />
+                <span className="font-medium">تسجيل الخروج</span>
               </Button>
             </div>
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4">
-            <ul className="space-y-2">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="flex items-center justify-between px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors group"
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon className="w-5 h-5" />
-                        <span>{item.title}</span>
-                      </div>
-                      {item.badge && (
-                        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </nav>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={logout}
-            >
-              <LogOut className="w-5 h-5 ml-3" />
-              تسجيل الخروج
-            </Button>
-          </div>
         </div>
-      </div>
 
-      {/* Main content */}
-      <div className="lg:mr-64">
-        {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between px-6 py-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
+        {/* Main content */}
+        <div className="md:mr-72">
+          {/* Top bar */}
+          <header className="sticky top-0 z-20 bg-white shadow-sm border-b border-gray-200">
+            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden hover:bg-gray-100 rounded-xl p-2"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="w-6 h-6" />
+              </Button>
             
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="text-right">
-                <p className="text-sm text-gray-600">مرحباً،</p>
-                <p className="font-semibold text-gray-900">{user?.name || 'مشرف'}</p>
-              </div>
-              {profilePicture ? (
-                <img
+              <div className="flex items-center gap-4 relative z-10 ml-auto md:ml-0">
+                <div className="text-right hidden md:block">
+                  <p className="text-sm text-gray-600">مرحباً،</p>
+                  <p className="font-semibold text-gray-900">{user?.name || 'مشرف'}</p>
+                </div>
+                {profilePicture ? (
+                  <img
                   src={profilePicture}
                   alt={user?.name || 'مشرف'}
                   className="w-10 h-10 rounded-full object-cover border-2 border-blue-200 relative z-10"

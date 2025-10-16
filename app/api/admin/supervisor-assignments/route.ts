@@ -18,16 +18,7 @@ export async function GET(request: NextRequest) {
     // Get all supervisors with their assignments
     const supervisors = await prisma.supervisor.findMany({
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            city: true,
-            profilePicture: true
-          }
-        },
+        user: true,  // Get all user fields
         hackathon: {
           select: {
             id: true,
