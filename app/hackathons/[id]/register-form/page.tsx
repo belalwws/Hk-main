@@ -69,6 +69,7 @@ export default function HackathonRegisterFormPage() {
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
+  const [showAlreadyRegistered, setShowAlreadyRegistered] = useState(false)
 
   useEffect(() => {
     checkCustomDesign()
@@ -225,7 +226,7 @@ export default function HackathonRegisterFormPage() {
       if (response.ok) {
         const result = await response.json()
         setSubmitted(true)
-        
+
         if (form.settings.redirectUrl) {
           setTimeout(() => {
             window.location.href = form.settings.redirectUrl!
@@ -233,7 +234,14 @@ export default function HackathonRegisterFormPage() {
         }
       } else {
         const error = await response.json()
-        alert(error.error || 'حدث خطأ في التسجيل')
+
+        // ✅ Check if user is already registered
+        if (response.status === 409 && error.alreadyRegistered) {
+          // Show modal for duplicate registration
+          setShowAlreadyRegistered(true)
+        } else {
+          alert(error.error || 'حدث خطأ في التسجيل')
+        }
       }
     } catch (error) {
       console.error('Error submitting form:', error)
@@ -632,6 +640,44 @@ export default function HackathonRegisterFormPage() {
         </Card>
         </motion.div>
       </div>
+
+      {/* Already Registered Modal */}
+      {showAlreadyRegistered && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-6 text-white">
+              <div className="flex items-center justify-center mb-4">
+                <AlertCircle className="w-16 h-16" />
+              </div>
+              <h2 className="text-2xl font-bold text-center">تم التسجيل مسبقاً</h2>
+            </div>
+
+            <div className="p-6 text-center">
+              <p className="text-gray-700 text-lg mb-6">
+                أنت مسجل بالفعل في هذا الهاكاثون!
+              </p>
+              <p className="text-gray-600 mb-8">
+                لا يمكنك التسجيل مرة أخرى بنفس البريد الإلكتروني.
+              </p>
+
+              <Button
+                onClick={() => setShowAlreadyRegistered(false)}
+                style={{
+                  backgroundColor: form?.colors?.primary || '#01645e',
+                  color: form?.colors?.buttonText || '#ffffff'
+                }}
+                className="w-full py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:opacity-90"
+              >
+                حسناً، فهمت
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

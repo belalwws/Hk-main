@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth'
-import { sendEmail } from '@/lib/email'
-import { generateUploadLinkEmail } from '@/lib/email-templates/upload-link'
+import { sendTemplatedEmail } from '@/lib/mailer'
 import crypto from 'crypto'
 
 // POST /api/admin/participants/[id]/send-upload-link - إرسال رابط رفع العرض التقديمي
@@ -112,34 +111,30 @@ export async function POST(
       minute: '2-digit'
     })
 
-    // إنشاء محتوى الإيميل
-    const emailContent = generateUploadLinkEmail({
-      participantName: participant.user.name,
-      hackathonTitle: participant.hackathon.title,
-      teamName: participant.team.name,
-      uploadLink: uploadLink,
-      expiryDate: expiryDate
-    })
-
-    // إرسال الإيميل
-    const emailSent = await sendEmail({
-      to: participant.user.email,
-      subject: emailContent.subject,
-      html: emailContent.html
-    })
-
-    if (!emailSent) {
-      console.warn('⚠️ [send-upload-link] Email not sent (SMTP not configured)')
+    // إرسال الإيميل باستخدام نظام القوالب
+    try {
+      await sendTemplatedEmail(
+        'upload_link',
+        participant.user.email,
+        {
+          participantName: participant.user.name,
+          hackathonTitle: participant.hackathon.title,
+          teamName: participant.team.name,
+          uploadLink: uploadLink,
+          expiryDate: expiryDate
+        }
+      )
+      console.log('✅ [send-upload-link] Email sent successfully to:', participant.user.email)
+    } catch (emailError) {
+      console.warn('⚠️ [send-upload-link] Email not sent:', emailError)
       return NextResponse.json({
-        message: 'تم إنشاء الرابط بنجاح (لم يتم إرسال الإيميل - SMTP غير مفعل)',
+        message: 'تم إنشاء الرابط بنجاح (لم يتم إرسال الإيميل)',
         uploadLink: uploadLink,
         token: uploadToken.token,
         expiresAt: uploadToken.expiresAt,
         emailSent: false
       })
     }
-
-    console.log('✅ [send-upload-link] Email sent successfully to:', participant.user.email)
 
     return NextResponse.json({
       message: 'تم إرسال رابط رفع العرض التقديمي بنجاح',
