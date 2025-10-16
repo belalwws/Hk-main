@@ -182,6 +182,12 @@ export default function SupervisorHackathonManagementPage() {
     checkExistingTeams()
   }, [params.id])
 
+  useEffect(() => {
+    if (uploadDialogOpen && formFields.length === 0) {
+      loadFormFields()
+    }
+  }, [uploadDialogOpen])
+
   const fetchHackathon = async () => {
     try {
       setLoading(true)
@@ -2312,13 +2318,38 @@ export default function SupervisorHackathonManagementPage() {
                   <strong>تنسيق الملف المطلوب:</strong>
                   <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
                     <li>ملف Excel (.xlsx أو .xls)</li>
-                    <li>يجب أن يحتوي على الأعمدة التالية:</li>
-                    <li className="mr-4">- name (الاسم)</li>
-                    <li className="mr-4">- email (البريد الإلكتروني)</li>
-                    <li className="mr-4">- phone (رقم الهاتف)</li>
-                    <li className="mr-4">- city (المدينة)</li>
-                    <li className="mr-4">- nationality (الجنسية)</li>
                     <li>الصف الأول يجب أن يحتوي على أسماء الأعمدة</li>
+                    {loadingFormFields ? (
+                      <li className="mr-4 flex items-center gap-2">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        جاري تحميل حقول الفورم...
+                      </li>
+                    ) : formFields.length > 0 ? (
+                      <>
+                        <li className="mt-2 font-semibold">الحقول المطلوبة في الفورم:</li>
+                        {formFields.map(field => (
+                          <li key={field.id} className="mr-4">
+                            - {field.label}
+                            {field.required && <span className="text-red-600 mr-1">*</span>}
+                            <span className="text-xs text-gray-600 mr-1">
+                              (ID: {field.id})
+                            </span>
+                          </li>
+                        ))}
+                        <li className="mt-2 text-xs text-gray-600">
+                          * استخدم ID الحقل كاسم للعمود في Excel
+                        </li>
+                      </>
+                    ) : (
+                      <>
+                        <li className="mt-2 font-semibold">الحقول الأساسية:</li>
+                        <li className="mr-4">- name (الاسم) *</li>
+                        <li className="mr-4">- email (البريد الإلكتروني) *</li>
+                        <li className="mr-4">- phone (رقم الهاتف)</li>
+                        <li className="mr-4">- city (المدينة)</li>
+                        <li className="mr-4">- nationality (الجنسية)</li>
+                      </>
+                    )}
                   </ul>
                 </AlertDescription>
               </Alert>

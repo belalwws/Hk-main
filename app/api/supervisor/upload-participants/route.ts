@@ -101,15 +101,17 @@ export async function POST(request: NextRequest) {
             }
           })
         } else {
-          // Update user info if exists
+          // Update basic user info if exists (only update if provided in Excel)
+          const updateData: any = {
+            name: row.name.toString().trim()
+          }
+          if (row.phone) updateData.phone = row.phone.toString().trim()
+          if (row.city) updateData.city = row.city.toString().trim()
+          if (row.nationality) updateData.nationality = row.nationality.toString().trim()
+          
           user = await prisma.user.update({
             where: { id: user.id },
-            data: {
-              name: row.name.toString().trim(),
-              phone: row.phone ? row.phone.toString().trim() : user.phone,
-              city: row.city ? row.city.toString().trim() : user.city,
-              nationality: row.nationality ? row.nationality.toString().trim() : user.nationality,
-            }
+            data: updateData
           })
         }
 
@@ -127,25 +129,23 @@ export async function POST(request: NextRequest) {
           continue
         }
 
+        // Prepare participant data with all fields from Excel
+        const participantFormData: any = {}
+        
+        // Add all fields from the Excel row
+        for (const [key, value] of Object.entries(row)) {
+          if (value !== null && value !== undefined && value !== '') {
+            participantFormData[key] = value.toString().trim()
+          }
+        }
+
         // Create participant with status = pending
         await prisma.participant.create({
           data: {
             userId: user.id,
             hackathonId: hackathonId,
             status: 'pending',
-            formData: {
-              name: row.name.toString().trim(),
-              email: row.email.toString().toLowerCase().trim(),
-              phone: row.phone ? row.phone.toString().trim() : '',
-              city: row.city ? row.city.toString().trim() : '',
-              nationality: row.nationality ? row.nationality.toString().trim() : '',
-              // Add any additional fields from the Excel
-              ...Object.fromEntries(
-                Object.entries(row).filter(([key]) => 
-                  !['name', 'email', 'phone', 'city', 'nationality'].includes(key)
-                )
-              )
-            }
+            additionalInfo: participantFormData
           }
         })
 
