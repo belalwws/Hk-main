@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
 
     // Fetch hackathon
     const hackathon = await prisma.hackathon.findUnique({
@@ -87,7 +87,7 @@ export async function POST(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
     const body = await request.json()
     const { participantName, participantEmail, overallRating, responses, suggestions } = body
 

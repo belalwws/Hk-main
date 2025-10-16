@@ -7,7 +7,7 @@ const prisma = new PrismaClient()
 // GET /api/admin/judge-form-design/[hackathonId] - Get form design
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ hackathonId: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params
@@ -43,7 +43,7 @@ export async function GET(
 // POST /api/admin/judge-form-design/[hackathonId] - Create or update form design
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ hackathonId: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params

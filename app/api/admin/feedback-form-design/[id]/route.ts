@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
 
     // Verify admin
     const token = request.headers.get('authorization')?.replace('Bearer ', '') || request.cookies.get('token')?.value
@@ -66,7 +66,7 @@ export async function POST(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
 
     // Verify admin
     const token = request.headers.get('authorization')?.replace('Bearer ', '') || request.cookies.get('token')?.value

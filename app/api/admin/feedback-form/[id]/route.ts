@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
 
     // Check if form exists
     const form = await prisma.hackathonFeedbackForm.findUnique({
@@ -52,7 +52,7 @@ export async function POST(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
     const body = await request.json()
 
     const {

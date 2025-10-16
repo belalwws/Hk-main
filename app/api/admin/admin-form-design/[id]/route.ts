@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
 
     // Check if hackathon exists
     const hackathon = await prisma.hackathon.findUnique({
@@ -64,7 +64,7 @@ export async function POST(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
     const formData = await request.formData()
 
     // Extract form fields
@@ -198,7 +198,7 @@ export async function PUT(
   { params }: { params: { hackathonId: string } }
 ) {
   try {
-    const { hackathonId } = params
+    const { id: hackathonId } = params
     const body = await request.json()
 
     // Check if hackathon exists
