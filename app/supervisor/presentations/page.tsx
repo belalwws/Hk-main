@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FileText, Download, CheckCircle2, XCircle, Eye, Users, Trash2, Send, Loader2, Mail } from 'lucide-react'
+import { FileText, Download, CheckCircle2, XCircle, Eye, Users, Trash2, Send, Loader2, Mail, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
 import { useModal } from '@/hooks/use-modal'
@@ -39,6 +39,7 @@ export default function SupervisorPresentationsPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [sendingLink, setSendingLink] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<'all' | 'uploaded' | 'pending'>('all')
+  const [fixingUrls, setFixingUrls] = useState(false)
   const { showSuccess, showError, showConfirm } = useModal()
   const { toast } = useToast()
 
@@ -248,6 +249,39 @@ export default function SupervisorPresentationsPage() {
     })
   }
 
+  const handleFixUrls = async () => {
+    showConfirm({
+      title: '🔧 إصلاح روابط العروض التقديمية',
+      message: 'هل تريد إصلاح روابط العروض التقديمية القديمة؟\n\nسيتم تحديث جميع الروابط من /image/upload/ إلى /raw/upload/',
+      type: 'warning',
+      confirmText: 'إصلاح',
+      cancelText: 'إلغاء',
+      onConfirm: async () => {
+        setFixingUrls(true)
+        try {
+          const response = await fetch('/api/supervisor/fix-presentation-urls', {
+            method: 'POST',
+            credentials: 'include'
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            showSuccess(`تم تحديث ${data.updated} رابط بنجاح`)
+            fetchData()
+          } else {
+            const error = await response.json()
+            showError(error.error || 'فشل في إصلاح الروابط')
+          }
+        } catch (error) {
+          console.error('Error fixing URLs:', error)
+          showError('حدث خطأ في إصلاح الروابط')
+        } finally {
+          setFixingUrls(false)
+        }
+      }
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -308,17 +342,33 @@ export default function SupervisorPresentationsPage() {
               </Select>
             </div>
 
-            {/* Bulk Action */}
-            <div className="space-y-2 flex items-end">
-              {teamsWithoutPresentation.length > 0 && (
+            {/* Actions */}
+            <div className="space-y-2">
+              <label className="text-gray-700 font-medium">إجراءات:</label>
+              <div className="flex gap-2">
+                {teamsWithoutPresentation.length > 0 && (
+                  <Button
+                    onClick={sendBulkUploadLinks}
+                    className="bg-blue-600 hover:bg-blue-700 flex-1"
+                  >
+                    <Send className="w-4 h-4 ml-2" />
+                    إرسال روابط ({teamsWithoutPresentation.length})
+                  </Button>
+                )}
                 <Button
-                  onClick={sendBulkUploadLinks}
-                  className="bg-blue-600 hover:bg-blue-700 w-full"
+                  onClick={handleFixUrls}
+                  disabled={fixingUrls}
+                  variant="outline"
+                  className="border-orange-600 text-orange-600 hover:bg-orange-50"
                 >
-                  <Send className="w-4 h-4 ml-2" />
-                  إرسال جماعي للروابط ({teamsWithoutPresentation.length})
+                  {fixingUrls ? (
+                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 ml-2" />
+                  )}
+                  إصلاح الروابط
                 </Button>
-              )}
+              </div>
             </div>
           </div>
 
