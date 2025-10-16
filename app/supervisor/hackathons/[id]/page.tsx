@@ -164,6 +164,11 @@ export default function SupervisorHackathonManagementPage() {
   const [filterEnabled, setFilterEnabled] = useState(false)
   const [autoApplyFilter, setAutoApplyFilter] = useState(false)
   const [loadingFormFields, setLoadingFormFields] = useState(false)
+  
+  // Excel Upload States
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [uploadingExcel, setUploadingExcel] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState('')
 
   const stats = hackathon?.stats || {
     totalParticipants: 0,
@@ -210,6 +215,50 @@ export default function SupervisorHackathonManagementPage() {
       }
     } catch (error) {
       console.error('Error checking teams:', error)
+    }
+  }
+
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      alert('يرجى اختيار ملف Excel صحيح (.xlsx أو .xls)')
+      return
+    }
+
+    try {
+      setUploadingExcel(true)
+      setUploadProgress('جاري قراءة الملف...')
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('hackathonId', params.id as string)
+
+      const response = await fetch('/api/supervisor/upload-participants', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setUploadProgress(`تم رفع ${data.count} مشارك بنجاح!`)
+        setTimeout(() => {
+          setUploadDialogOpen(false)
+          fetchHackathon() // Reload data
+          setUploadProgress('')
+        }, 2000)
+      } else {
+        throw new Error(data.error || 'فشل رفع الملف')
+      }
+    } catch (error: any) {
+      console.error('Error uploading Excel:', error)
+      setUploadProgress(`خطأ: ${error.message}`)
+    } finally {
+      setUploadingExcel(false)
+      e.target.value = '' // Reset input
     }
   }
 
@@ -975,6 +1024,14 @@ export default function SupervisorHackathonManagementPage() {
                       <CardDescription>مراجعة وقبول أو رفض المتقدمين مع إمكانية التصفية</CardDescription>
                     </div>
                     <div className="flex gap-2">
+                      <Button
+                        onClick={() => setUploadDialogOpen(true)}
+                        variant="outline"
+                        className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                      >
+                        <Upload className="w-4 h-4 ml-2" />
+                        رفع Excel
+                      </Button>
                       <Button
                         onClick={() => {
                           setAdvancedFilterDialogOpen(true)
@@ -2229,6 +2286,87 @@ export default function SupervisorHackathonManagementPage() {
               >
                 <Check className="w-4 h-4 ml-1" />
                 تطبيق الفلترة
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Upload Excel Dialog */}
+        <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <Upload className="w-6 h-6 text-purple-600" />
+                رفع ملف Excel للمشاركين
+              </DialogTitle>
+              <DialogDescription>
+                رفع ملف Excel يحتوي على بيانات المشاركين (سيكونون في حالة الانتظار)
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Instructions */}
+              <Alert className="border-blue-200 bg-blue-50">
+                <AlertCircle className="w-4 h-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <strong>تنسيق الملف المطلوب:</strong>
+                  <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                    <li>ملف Excel (.xlsx أو .xls)</li>
+                    <li>يجب أن يحتوي على الأعمدة التالية:</li>
+                    <li className="mr-4">- name (الاسم)</li>
+                    <li className="mr-4">- email (البريد الإلكتروني)</li>
+                    <li className="mr-4">- phone (رقم الهاتف)</li>
+                    <li className="mr-4">- city (المدينة)</li>
+                    <li className="mr-4">- nationality (الجنسية)</li>
+                    <li>الصف الأول يجب أن يحتوي على أسماء الأعمدة</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              {/* Upload Input */}
+              <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-500 transition-colors">
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleExcelUpload}
+                  disabled={uploadingExcel}
+                  className="hidden"
+                  id="excel-upload"
+                />
+                <label 
+                  htmlFor="excel-upload"
+                  className="cursor-pointer"
+                >
+                  <Upload className="w-12 h-12 text-purple-400 mx-auto mb-3" />
+                  <p className="text-lg font-semibold text-purple-900 mb-1">
+                    {uploadingExcel ? 'جاري الرفع...' : 'اضغط لاختيار ملف Excel'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    أو اسحب الملف هنا
+                  </p>
+                </label>
+              </div>
+
+              {/* Progress */}
+              {uploadProgress && (
+                <Alert className={uploadProgress.includes('خطأ') ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}>
+                  <AlertDescription className={uploadProgress.includes('خطأ') ? 'text-red-800' : 'text-green-800'}>
+                    {uploadProgress}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setUploadDialogOpen(false)
+                  setUploadProgress('')
+                }}
+                disabled={uploadingExcel}
+              >
+                إغلاق
               </Button>
             </div>
           </DialogContent>
