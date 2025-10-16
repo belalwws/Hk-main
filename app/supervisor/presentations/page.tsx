@@ -112,10 +112,10 @@ export default function SupervisorPresentationsPage() {
     window.open(`/api/files/${teamId}`, '_blank')
   }
 
-  const sendUploadLink = async (participantId: string, teamName: string) => {
+  const sendUploadLink = async (teamId: string, teamName: string) => {
     try {
-      setSendingLink(participantId)
-      const response = await fetch(`/api/admin/participants/${participantId}/send-upload-link`, {
+      setSendingLink(teamId)
+      const response = await fetch(`/api/supervisor/teams/${teamId}/send-upload-links`, {
         method: 'POST',
         credentials: 'include'
       })
@@ -125,23 +125,21 @@ export default function SupervisorPresentationsPage() {
       if (response.ok) {
         toast({
           title: "✅ تم الإرسال",
-          description: data.emailSent
-            ? `تم إرسال رابط رفع العرض التقديمي لفريق ${teamName}`
-            : "تم إنشاء الرابط ولكن لم يتم إرسال الإيميل (SMTP غير مفعل)"
+          description: `تم إرسال ${data.successCount} رابط لأعضاء فريق ${teamName}${data.failCount > 0 ? ` (فشل ${data.failCount})` : ''}`
         })
         fetchData() // Refresh data
       } else {
         toast({
           title: "❌ خطأ",
-          description: data.error || 'فشل في إرسال الرابط',
+          description: data.error || 'فشل في إرسال الروابط',
           variant: "destructive"
         })
       }
     } catch (error) {
-      console.error('Error sending upload link:', error)
+      console.error('Error sending upload links:', error)
       toast({
         title: "❌ خطأ",
-        description: "حدث خطأ في إرسال الرابط",
+        description: "حدث خطأ في إرسال الروابط",
         variant: "destructive"
       })
     } finally {
@@ -161,17 +159,20 @@ export default function SupervisorPresentationsPage() {
 
     let successCount = 0
     let failCount = 0
+    let totalEmailsSent = 0
 
     for (const team of teamsWithoutPresentation) {
       if (team.participants.length > 0) {
         try {
-          const response = await fetch(`/api/admin/participants/${team.participants[0].id}/send-upload-link`, {
+          const response = await fetch(`/api/supervisor/teams/${team.id}/send-upload-links`, {
             method: 'POST',
             credentials: 'include'
           })
 
           if (response.ok) {
+            const data = await response.json()
             successCount++
+            totalEmailsSent += data.successCount || 0
           } else {
             failCount++
           }
@@ -183,7 +184,7 @@ export default function SupervisorPresentationsPage() {
 
     toast({
       title: successCount > 0 ? "✅ تم الإرسال" : "❌ فشل الإرسال",
-      description: `تم إرسال ${successCount} رابط بنجاح${failCount > 0 ? ` وفشل ${failCount}` : ''}`
+      description: `تم إرسال ${totalEmailsSent} إيميل لـ ${successCount} فريق${failCount > 0 ? ` (فشل ${failCount} فريق)` : ''}`
     })
 
     fetchData() // Refresh data
@@ -529,10 +530,10 @@ export default function SupervisorPresentationsPage() {
                         <Button
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white mr-4"
-                          onClick={() => sendUploadLink(team.participants[0].id, team.name)}
-                          disabled={sendingLink === team.participants[0].id}
+                          onClick={() => sendUploadLink(team.id, team.name)}
+                          disabled={sendingLink === team.id}
                         >
-                          {sendingLink === team.participants[0].id ? (
+                          {sendingLink === team.id ? (
                             <>
                               <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                               جاري الإرسال...
@@ -540,7 +541,7 @@ export default function SupervisorPresentationsPage() {
                           ) : (
                             <>
                               <Send className="w-4 h-4 ml-2" />
-                              إرسال رابط الرفع
+                              إرسال لجميع الأعضاء ({team.participants.length})
                             </>
                           )}
                         </Button>

@@ -36,12 +36,6 @@ const sidebarItems = [
     description: "إدارة الهاكاثونات المسندة"
   },
   {
-    title: "الفرق",
-    href: "/supervisor/teams",
-    icon: BarChart3,
-    description: "إدارة الفرق"
-  },
-  {
     title: "العروض التقديمية",
     href: "/supervisor/presentations",
     icon: FileText,
@@ -71,12 +65,6 @@ const sidebarItems = [
     href: "/supervisor/reports",
     icon: BarChart3,
     description: "التقارير والإحصائيات"
-  },
-  {
-    title: "الرسائل",
-    href: "/supervisor/messages",
-    icon: MessageSquare,
-    description: "الرسائل والإشعارات"
   },
   {
     title: "الملف الشخصي",

@@ -23,6 +23,8 @@ export async function POST(
   try {
     const params = await context.params
     const { id: hackathonId, teamId: sourceTeamId, participantId } = params
+    const body = await request.json()
+    const { targetTeamId, skipEmails = false } = body
     const userRole = request.headers.get("x-user-role")
     const userId = request.headers.get("x-user-id")
 
@@ -54,8 +56,6 @@ export async function POST(
         }, { status: 403 })
       }
     }
-
-    const { targetTeamId } = await request.json()
 
     if (!targetTeamId) {
       return NextResponse.json({ error: 'معرف الفريق المستهدف مطلوب' }, { status: 400 })
@@ -151,39 +151,46 @@ export async function POST(
       })
     ])
 
-    // Send email notifications to both teams
-    if (updatedSourceTeam && updatedSourceTeam.participants.length > 0) {
-      await sendTeamUpdateEmails(
-        updatedSourceTeam,
-        `تم نقل ${participant.user.name} من الفريق`
-      )
-    }
+    // Send email notifications only if not skipped
+    if (!skipEmails) {
+      // Send email notifications to both teams
+      if (updatedSourceTeam && updatedSourceTeam.participants.length > 0) {
+        await sendTeamUpdateEmails(
+          updatedSourceTeam,
+          `تم نقل ${participant.user.name} من الفريق`
+        )
+      }
 
-    if (updatedTargetTeam) {
-      await sendTeamUpdateEmails(
-        updatedTargetTeam,
-        `تم إضافة ${participant.user.name} إلى الفريق`
-      )
-    }
+      if (updatedTargetTeam) {
+        await sendTeamUpdateEmails(
+          updatedTargetTeam,
+          `تم إضافة ${participant.user.name} إلى الفريق`
+        )
+      }
 
-    // Send special email to the moved participant
-    if (updatedTargetTeam?.hackathon) {
-      await sendMovedToTeamEmail(
-        participant.user.email,
-        participant.user.name,
-        sourceTeam?.name || 'الفريق السابق',
-        targetTeam.name,
-        updatedTargetTeam.hackathon.title
-      )
+      // Send special email to the moved participant
+      if (updatedTargetTeam?.hackathon) {
+        await sendMovedToTeamEmail(
+          participant.user.email,
+          participant.user.name,
+          sourceTeam?.name || 'الفريق السابق',
+          targetTeam.name,
+          updatedTargetTeam.hackathon.title
+        )
+      }
     }
 
     return NextResponse.json({
-      message: `تم نقل ${participant.user.name} من ${sourceTeam?.name} إلى ${targetTeam.name} بنجاح وإرسال الإيميلات`,
+      message: skipEmails
+        ? `تم نقل ${participant.user.name} من ${sourceTeam?.name} إلى ${targetTeam.name} بنجاح`
+        : `تم نقل ${participant.user.name} من ${sourceTeam?.name} إلى ${targetTeam.name} بنجاح وإرسال الإيميلات`,
       movedMember: {
         name: participant.user.name,
         email: participant.user.email,
         fromTeam: sourceTeam?.name,
-        toTeam: targetTeam.name
+        toTeam: targetTeam.name,
+        fromTeamId: sourceTeamId,
+        toTeamId: targetTeamId
       }
     })
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Shuffle, AlertCircle, Shield, Send, Plus, Crown, RefreshCw, GripVertical, Phone, User } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Shuffle, AlertCircle, Shield, Send, Plus, Crown, RefreshCw, GripVertical, Phone, User, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -71,6 +71,17 @@ interface Team {
   participants?: Participant[]
 }
 
+interface PendingTransfer {
+  participantId: string
+  memberName: string
+  memberEmail: string
+  fromTeamId: string
+  fromTeamName: string
+  toTeamId: string
+  toTeamName: string
+  timestamp: number
+}
+
 interface SupervisorPermissions {
   canManageParticipants: boolean
   canApproveParticipants: boolean
@@ -117,6 +128,9 @@ export default function SupervisorHackathonManagementPage() {
   const [newTeamName, setNewTeamName] = useState("")
   const [creatingNewTeam, setCreatingNewTeam] = useState(false)
   const [teamError, setTeamError] = useState("")
+  const [pendingTransfers, setPendingTransfers] = useState<PendingTransfer[]>([])
+  const [confirmTransfersDialogOpen, setConfirmTransfersDialogOpen] = useState(false)
+  const [confirmingTransfers, setConfirmingTransfers] = useState(false)
   const [teamSuccess, setTeamSuccess] = useState("")
 
   const stats = hackathon?.stats || {
@@ -388,7 +402,7 @@ export default function SupervisorHackathonManagementPage() {
 
   const handleDrop = async (e: React.DragEvent, targetTeamId: string) => {
     e.preventDefault()
-    
+
     if (!draggedMember || draggedMember.sourceTeamId === targetTeamId) {
       setDraggedMember(null)
       return
@@ -396,29 +410,39 @@ export default function SupervisorHackathonManagementPage() {
 
     const targetTeam = teams.find(team => team.id === targetTeamId)
     const sourceTeam = teams.find(team => team.id === draggedMember.sourceTeamId)
-    
-    if (confirm(`هل تريد نقل ${draggedMember.memberName} من ${sourceTeam?.name} إلى ${targetTeam?.name}؟`)) {
-      await moveMemberToTeam(
-        draggedMember.participantId,
-        draggedMember.sourceTeamId,
-        targetTeamId
-      )
-    }
-    
+
+    // نقل العضو مباشرة بدون تأكيد
+    await moveMemberToTeam(
+      draggedMember.participantId,
+      draggedMember.sourceTeamId,
+      targetTeamId,
+      draggedMember.memberName,
+      sourceTeam?.name || '',
+      targetTeam?.name || ''
+    )
+
     setDraggedMember(null)
   }
 
-  const moveMemberToTeam = async (participantId: string, sourceTeamId: string, targetTeamId: string) => {
+  const moveMemberToTeam = async (
+    participantId: string,
+    sourceTeamId: string,
+    targetTeamId: string,
+    memberName: string,
+    sourceTeamName: string,
+    targetTeamName: string
+  ) => {
     try {
       setTeamSuccess("")
       setTeamError("")
 
+      // نقل العضو بدون إرسال إيميلات
       const response = await fetch(
         `/api/supervisor/hackathons/${params.id}/teams/${sourceTeamId}/members/${participantId}/move`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ targetTeamId }),
+          body: JSON.stringify({ targetTeamId, skipEmails: true }),
           credentials: 'include'
         }
       )
@@ -426,7 +450,28 @@ export default function SupervisorHackathonManagementPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setTeamSuccess(data.message || "تم نقل العضو بنجاح وإرسال الإيميلات")
+        // إضافة النقل للقائمة المؤقتة
+        const member = teams
+          .find(t => t.id === sourceTeamId)
+          ?.members.find((m: any) => m.participantId === participantId)
+
+        if (member) {
+          setPendingTransfers(prev => [
+            ...prev,
+            {
+              participantId,
+              memberName: member.name,
+              memberEmail: member.email,
+              fromTeamId: sourceTeamId,
+              fromTeamName: sourceTeamName,
+              toTeamId: targetTeamId,
+              toTeamName: targetTeamName,
+              timestamp: Date.now()
+            }
+          ])
+        }
+
+        setTeamSuccess(`تم نقل ${memberName} من ${sourceTeamName} إلى ${targetTeamName} (معلق)`)
         checkExistingTeams()
         setTimeout(() => setTeamSuccess(""), 5000)
       } else {
@@ -436,6 +481,52 @@ export default function SupervisorHackathonManagementPage() {
       console.error("Error moving member:", error)
       setTeamError("حدث خطأ في الاتصال بالخادم")
     }
+  }
+
+  const confirmAllTransfers = async () => {
+    if (pendingTransfers.length === 0) {
+      setTeamError("لا توجد انتقالات معلقة")
+      return
+    }
+
+    try {
+      setConfirmingTransfers(true)
+      setTeamSuccess("")
+      setTeamError("")
+
+      const response = await fetch(
+        `/api/supervisor/hackathons/${params.id}/teams/confirm-transfers`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transfers: pendingTransfers }),
+          credentials: 'include'
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setTeamSuccess(`✅ ${data.message}`)
+        setPendingTransfers([])
+        setConfirmTransfersDialogOpen(false)
+        checkExistingTeams()
+        setTimeout(() => setTeamSuccess(""), 5000)
+      } else {
+        setTeamError(data.error || "حدث خطأ في تأكيد الانتقالات")
+      }
+    } catch (error) {
+      console.error("Error confirming transfers:", error)
+      setTeamError("حدث خطأ في الاتصال بالخادم")
+    } finally {
+      setConfirmingTransfers(false)
+    }
+  }
+
+  const clearPendingTransfers = () => {
+    setPendingTransfers([])
+    setTeamSuccess("تم إلغاء جميع الانتقالات المعلقة")
+    setTimeout(() => setTeamSuccess(""), 3000)
   }
 
   const removeMemberFromTeam = async (teamId: string, participantId: string, memberName: string) => {
@@ -972,6 +1063,18 @@ export default function SupervisorHackathonManagementPage() {
                     </div>
                     {permissions.canManageTeams && (
                       <div className="flex gap-2">
+                        {pendingTransfers.length > 0 && (
+                          <Button
+                            onClick={() => setConfirmTransfersDialogOpen(true)}
+                            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 relative"
+                          >
+                            <Send className="w-4 h-4 ml-2" />
+                            تأكيد الانتقالات ({pendingTransfers.length})
+                            <span className="absolute -top-1 -right-1 bg-white text-red-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                              {pendingTransfers.length}
+                            </span>
+                          </Button>
+                        )}
                         <Button
                           onClick={() => setNewTeamDialogOpen(true)}
                           className="bg-blue-600 hover:bg-blue-700"
@@ -1002,6 +1105,27 @@ export default function SupervisorHackathonManagementPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {pendingTransfers.length > 0 && (
+                    <Alert className="border-orange-200 bg-orange-50">
+                      <AlertCircle className="w-4 h-4 text-orange-600" />
+                      <AlertDescription className="text-orange-800">
+                        <div className="flex items-center justify-between">
+                          <span>
+                            <strong>لديك {pendingTransfers.length} عملية نقل معلقة.</strong> اضغط على "تأكيد الانتقالات" لإرسال الإيميلات.
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearPendingTransfers}
+                            className="text-orange-700 hover:text-orange-900 hover:bg-orange-100"
+                          >
+                            إلغاء الكل
+                          </Button>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {teamError && (
                     <Alert className="border-red-200 bg-red-50">
                       <AlertCircle className="w-4 h-4 text-red-600" />
@@ -1019,7 +1143,7 @@ export default function SupervisorHackathonManagementPage() {
                   <Alert className="border-blue-200 bg-blue-50">
                     <AlertCircle className="w-4 h-4 text-blue-600" />
                     <AlertDescription className="text-blue-800">
-                      💡 يمكنك سحب الأعضاء وإفلاتهم بين الفرق لنقلهم. سيتم إرسال إيميلات تلقائياً للمشاركين.
+                      💡 يمكنك سحب الأعضاء وإفلاتهم بين الفرق لنقلهم. <strong>لن يتم إرسال الإيميلات فوراً</strong> - اضغط على "تأكيد الانتقالات" لإرسال الإيميلات لجميع المتأثرين.
                     </AlertDescription>
                   </Alert>
 
@@ -1599,6 +1723,121 @@ export default function SupervisorHackathonManagementPage() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirm Transfers Dialog */}
+        <Dialog open={confirmTransfersDialogOpen} onOpenChange={setConfirmTransfersDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <Send className="w-6 h-6 text-orange-600" />
+                تأكيد الانتقالات وإرسال الإيميلات
+              </DialogTitle>
+              <DialogDescription>
+                مراجعة جميع عمليات النقل قبل إرسال الإيميلات للأعضاء المتأثرين
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Summary */}
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4">
+                <h3 className="font-semibold text-lg text-orange-900 mb-2">📊 ملخص الانتقالات</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-orange-700">عدد الانتقالات</p>
+                    <p className="text-2xl font-bold text-orange-900">{pendingTransfers.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-orange-700">الأعضاء المنقولون</p>
+                    <p className="text-2xl font-bold text-orange-900">{pendingTransfers.length}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transfers List */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">📋 قائمة الانتقالات:</h3>
+                {pendingTransfers.map((transfer, index) => (
+                  <div
+                    key={index}
+                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">{transfer.memberName}</p>
+                          <p className="text-sm text-gray-500">{transfer.memberEmail}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">من</p>
+                          <p className="font-medium text-red-600">{transfer.fromTeamName}</p>
+                        </div>
+                        <div className="text-gray-400">→</div>
+                        <div className="text-left">
+                          <p className="text-xs text-gray-500">إلى</p>
+                          <p className="font-medium text-green-600">{transfer.toTeamName}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Warning */}
+              <Alert className="border-blue-200 bg-blue-50">
+                <AlertCircle className="w-4 h-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <strong>ملاحظة مهمة:</strong>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>سيتم إرسال إيميل لكل عضو منقول يخبره بالنقل</li>
+                    <li>سيتم إرسال إيميلات لجميع أعضاء الفرق المتأثرة (القديمة والجديدة)</li>
+                    <li>الإيميلات ستحتوي على تفاصيل الفريق الجديد وأسماء الأعضاء</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              {/* Actions */}
+              <div className="flex gap-3 justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmTransfersDialogOpen(false)}
+                  disabled={confirmingTransfers}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={clearPendingTransfers}
+                  disabled={confirmingTransfers}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  حذف جميع الانتقالات
+                </Button>
+                <Button
+                  onClick={confirmAllTransfers}
+                  disabled={confirmingTransfers}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                >
+                  {confirmingTransfers ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
+                      جاري الإرسال...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 ml-2" />
+                      تأكيد وإرسال الإيميلات ({pendingTransfers.length})
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
