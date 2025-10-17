@@ -44,7 +44,14 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: invitation.email }
+      where: { email: invitation.email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true
+      }
     })
 
     // Create user and supervisor in a transaction
@@ -59,8 +66,15 @@ export async function POST(request: NextRequest) {
             name: invitation.name || existingUser.name,
             password: hashedPassword,
             role: "supervisor",
-            isActive: true,
-            emailVerified: true
+            isActive: true
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
           }
         })
       } else {
@@ -71,8 +85,15 @@ export async function POST(request: NextRequest) {
             email: invitation.email,
             password: hashedPassword,
             role: "supervisor",
-            isActive: true,
-            emailVerified: true
+            isActive: true
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
           }
         })
       }
@@ -162,7 +183,11 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Error accepting supervisor invitation:", error)
-    return NextResponse.json({ error: "حدث خطأ في قبول الدعوة" }, { status: 500 })
+    console.error("Error details:", JSON.stringify(error, null, 2))
+    return NextResponse.json({ 
+      error: "حدث خطأ في قبول الدعوة",
+      details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+    }, { status: 500 })
   }
 }
 

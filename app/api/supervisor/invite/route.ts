@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: { id: true, email: true }
     })
 
     if (existingUser) {
@@ -121,7 +122,11 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Error creating supervisor invitation:", error)
-    return NextResponse.json({ error: "حدث خطأ في إرسال الدعوة" }, { status: 500 })
+    console.error("Error details:", JSON.stringify(error, null, 2))
+    return NextResponse.json({ 
+      error: "حدث خطأ في إرسال الدعوة",
+      details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+    }, { status: 500 })
   }
 }
 
@@ -165,17 +170,14 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const invitationId = searchParams.get('id')
-    const email = searchParams.get('email')
 
-    if (!invitationId && !email) {
-      return NextResponse.json({ error: "معرف الدعوة أو البريد الإلكتروني مطلوب" }, { status: 400 })
+    if (!invitationId) {
+      return NextResponse.json({ error: "معرف الدعوة مطلوب" }, { status: 400 })
     }
 
     // حذف الدعوة
-    const whereClause = invitationId ? { id: invitationId } : { email: email! }
-
     const deletedInvitation = await prisma.supervisorInvitation.delete({
-      where: whereClause
+      where: { id: invitationId }
     })
 
     return NextResponse.json({
