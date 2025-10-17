@@ -23,6 +23,32 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {}
     
+    // For supervisors, filter by their assigned hackathons
+    if (userRole === "supervisor") {
+      // Get supervisor's assigned hackathons
+      const supervisorAssignments = await prisma.supervisor.findMany({
+        where: {
+          userId: userId!,
+          isActive: true
+        },
+        select: {
+          hackathonId: true
+        }
+      })
+
+      const hackathonIds = supervisorAssignments
+        .map(s => s.hackathonId)
+        .filter((id): id is string => id !== null)
+
+      // If supervisor has specific hackathon assignments, filter by them
+      // If hackathonId is null, they're a general supervisor and can see all
+      if (hackathonIds.length > 0) {
+        where.hackathonId = {
+          in: hackathonIds
+        }
+      }
+    }
+    
     if (status && status !== "all") {
       where.status = status
     }
