@@ -15,16 +15,22 @@ export async function POST(request: NextRequest) {
     // Parse the JSON form data
     const parsedData = formDataJson ? JSON.parse(formDataJson) : {}
 
+    console.log('📋 Parsed form data:', parsedData)
+
     const name = parsedData.name || parsedData['الاسم الكامل'] || formDataRaw.get('name') as string
     const email = parsedData.email || parsedData['البريد الإلكتروني'] || formDataRaw.get('email') as string
     const phone = parsedData.phone || parsedData['رقم الهاتف'] || formDataRaw.get('phone') as string | null
     
     // ✅ استخدام الحقول الجديدة مباشرة
     const bio = parsedData.bio || parsedData['نبذه عن المحكم المشارك'] || null
-    const nationalId = parsedData.nationalId || parsedData['رقم الهويه'] || null
-    const workplace = parsedData.workplace || parsedData['جهه العمل'] || null
+    const nationalId = parsedData.nationalId || parsedData['رقم الهويه'] || parsedData['رقم الهوية'] || null
+    const workplace = parsedData.workplace || parsedData['جهه العمل'] || parsedData['جهة العمل'] || null
     const education = parsedData.education || parsedData['المؤهل العلمي'] || null
-    const previousHackathons = parsedData.previousHackathons || parsedData['هل شاركت في هاكثونات افتراضيه عبر الانترنت من قبب'] || null
+    const previousHackathons = parsedData.previousHackathons || parsedData['هل شاركت في هاكثونات افتراضيه عبر الانترنت من قبب'] || parsedData['هل شاركت في هاكاثونات افتراضية من قبل؟'] || null
+    
+    console.log('📝 Extracted data:', { 
+      name, email, phone, bio, nationalId, workplace, education, previousHackathons 
+    })
     
     // للتوافق مع الحقول القديمة
     const expertise = education || parsedData.expertise || null
