@@ -103,10 +103,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { email, name, hackathonId, expiresInDays = 7, registrationLink, attachmentUrl, emailMessage } = body
+    // Parse FormData instead of JSON
+    const formData = await request.formData()
+    const email = formData.get('email') as string
+    const name = formData.get('name') as string
+    const hackathonId = formData.get('hackathonId') as string
+    const expiresInDays = parseInt(formData.get('expiresInDays') as string || '7')
+    const registrationLink = formData.get('registrationLink') as string
+    const emailMessage = formData.get('emailMessage') as string
+    const attachmentFile = formData.get('attachment') as File | null
 
-    console.log('📧 Creating judge invitation:', { email, name, hackathonId })
+    console.log('📧 Creating judge invitation:', { email, name, hackathonId, hasAttachment: !!attachmentFile })
 
     // Validate required fields
     if (!email || !hackathonId || !name || !registrationLink || !emailMessage) {
@@ -178,7 +185,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Judge invitation created successfully')
     console.log('🔗 Invitation link:', invitationLink)
 
-    // Send invitation email
+    // Send invitation email with PDF attachment
     try {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -192,16 +199,30 @@ export async function POST(request: NextRequest) {
         name,
         registrationLink,
         emailMessage,
-        attachmentUrl
+        undefined // لا نحتاج URL لأننا سنرسل الملف مباشرة
       )
 
-      await transporter.sendMail({
+      // Prepare email options
+      const mailOptions: any = {
         from: `"نظام إدارة الهاكاثونات" <${process.env.GMAIL_USER || process.env.EMAIL_USER}>`,
         to: email,
         subject: emailContent.subject,
         html: emailContent.html,
         text: emailContent.text
-      })
+      }
+
+      // Add PDF as attachment if provided
+      if (attachmentFile) {
+        const buffer = Buffer.from(await attachmentFile.arrayBuffer())
+        mailOptions.attachments = [{
+          filename: attachmentFile.name || 'invitation.pdf',
+          content: buffer,
+          contentType: 'application/pdf'
+        }]
+        console.log('📎 Adding PDF attachment:', attachmentFile.name)
+      }
+
+      await transporter.sendMail(mailOptions)
 
       console.log('✅ Invitation email sent successfully to:', email)
     } catch (emailError) {

@@ -98,7 +98,7 @@ export default function AdminJudgesPage() {
     hackathonId: '',
     expiresInDays: 7,
     registrationLink: '',
-    attachmentUrl: '',
+    attachmentFile: null as File | null,
     emailMessage: `سعادة / [الاسم الكامل]
 الموضوع / دعوة للمشاركة كعضو لجنة تحكيم
 
@@ -122,7 +122,6 @@ export default function AdminJudgesPage() {
 فريق اللجنة التنظيمية
 هاكاثون الصحة النفسية الافتراضي 2025`
   })
-  const [uploadingPdf, setUploadingPdf] = useState(false)
   const [approveFormData, setApproveFormData] = useState({
     password: '',
     reviewNotes: ''
@@ -223,10 +222,23 @@ export default function AdminJudgesPage() {
     }
 
     try {
+      // إرسال البيانات مع PDF كـ FormData
+      const formData = new FormData()
+      formData.append('email', inviteFormData.email)
+      formData.append('name', inviteFormData.name)
+      formData.append('hackathonId', inviteFormData.hackathonId)
+      formData.append('expiresInDays', inviteFormData.expiresInDays.toString())
+      formData.append('registrationLink', inviteFormData.registrationLink)
+      formData.append('emailMessage', inviteFormData.emailMessage)
+      
+      // إضافة PDF إذا كان موجود
+      if (inviteFormData.attachmentFile) {
+        formData.append('attachment', inviteFormData.attachmentFile)
+      }
+
       const response = await fetch('/api/admin/judge-invitations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(inviteFormData)
+        body: formData // ✅ FormData بدلاً من JSON
       })
 
       if (response.ok) {
@@ -240,7 +252,7 @@ export default function AdminJudgesPage() {
           hackathonId: '', 
           expiresInDays: 7,
           registrationLink: '',
-          attachmentUrl: '',
+          attachmentFile: null,
           emailMessage: inviteFormData.emailMessage // Keep default message
         })
         fetchInvitations()
@@ -254,59 +266,28 @@ export default function AdminJudgesPage() {
     }
   }
 
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file) {
+      setInviteFormData({ ...inviteFormData, attachmentFile: null })
+      return
+    }
 
     if (file.type !== 'application/pdf') {
       showError('يرجى رفع ملف PDF فقط')
+      e.target.value = '' // Clear input
       return
     }
 
     if (file.size > 10 * 1024 * 1024) { // 10MB
       showError('حجم الملف يجب أن يكون أقل من 10 ميجابايت')
+      e.target.value = '' // Clear input
       return
     }
 
-    // Use NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME or fallback to server-side variable
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'djva3nfy5'
-    if (!cloudName) {
-      showError('إعدادات Cloudinary غير متوفرة. يمكنك المتابعة بدون مرفق.')
-      return
-    }
-
-    setUploadingPdf(true)
-
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('upload_preset', 'hackathon_pdfs')
-      // لا حاجة لـ resource_type لأننا نستخدم /raw/upload
-      // access_mode يتم تحديده في upload preset settings
-
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`, // ✅ raw بدلاً من image
-        {
-          method: 'POST',
-          body: formData
-        }
-      )
-
-      if (response.ok) {
-        const data = await response.json()
-        setInviteFormData({ ...inviteFormData, attachmentUrl: data.secure_url })
-        showSuccess('تم رفع المرفق بنجاح!')
-      } else {
-        const errorData = await response.json().catch(() => ({}))
-        console.error('Cloudinary error:', errorData)
-        showError('فشل في رفع المرفق. تأكد من إعدادات Cloudinary.')
-      }
-    } catch (error) {
-      console.error('Error uploading PDF:', error)
-      showError('حدث خطأ في رفع المرفق')
-    } finally {
-      setUploadingPdf(false)
-    }
+    // حفظ الملف مباشرة - سيتم إرساله مع الإيميل
+    setInviteFormData({ ...inviteFormData, attachmentFile: file })
+    showSuccess(`تم اختيار الملف: ${file.name}`)
   }
 
   const cancelInvitation = async (invitationId: string) => {
@@ -890,22 +871,18 @@ export default function AdminJudgesPage() {
                   type="file"
                   accept="application/pdf"
                   onChange={handlePdfUpload}
-                  disabled={uploadingPdf}
                   className="flex-1"
                 />
-                {uploadingPdf && (
-                  <div className="text-sm text-[#01645e]">جاري الرفع...</div>
-                )}
               </div>
-              {inviteFormData.attachmentUrl && (
+              {inviteFormData.attachmentFile && (
                 <div className="flex items-center gap-2 text-sm text-green-600">
                   <CheckCircle className="w-4 h-4" />
-                  تم رفع المرفق بنجاح
-                  <a href={inviteFormData.attachmentUrl} target="_blank" rel="noopener noreferrer" className="underline">
-                    عرض
-                  </a>
+                  تم اختيار الملف: {inviteFormData.attachmentFile.name}
                 </div>
               )}
+              <p className="text-xs text-gray-500">
+                سيتم إرسال PDF مباشرة كـ attachment في الإيميل
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -941,7 +918,7 @@ export default function AdminJudgesPage() {
             <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
               إلغاء
             </Button>
-            <Button onClick={sendInvitation} className="bg-gradient-to-r from-[#01645e] to-[#3ab666]" disabled={uploadingPdf}>
+            <Button onClick={sendInvitation} className="bg-gradient-to-r from-[#01645e] to-[#3ab666]">
               <Send className="w-4 h-4 ml-2" />
               إرسال الدعوة
             </Button>
