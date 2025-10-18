@@ -168,7 +168,7 @@ export async function POST(
     const assignedParticipants = new Set<string>()
     const sortedRules = [...rules].sort((a, b) => (a.priority || 999) - (b.priority || 999))
 
-    // استراتيجية جديدة: نوزع كل قيمة (role) على كل الفرق أولاً قبل ما نكررها
+    // استراتيجية Round-Robin الصحيحة: نوزع بالتناوب بين كل القيم والفرق
     for (const rule of sortedRules) {
       if (rule.distribution === 'ignore' || !groups[rule.fieldId]) continue
 
@@ -176,50 +176,63 @@ export async function POST(
       const values = Object.keys(fieldGroups)
 
       if (rule.distribution === 'one_per_team') {
-        // لكل قيمة (مثلاً "مطور")، وزع واحد على كل فريق
-        for (const value of values) {
-          const participants = fieldGroups[value].filter(p => !assignedParticipants.has(p.id))
-          const maxPerTeam = rule.maxPerTeam || 1
+        const maxPerTeam = rule.maxPerTeam || 1
+        
+        // استراتيجية Round-Robin: نوزع دورة كاملة على كل الفرق لكل قيمة
+        let globalTeamIndex = 0
+        
+        // نكرر الدورات حتى نوزع كل المشاركين
+        let hasMoreParticipants = true
+        let roundNumber = 0
+        
+        while (hasMoreParticipants && roundNumber < maxPerTeam) {
+          hasMoreParticipants = false
+          roundNumber++
           
-          // وزع على كل الفرق بالتساوي
-          let teamIndex = 0
-          for (const participant of participants) {
-            // ابحث عن أول فريق لم يصل للحد الأقصى من هذه القيمة
-            let assigned = false
-            let attempts = 0
+          // في كل دورة، نوزع قيمة واحدة من كل نوع على كل فريق
+          for (const value of values) {
+            const participants = fieldGroups[value].filter(p => !assignedParticipants.has(p.id))
             
-            while (!assigned && attempts < numberOfTeams) {
-              const currentCount = teams[teamIndex].members.filter(m => {
-                let mValue: string | undefined
-                if (rule.fieldId === 'preferredRole' || rule.fieldLabel.includes('دور')) {
-                  mValue = m.user.preferredRole || 'غير محدد'
-                } else if (m.additionalInfo) {
-                  const additionalInfo = m.additionalInfo as any
-                  mValue = additionalInfo[rule.fieldId] || additionalInfo[rule.fieldLabel] || 'غير محدد'
-                } else {
-                  mValue = (m as any)[rule.fieldId] || 'غير محدد'
-                }
-                return mValue === value
-              }).length
-
-              if (currentCount < maxPerTeam) {
-                teams[teamIndex].members.push(participant)
-                assignedParticipants.add(participant.id)
-                assigned = true
-              }
+            if (participants.length > 0) {
+              hasMoreParticipants = true
               
-              teamIndex = (teamIndex + 1) % numberOfTeams
-              attempts++
+              // نوزع على كل الفرق في هذه الدورة
+              for (let teamIdx = 0; teamIdx < numberOfTeams && participants.length > 0; teamIdx++) {
+                const teamIndex = (globalTeamIndex + teamIdx) % numberOfTeams
+                
+                // تحقق من عدد الحالي لهذه القيمة في الفريق
+                const currentCount = teams[teamIndex].members.filter(m => {
+                  let mValue: string | undefined
+                  if (rule.fieldId === 'preferredRole' || rule.fieldLabel.includes('دور')) {
+                    mValue = m.user.preferredRole || 'غير محدد'
+                  } else if (m.additionalInfo) {
+                    const additionalInfo = m.additionalInfo as any
+                    mValue = additionalInfo[rule.fieldId] || additionalInfo[rule.fieldLabel] || 'غير محدد'
+                  } else {
+                    mValue = (m as any)[rule.fieldId] || 'غير محدد'
+                  }
+                  return mValue === value
+                }).length
+
+                // إذا لم نصل للحد الأقصى، أضف مشارك
+                if (currentCount < maxPerTeam) {
+                  const availableParticipants = fieldGroups[value].filter(p => !assignedParticipants.has(p.id))
+                  if (availableParticipants.length > 0) {
+                    const participant = availableParticipants[0]
+                    teams[teamIndex].members.push(participant)
+                    assignedParticipants.add(participant.id)
+                    console.log(`✅ Assigned ${participant.user.name} (${value}) to Team ${teamIndex + 1}`)
+                  }
+                }
+              }
             }
             
-            // إذا لم نجد فريق مناسب، نتجاوز هذا المشارك (سيتم تعيينه في المرحلة التالية)
-            if (!assigned) {
-              console.log(`⚠️ Could not assign ${participant.user.name} (${value}) to any team following rules`)
-            }
+            // تدوير الفريق البدائي لكل قيمة لضمان التوزيع العادل
+            globalTeamIndex = (globalTeamIndex + 1) % numberOfTeams
           }
         }
       } else {
-        // التوزيع العادي (evenly)
+        // التوزيع العادي (balanced) - round-robin بسيط
         let currentTeamIndex = 0
         for (const value of values) {
           const participants = fieldGroups[value].filter(p => !assignedParticipants.has(p.id))

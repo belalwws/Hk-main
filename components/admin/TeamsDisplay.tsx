@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Mail, User, Crown, Trash2, UserMinus, ArrowRightLeft } from 'lucide-react'
+import { Users, Mail, User, Crown, Trash2, UserMinus, ArrowRightLeft, Eye, Phone, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -14,8 +14,13 @@ interface TeamMember {
   user: {
     name: string
     email: string
+    phone?: string
+    city?: string
+    nationality?: string
     preferredRole: string
   }
+  teamRole?: string
+  additionalInfo?: any
 }
 
 interface DraggedMember {
@@ -41,6 +46,7 @@ export default function TeamsDisplay({ hackathonId }: TeamsDisplayProps) {
   const [draggedMember, setDraggedMember] = useState<DraggedMember | null>(null)
   const [selectedMemberToMove, setSelectedMemberToMove] = useState<{participantId: string, sourceTeamId: string, memberName: string} | null>(null)
   const [targetTeamForMove, setTargetTeamForMove] = useState<string>('')
+  const [selectedMemberDetails, setSelectedMemberDetails] = useState<TeamMember | null>(null)
 
   useEffect(() => {
     fetchTeams()
@@ -281,6 +287,120 @@ export default function TeamsDisplay({ hackathonId }: TeamsDisplayProps) {
                       
                       {/* Member Actions */}
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* عرض التفاصيل */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                              onClick={() => setSelectedMemberDetails(member)}
+                            >
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[600px]">
+                            <DialogHeader>
+                              <DialogTitle>تفاصيل المشارك</DialogTitle>
+                              <DialogDescription>
+                                معلومات شاملة عن {selectedMemberDetails?.user.name}
+                              </DialogDescription>
+                            </DialogHeader>
+                            {selectedMemberDetails && (
+                              <div className="grid gap-6 py-4">
+                                {/* المعلومات الشخصية */}
+                                <div className="space-y-3">
+                                  <h4 className="font-semibold text-[#01645e] flex items-center gap-2">
+                                    <User className="w-4 h-4" />
+                                    المعلومات الشخصية
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
+                                    <div>
+                                      <p className="text-[#8b7632] mb-1">الاسم:</p>
+                                      <p className="font-medium text-[#01645e]">{selectedMemberDetails.user.name}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[#8b7632] mb-1">البريد الإلكتروني:</p>
+                                      <p className="font-medium text-[#01645e] truncate" title={selectedMemberDetails.user.email}>
+                                        {selectedMemberDetails.user.email}
+                                      </p>
+                                    </div>
+                                    {selectedMemberDetails.user.phone && (
+                                      <div>
+                                        <p className="text-[#8b7632] mb-1 flex items-center gap-1">
+                                          <Phone className="w-3 h-3" />
+                                          رقم الهاتف:
+                                        </p>
+                                        <p className="font-medium text-[#01645e]">{selectedMemberDetails.user.phone}</p>
+                                      </div>
+                                    )}
+                                    {selectedMemberDetails.user.city && (
+                                      <div>
+                                        <p className="text-[#8b7632] mb-1 flex items-center gap-1">
+                                          <MapPin className="w-3 h-3" />
+                                          المدينة:
+                                        </p>
+                                        <p className="font-medium text-[#01645e]">{selectedMemberDetails.user.city}</p>
+                                      </div>
+                                    )}
+                                    {selectedMemberDetails.user.nationality && (
+                                      <div>
+                                        <p className="text-[#8b7632] mb-1">الجنسية:</p>
+                                        <p className="font-medium text-[#01645e]">{selectedMemberDetails.user.nationality}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* معلومات الفريق */}
+                                <div className="space-y-3">
+                                  <h4 className="font-semibold text-[#01645e] flex items-center gap-2">
+                                    <Crown className="w-4 h-4" />
+                                    معلومات الفريق
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-4 text-sm bg-green-50 p-4 rounded-lg">
+                                    <div>
+                                      <p className="text-[#8b7632] mb-1">الدور المفضل:</p>
+                                      <Badge className="bg-[#3ab666] text-white">
+                                        {selectedMemberDetails.user.preferredRole}
+                                      </Badge>
+                                    </div>
+                                    {selectedMemberDetails.teamRole && (
+                                      <div>
+                                        <p className="text-[#8b7632] mb-1">دور الفريق:</p>
+                                        <Badge variant="outline" className="border-[#3ab666] text-[#3ab666]">
+                                          {selectedMemberDetails.teamRole}
+                                        </Badge>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* معلومات إضافية */}
+                                {selectedMemberDetails.additionalInfo && Object.keys(selectedMemberDetails.additionalInfo).length > 0 && (
+                                  <div className="space-y-3">
+                                    <h4 className="font-semibold text-[#01645e]">معلومات إضافية</h4>
+                                    <div className="grid grid-cols-2 gap-4 text-sm bg-blue-50 p-4 rounded-lg">
+                                      {Object.entries(selectedMemberDetails.additionalInfo).map(([key, value]) => (
+                                        <div key={key}>
+                                          <p className="text-[#8b7632] mb-1 capitalize">{key}:</p>
+                                          <p className="font-medium text-[#01645e]">{String(value)}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            <DialogFooter>
+                              <Button onClick={() => setSelectedMemberDetails(null)} variant="outline">
+                                إغلاق
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* نقل العضو */}
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button
@@ -334,6 +454,7 @@ export default function TeamsDisplay({ hackathonId }: TeamsDisplayProps) {
                           </DialogContent>
                         </Dialog>
                         
+                        {/* إزالة العضو */}
                         <Button
                           size="sm"
                           variant="ghost"
