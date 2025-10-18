@@ -9,6 +9,23 @@ let cachedTransporter: any | null = null
 let cachedStatus: { installed: boolean; provider: 'smtp' | 'gmail' | null; configured: boolean } | null = null
 const FORCE_SEND = String(process.env.EMAIL_FORCE_SEND || '').toLowerCase() === 'true'
 
+// Rate limiting: delay between emails to avoid Gmail spam detection
+const EMAIL_DELAY_MS = 1000 // 1 second delay between emails
+let lastEmailTime = 0
+
+async function waitForRateLimit() {
+  const now = Date.now()
+  const timeSinceLastEmail = now - lastEmailTime
+  
+  if (timeSinceLastEmail < EMAIL_DELAY_MS) {
+    const waitTime = EMAIL_DELAY_MS - timeSinceLastEmail
+    console.log(`⏱️ [mailer] Rate limiting: waiting ${waitTime}ms before sending next email`)
+    await new Promise(resolve => setTimeout(resolve, waitTime))
+  }
+  
+  lastEmailTime = Date.now()
+}
+
 async function getMailer() {
   if (cachedTransporter) return cachedTransporter
 
@@ -76,6 +93,9 @@ async function getMailer() {
 }
 
 export async function sendMail(options: MailOptions) {
+  // Apply rate limiting before sending
+  await waitForRateLimit()
+  
   console.log('📧 [mailer] Attempting to send email to:', options.to)
   console.log('🔍 [mailer] Environment check:')
   console.log('🔍 [mailer] GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET')
@@ -110,14 +130,37 @@ export async function sendMail(options: MailOptions) {
   console.log('📧 [mailer] To:', options.to)
   console.log('📧 [mailer] Subject:', options.subject)
   
-  try {
-    const result = await transporter.sendMail({ from, ...options })
-    console.log('✅ [mailer] Email sent successfully:', result.messageId)
-    return Object.assign(result || {}, { actuallyMailed: true })
-  } catch (error) {
-    console.error('❌ [mailer] Failed to send email:', error)
-    throw error
+  // Retry logic for Gmail rate limiting
+  const MAX_RETRIES = 3
+  let lastError: any = null
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await transporter.sendMail({ from, ...options })
+      console.log('✅ [mailer] Email sent successfully:', result.messageId)
+      return Object.assign(result || {}, { actuallyMailed: true })
+    } catch (error: any) {
+      lastError = error
+      console.error(`❌ [mailer] Attempt ${attempt}/${MAX_RETRIES} failed:`, error.message)
+      
+      // Check if it's a rate limit error
+      if (error.responseCode === 421 || error.code === 'EENVELOPE') {
+        if (attempt < MAX_RETRIES) {
+          const retryDelay = 2000 * attempt // 2s, 4s, 6s
+          console.log(`⏱️ [mailer] Rate limit detected. Retrying in ${retryDelay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+          continue
+        }
+      }
+      
+      // For other errors, throw immediately
+      throw error
+    }
   }
+  
+  // If all retries failed, throw the last error
+  console.error('❌ [mailer] All retry attempts exhausted')
+  throw lastError
 }
 
 /**
@@ -170,4 +213,62 @@ export function mailerStatus() {
   const status = cachedStatus || { installed: !!cachedTransporter, provider: null as any, configured: !!cachedTransporter }
   const mode = FORCE_SEND ? 'force' : (process.env.NODE_ENV === 'production' ? 'prod' : 'dev')
   return { ...status, mode }
+}
+
+/**
+ * Send multiple emails in batches with rate limiting
+ * Useful for team assignments or bulk notifications
+ */
+export async function sendBulkEmails(
+  emails: Array<{ to: string; subject: string; html?: string; text?: string }>,
+  options?: { batchSize?: number; delayBetweenBatches?: number }
+) {
+  const batchSize = options?.batchSize || 5 // Send 5 emails at a time
+  const delayBetweenBatches = options?.delayBetweenBatches || 3000 // 3 seconds between batches
+  
+  const results = {
+    total: emails.length,
+    sent: 0,
+    failed: 0,
+    errors: [] as Array<{ email: string; error: string }>
+  }
+  
+  console.log(`📧 [mailer] Starting bulk send: ${emails.length} emails in batches of ${batchSize}`)
+  
+  // Process emails in batches
+  for (let i = 0; i < emails.length; i += batchSize) {
+    const batch = emails.slice(i, i + batchSize)
+    const batchNumber = Math.floor(i / batchSize) + 1
+    const totalBatches = Math.ceil(emails.length / batchSize)
+    
+    console.log(`📦 [mailer] Processing batch ${batchNumber}/${totalBatches} (${batch.length} emails)`)
+    
+    // Send all emails in current batch in parallel (with individual rate limiting)
+    const batchPromises = batch.map(async (email) => {
+      try {
+        await sendMail(email)
+        results.sent++
+        return { success: true }
+      } catch (error: any) {
+        results.failed++
+        results.errors.push({ 
+          email: email.to, 
+          error: error.message || 'Unknown error' 
+        })
+        console.error(`❌ [mailer] Failed to send to ${email.to}:`, error.message)
+        return { success: false, error }
+      }
+    })
+    
+    await Promise.all(batchPromises)
+    
+    // Wait between batches (except for the last batch)
+    if (i + batchSize < emails.length) {
+      console.log(`⏱️ [mailer] Waiting ${delayBetweenBatches}ms before next batch...`)
+      await new Promise(resolve => setTimeout(resolve, delayBetweenBatches))
+    }
+  }
+  
+  console.log(`✅ [mailer] Bulk send complete: ${results.sent} sent, ${results.failed} failed`)
+  return results
 }

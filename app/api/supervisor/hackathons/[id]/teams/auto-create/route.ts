@@ -257,7 +257,14 @@ export async function POST(
 
     // Create teams in database
     const createdTeams: any[] = []
-    const emailPromises: Promise<any>[] = []
+    const emailData: Array<{
+      email: string
+      userName: string
+      hackathonTitle: string
+      teamName: string
+      userRole: string
+      teamMembers: string
+    }> = []
     let totalMembers = 0
 
     for (const teamData of teams) {
@@ -288,32 +295,63 @@ export async function POST(
           members: teamData.members
         })
 
-        // Send emails
+        // Prepare emails (don't send yet - we'll batch them)
         teamData.members.forEach(participant => {
           const teamMembers = teamData.members.map(m => `${m.user.name} (${m.user.preferredRole || 'مطور'})`).join('\n')
-          emailPromises.push(
-            sendTeamAssignmentEmail(
-              participant.user.email,
-              participant.user.name,
-              hackathon.title,
-              team.name,
-              participant.user.preferredRole || 'مطور',
-              teamMembers
-            ).catch(err => console.error('Email error:', err))
-          )
+          emailData.push({
+            email: participant.user.email,
+            userName: participant.user.name,
+            hackathonTitle: hackathon.title,
+            teamName: team.name,
+            userRole: participant.user.preferredRole || 'مطور',
+            teamMembers
+          })
         })
       } catch (error) {
         console.error(`Error creating team ${teamData.name}:`, error)
       }
     }
 
-    // Send all emails
-    await Promise.all(emailPromises)
+    // Send emails in batches using bulk email function
+    console.log(`📧 Preparing to send ${emailData.length} team assignment emails in batches`)
+    
+    const { sendBulkEmails } = await import('@/lib/mailer')
+    const emailsToSend = emailData.map(data => ({
+      to: data.email,
+      subject: `تم تعيينك في ${data.teamName} - ${data.hackathonTitle}`,
+      html: `
+        <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #01645e;">مرحباً ${data.userName}!</h2>
+          <p>تم تعيينك في <strong>${data.teamName}</strong> للمشاركة في <strong>${data.hackathonTitle}</strong></p>
+          <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #01645e;">دورك في الفريق:</h3>
+            <p style="font-size: 18px; color: #3ab666;"><strong>${data.userRole}</strong></p>
+          </div>
+          <div style="background: #e8f5e9; padding: 15px; border-radius: 5px;">
+            <h3 style="color: #01645e;">أعضاء الفريق:</h3>
+            <pre style="white-space: pre-line;">${data.teamMembers}</pre>
+          </div>
+          <p style="margin-top: 20px;">تواصل مع أعضاء فريقك وابدأوا العمل على مشروعكم!</p>
+          <p style="color: #8b7632;">بالتوفيق! 🚀</p>
+        </div>
+      `,
+      text: `مرحباً ${data.userName}!\n\nتم تعيينك في ${data.teamName} للمشاركة في ${data.hackathonTitle}\n\nدورك: ${data.userRole}\n\nأعضاء الفريق:\n${data.teamMembers}\n\nبالتوفيق!`
+    }))
+    
+    const bulkResults = await sendBulkEmails(emailsToSend, {
+      batchSize: 5,
+      delayBetweenBatches: 3000
+    })
 
     return NextResponse.json({
       message: `تم تكوين ${createdTeams.length} فريق بنجاح`,
       teams: createdTeams.length,
-      totalMembers: totalMembers
+      totalMembers: totalMembers,
+      emailStats: {
+        sent: bulkResults.sent,
+        failed: bulkResults.failed,
+        total: bulkResults.total
+      }
     })
 
   } catch (error) {
