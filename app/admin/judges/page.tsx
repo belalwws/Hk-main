@@ -100,7 +100,6 @@ export default function AdminJudgesPage() {
     registrationLink: '',
     attachmentFile: null as File | null,
     emailMessage: `سعادة / [الاسم الكامل]
-الموضوع / دعوة للمشاركة كعضو لجنة تحكيم
 
 السلام عليكم ورحمة الله وبركاته،،
 

@@ -39,7 +39,7 @@ function getJudgeInvitationEmailContent(
 <body>
   <div class="container">
     <div class="header">
-      <h1 style="margin: 0;">✨ دعوة للمشاركة</h1>
+      <h1 style="margin: 0;">✨ دعوة للمشاركة كعضو لجنة تحكيم</h1>
     </div>
     <div class="content">
       <div class="message">${messageContent}</div>
