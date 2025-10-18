@@ -19,25 +19,16 @@ export async function POST(request: NextRequest) {
     const email = parsedData.email || parsedData['البريد الإلكتروني'] || formDataRaw.get('email') as string
     const phone = parsedData.phone || parsedData['رقم الهاتف'] || formDataRaw.get('phone') as string | null
     
-    // جمع البيانات الإضافية في حقل bio
-    const bioText = parsedData.bio || parsedData['نبذه عن المحكم المشارك'] || ''
-    const nationalId = parsedData.nationalId || parsedData['رقم الهويه'] || ''
-    const workplace = parsedData.workplace || parsedData['جهه العمل'] || ''
-    
-    // تخزين البيانات كـ JSON في bio
-    const bioData = {
-      bio: bioText,
-      nationalId: nationalId,
-      workplace: workplace
-    }
-    const bio = JSON.stringify(bioData)
-    
-    // المؤهل العلمي في expertise
-    const expertise = parsedData.expertise || parsedData['المؤهل العلمي'] || parsedData.education || null
-    
-    // المشاركات السابقة في experience  
+    // ✅ استخدام الحقول الجديدة مباشرة
+    const bio = parsedData.bio || parsedData['نبذه عن المحكم المشارك'] || null
+    const nationalId = parsedData.nationalId || parsedData['رقم الهويه'] || null
+    const workplace = parsedData.workplace || parsedData['جهه العمل'] || null
+    const education = parsedData.education || parsedData['المؤهل العلمي'] || null
     const previousHackathons = parsedData.previousHackathons || parsedData['هل شاركت في هاكثونات افتراضيه عبر الانترنت من قبب'] || null
-    const experience = previousHackathons ? `مشاركات سابقة: ${previousHackathons}` : null
+    
+    // للتوافق مع الحقول القديمة
+    const expertise = education || parsedData.expertise || null
+    const experience = previousHackathons || parsedData.experience || null
     
     const linkedin = parsedData.linkedin || formDataRaw.get('linkedin') as string | null
     const twitter = parsedData.twitter || formDataRaw.get('twitter') as string | null
@@ -111,6 +102,10 @@ export async function POST(request: NextRequest) {
         twitter,
         website,
         profileImage: profileImageUrl,
+        nationalId,
+        workplace,
+        education,
+        previousHackathons,
         status: 'pending'
       }
     })

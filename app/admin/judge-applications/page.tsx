@@ -51,6 +51,10 @@ interface JudgeApplication {
   twitter: string | null
   website: string | null
   profileImage: string | null
+  nationalId: string | null
+  workplace: string | null
+  education: string | null
+  previousHackathons: string | null
   status: 'pending' | 'approved' | 'rejected'
   reviewedBy: string | null
   reviewNotes: string | null
@@ -221,15 +225,6 @@ export default function JudgeApplicationsPage() {
       'إلغاء',
       'danger'
     )
-  }
-
-  const parseAdditionalData = (bioString: string | null) => {
-    if (!bioString) return { bio: '', nationalId: '', workplace: '' }
-    try {
-      return JSON.parse(bioString)
-    } catch {
-      return { bio: bioString, nationalId: '', workplace: '' }
-    }
   }
 
   const exportToExcel = async () => {
@@ -565,31 +560,42 @@ export default function JudgeApplicationsPage() {
                     </div>
                   </div>
                 )}
-                {(() => {
-                  const additionalData = parseAdditionalData(selectedApplication.bio)
-                  return (
-                    <>
-                      {additionalData.nationalId && (
-                        <div className="flex items-start gap-2">
-                          <IdCard className="w-4 h-4 text-[#01645e] mt-1" />
-                          <div>
-                            <Label className="text-[#01645e] font-bold text-sm">رقم الهوية</Label>
-                            <p className="text-sm">{additionalData.nationalId}</p>
-                          </div>
-                        </div>
-                      )}
-                      {additionalData.workplace && (
-                        <div className="flex items-start gap-2">
-                          <Building className="w-4 h-4 text-[#01645e] mt-1" />
-                          <div>
-                            <Label className="text-[#01645e] font-bold text-sm">جهة العمل</Label>
-                            <p className="text-sm">{additionalData.workplace}</p>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )
-                })()}
+                {selectedApplication.nationalId && (
+                  <div className="flex items-start gap-2">
+                    <IdCard className="w-4 h-4 text-[#01645e] mt-1" />
+                    <div>
+                      <Label className="text-[#01645e] font-bold text-sm">رقم الهوية</Label>
+                      <p className="text-sm">{selectedApplication.nationalId}</p>
+                    </div>
+                  </div>
+                )}
+                {selectedApplication.workplace && (
+                  <div className="flex items-start gap-2">
+                    <Building className="w-4 h-4 text-[#01645e] mt-1" />
+                    <div>
+                      <Label className="text-[#01645e] font-bold text-sm">جهة العمل</Label>
+                      <p className="text-sm">{selectedApplication.workplace}</p>
+                    </div>
+                  </div>
+                )}
+                {selectedApplication.education && (
+                  <div className="flex items-start gap-2">
+                    <Briefcase className="w-4 h-4 text-[#01645e] mt-1" />
+                    <div>
+                      <Label className="text-[#01645e] font-bold text-sm">التعليم</Label>
+                      <p className="text-sm">{selectedApplication.education}</p>
+                    </div>
+                  </div>
+                )}
+                {selectedApplication.previousHackathons && (
+                  <div className="flex items-start gap-2">
+                    <Calendar className="w-4 h-4 text-[#01645e] mt-1" />
+                    <div>
+                      <Label className="text-[#01645e] font-bold text-sm">مشاركات سابقة</Label>
+                      <p className="text-sm">{selectedApplication.previousHackathons}</p>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-start gap-2 col-span-2">
                   <Calendar className="w-4 h-4 text-[#01645e] mt-1" />
                   <div>
@@ -602,17 +608,12 @@ export default function JudgeApplicationsPage() {
               </div>
 
               {/* نبذة عن المحكم */}
-              {(() => {
-                const additionalData = parseAdditionalData(selectedApplication.bio)
-                return additionalData.bio && (
-                  <div className="p-4 bg-white border rounded-lg">
-                    <Label className="text-[#01645e] font-bold">نبذة عن المحكم المشارك</Label>
-                    <p className="text-sm text-[#8b7632] mt-2 whitespace-pre-wrap">{additionalData.bio}</p>
-                  </div>
-                )
-              })()}
-
-              {/* المشاركات السابقة */}
+              {selectedApplication.bio && (
+                <div className="p-4 bg-white border rounded-lg">
+                  <Label className="text-[#01645e] font-bold">نبذة عن المحكم المشارك</Label>
+                  <p className="text-sm text-[#8b7632] mt-2 whitespace-pre-wrap">{selectedApplication.bio}</p>
+                </div>
+              )}              {/* المشاركات السابقة */}
               {selectedApplication.experience && (
                 <div className="p-4 bg-white border rounded-lg">
                   <Label className="text-[#01645e] font-bold">هل شارك في هاكاثونات افتراضية من قبل؟</Label>

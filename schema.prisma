@@ -494,12 +494,19 @@ model JudgeApplication {
   email             String
   phone             String?
   bio               String?
-  expertise         String?  // Areas of expertise
-  experience        String?  // Years of experience or description
+  expertise         String?  // Areas of expertise / المؤهل العلمي
+  experience        String?  // Years of experience or description / المشاركات السابقة
   linkedin          String?
   twitter           String?
   website           String?
-  profileImage      String?  // URL to uploaded image
+  profileImage      String?  // URL to uploaded image (Cloudinary)
+  
+  // ✅ حقول جديدة - nullable لحماية البيانات الموجودة
+  nationalId        String?  // رقم الهوية
+  workplace         String?  // جهة العمل
+  education         String?  // المؤهل العلمي (مكرر من expertise للمرونة)
+  previousHackathons String? // هل شارك في هاكاثونات سابقة (مكرر من experience للمرونة)
+  
   status            ApplicationStatus @default(pending)
   reviewedBy        String?  // Admin user ID who reviewed
   reviewNotes       String?  // Admin notes
