@@ -281,8 +281,8 @@ export default function AdminJudgesPage() {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('upload_preset', 'hackathon_pdfs')
-      formData.append('resource_type', 'raw') // ✅ مهم للـ PDF
-      formData.append('access_mode', 'public') // ✅ لجعل الملف public
+      // لا حاجة لـ resource_type لأننا نستخدم /raw/upload
+      // access_mode يتم تحديده في upload preset settings
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`, // ✅ raw بدلاً من image

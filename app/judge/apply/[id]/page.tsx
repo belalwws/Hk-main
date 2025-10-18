@@ -23,7 +23,7 @@ import { FormField } from '@/components/admin/FormBuilder'
 export default function JudgeApplicationPage() {
   const params = useParams()
   const router = useRouter()
-  const hackathonId = params.hackathonId as string
+  const hackathonId = params.id as string
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
