@@ -55,14 +55,28 @@ export default function HackathonFormSchedulePage({ params }: { params: { id: st
           
           if (data.form.openAt) {
             const openDateTime = new Date(data.form.openAt)
-            setOpenDate(openDateTime.toISOString().split('T')[0])
-            setOpenTime(openDateTime.toTimeString().slice(0, 5))
+            // استخدام التوقيت المحلي بدلاً من UTC
+            const year = openDateTime.getFullYear()
+            const month = String(openDateTime.getMonth() + 1).padStart(2, '0')
+            const day = String(openDateTime.getDate()).padStart(2, '0')
+            const hours = String(openDateTime.getHours()).padStart(2, '0')
+            const minutes = String(openDateTime.getMinutes()).padStart(2, '0')
+            
+            setOpenDate(`${year}-${month}-${day}`)
+            setOpenTime(`${hours}:${minutes}`)
           }
           
           if (data.form.closeAt) {
             const closeDateTime = new Date(data.form.closeAt)
-            setCloseDate(closeDateTime.toISOString().split('T')[0])
-            setCloseTime(closeDateTime.toTimeString().slice(0, 5))
+            // استخدام التوقيت المحلي بدلاً من UTC
+            const year = closeDateTime.getFullYear()
+            const month = String(closeDateTime.getMonth() + 1).padStart(2, '0')
+            const day = String(closeDateTime.getDate()).padStart(2, '0')
+            const hours = String(closeDateTime.getHours()).padStart(2, '0')
+            const minutes = String(closeDateTime.getMinutes()).padStart(2, '0')
+            
+            setCloseDate(`${year}-${month}-${day}`)
+            setCloseTime(`${hours}:${minutes}`)
           }
         }
       }
@@ -84,12 +98,16 @@ export default function HackathonFormSchedulePage({ params }: { params: { id: st
       if (enableSchedule) {
         // Validate and create openAt
         if (openDate && openTime) {
-          openAt = `${openDate}T${openTime}:00.000Z`
+          // إنشاء Date object من التاريخ والوقت المحلي
+          const openDateTime = new Date(`${openDate}T${openTime}`)
+          openAt = openDateTime.toISOString()
         }
 
         // Validate and create closeAt
         if (closeDate && closeTime) {
-          closeAt = `${closeDate}T${closeTime}:00.000Z`
+          // إنشاء Date object من التاريخ والوقت المحلي
+          const closeDateTime = new Date(`${closeDate}T${closeTime}`)
+          closeAt = closeDateTime.toISOString()
         }
 
         // Validation: closeAt must be after openAt
