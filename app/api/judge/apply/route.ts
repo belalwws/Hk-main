@@ -34,11 +34,31 @@ export async function POST(request: NextRequest) {
     const twitter = parsedData.twitter || formDataRaw.get('twitter') as string | null
     const website = parsedData.website || formDataRaw.get('website') as string | null
     
-    // معالجة الصورة الشخصية
-    const profileImageFile = formDataRaw.get('profileImage') || formDataRaw.get('صوره شخصيه')
-    const profileImage = (profileImageFile && typeof profileImageFile !== 'string') ? profileImageFile as File : null
+    // معالجة الصورة الشخصية - البحث في كل الـ files المرسلة
+    let profileImageFile: File | null = null
+    
+    // جرب البحث بأسماء مختلفة
+    const possibleImageKeys = ['profileImage', 'صوره شخصيه', 'صورة شخصية']
+    for (const key of possibleImageKeys) {
+      const file = formDataRaw.get(key)
+      if (file && typeof file !== 'string') {
+        profileImageFile = file as File
+        break
+      }
+    }
+    
+    // إذا لم يتم العثور، جرب البحث في جميع المفاتيح
+    if (!profileImageFile) {
+      for (const [key, value] of formDataRaw.entries()) {
+        if (value instanceof File && value.type.startsWith('image/')) {
+          profileImageFile = value
+          console.log('📸 Found image file with key:', key)
+          break
+        }
+      }
+    }
 
-    console.log('📝 Submitting judge application:', { name, email, hackathonId })
+    console.log('📝 Submitting judge application:', { name, email, hackathonId, hasImage: !!profileImageFile })
 
     // Validate required fields
     if (!hackathonId || !name || !email) {
@@ -67,16 +87,16 @@ export async function POST(request: NextRequest) {
 
     // Handle profile image upload to Cloudinary
     let profileImageUrl: string | null = null
-    if (profileImage && profileImage.size > 0) {
+    if (profileImageFile && profileImageFile.size > 0) {
       try {
-        const bytes = await profileImage.arrayBuffer()
+        const bytes = await profileImageFile.arrayBuffer()
         const buffer = Buffer.from(bytes)
         
         // Upload to Cloudinary instead of base64
         const cloudinaryResult = await uploadToCloudinary(
           buffer,
           'hackathon/judges',
-          `judge-${Date.now()}-${profileImage.name}`
+          `judge-${Date.now()}-${profileImageFile.name}`
         )
         
         profileImageUrl = cloudinaryResult.url

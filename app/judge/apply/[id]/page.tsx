@@ -47,7 +47,8 @@ export default function JudgeApplicationPage() {
         setHackathon(hackData)
       }
 
-      const formRes = await fetch(`/api/admin/judge-form/${hackathonId}`)
+      // استخدام الـ endpoint العام بدلاً من الـ admin endpoint
+      const formRes = await fetch(`/api/judge-form/${hackathonId}`)
       if (formRes.ok) {
         const formData = await formRes.json()
         if (formData.form) {
