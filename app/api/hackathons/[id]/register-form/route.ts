@@ -4,7 +4,7 @@ import { sendTemplatedEmail } from '@/lib/mailer'
 
 // ✅ Send confirmation email using template system ONLY
 // Dedicated function to send confirmation email
-async function sendRegistrationConfirmationEmail(userData: any, hackathonTitle?: string) {
+async function sendRegistrationConfirmationEmail(userData: any, hackathonTitle?: string, hackathonId?: string) {
   console.log('📧 Sending confirmation email to:', userData.email)
 
   try {
@@ -19,7 +19,8 @@ async function sendRegistrationConfirmationEmail(userData: any, hackathonTitle?:
         registrationDate: new Date().toLocaleDateString('ar-SA'),
         hackathonDate: 'سيتم تحديده لاحقاً',
         hackathonLocation: 'سيتم تحديده لاحقاً'
-      }
+      },
+      hackathonId
     )
     console.log('✅ Confirmation email sent via template system')
     return { success: true, method: 'template' }
@@ -225,7 +226,7 @@ export async function POST(
     // ✅ STEP 3: Send ONLY ONE confirmation email using template system
     console.log('📧 Sending confirmation email to:', data.email)
     try {
-      const emailResult = await sendRegistrationConfirmationEmail(data, hackathonTitle)
+      const emailResult = await sendRegistrationConfirmationEmail(data, hackathonTitle, params.id)
       console.log('📧 Email sending result:', emailResult)
 
       if (!emailResult.success) {

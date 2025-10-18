@@ -135,11 +135,30 @@ export async function sendTemplatedEmail(
 
     console.log(`📧 [mailer] Sending templated email (${templateType}) to:`, to)
 
+    // Fetch hackathon name for dynamic sender if hackathonId is provided
+    let fromAddress: string | undefined = undefined
+    if (hackathonId) {
+      try {
+        const { prisma } = await import('./prisma')
+        const hackathon = await prisma.hackathon.findUnique({
+          where: { id: hackathonId },
+          select: { title: true }
+        })
+        if (hackathon) {
+          fromAddress = `"${hackathon.title}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`
+          console.log(`📧 [mailer] Using hackathon-specific sender: ${fromAddress}`)
+        }
+      } catch (error) {
+        console.warn(`⚠️ [mailer] Failed to fetch hackathon for sender name:`, error)
+      }
+    }
+
     return await sendMail({
       to,
       subject,
       html: body.replace(/\n/g, '<br>'),
-      text: body
+      text: body,
+      ...(fromAddress && { from: fromAddress })
     })
   } catch (error) {
     console.error(`❌ [mailer] Failed to send templated email (${templateType}):`, error)
