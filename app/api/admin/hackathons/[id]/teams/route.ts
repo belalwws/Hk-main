@@ -56,6 +56,9 @@ export async function GET(
                 id: true,
                 name: true,
                 email: true,
+                phone: true,
+                city: true,
+                nationality: true,
                 preferredRole: true
               }
             }
@@ -77,9 +80,14 @@ export async function GET(
         members: team.participants.map(participant => ({
           id: participant.id,
           registeredAt: participant.registeredAt,
+          teamRole: participant.teamRole,
+          additionalInfo: participant.additionalInfo,
           user: {
             name: participant.user.name,
             email: participant.user.email,
+            phone: participant.user.phone,
+            city: participant.user.city,
+            nationality: participant.user.nationality,
             preferredRole: participant.user.preferredRole || 'مطور'
           }
         }))

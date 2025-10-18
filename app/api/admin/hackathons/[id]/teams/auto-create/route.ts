@@ -28,7 +28,7 @@ export async function POST(
       take: 1
     })
 
-    const startingTeamNumber = existingTeams.length > 0 ? existingTeams[0].teamNumber + 1 : 1
+    const startingTeamNumber = existingTeams.length > 0 ? (existingTeams[0]?.teamNumber ?? 0) + 1 : 1
 
     // Get hackathon with settings to determine team size
     const hackathon = await prisma.hackathon.findUnique({
@@ -97,11 +97,12 @@ export async function POST(
     for (const rule of rules) {
       if (rule.distribution === 'ignore') continue
 
-      groups[rule.fieldId] = {}
+      const fieldId = rule.fieldId || 'defaultField'
+      groups[fieldId] = {}
 
       approvedParticipants.forEach(participant => {
         // Get value from participant's custom fields or standard fields
-        let value: string | undefined
+        let value: string
 
         // Check standard fields first
         if (rule.fieldId === 'preferredRole' || rule.fieldLabel.includes('دور') || rule.fieldLabel.includes('role')) {
@@ -114,14 +115,14 @@ export async function POST(
           value = (participant as any)[rule.fieldId] || 'غير محدد'
         }
 
-        if (!groups[rule.fieldId][value]) {
-          groups[rule.fieldId][value] = []
+        if (!groups[fieldId][value]) {
+          groups[fieldId][value] = []
         }
-        groups[rule.fieldId][value].push(participant)
+        groups[fieldId][value].push(participant)
       })
 
       console.log(`📊 ${rule.fieldLabel} distribution:`,
-        Object.keys(groups[rule.fieldId]).map(val => `${val}: ${groups[rule.fieldId][val].length}`)
+        Object.keys(groups[fieldId]).map(val => `${val}: ${groups[fieldId][val].length}`)
       )
     }
 
@@ -400,16 +401,21 @@ export async function POST(
 
     console.log(`📊 Email results: ${successfulEmails} successful, ${failedEmails} failed`)
 
+    const finalUnassignedCount = approvedParticipants.length - assignedParticipants.size
+
     return NextResponse.json({
       message: `تم تكوين الفرق بنجاح`,
       teamsCreated: createdTeams.length,
-      participantsAssigned: approvedParticipants.length,
+      participantsAssigned: assignedParticipants.size,
+      totalParticipants: approvedParticipants.length,
+      unassignedParticipants: finalUnassignedCount,
       emailsSent: successfulEmails,
       emailsFailed: failedEmails,
       teams: createdTeams.map(t => ({
         name: t.name,
         memberCount: t.members.length
-      }))
+      })),
+      warning: finalUnassignedCount > 0 ? `⚠️ ${finalUnassignedCount} مشاركين لم يتم تعيينهم بسبب قواعد التوزيع` : null
     })
 
   } catch (error) {

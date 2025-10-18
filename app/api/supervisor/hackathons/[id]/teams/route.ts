@@ -73,7 +73,8 @@ export async function GET(
                 email: true,
                 phone: true,
                 city: true,
-                nationality: true
+                nationality: true,
+                preferredRole: true
               }
             }
           }
@@ -100,9 +101,12 @@ export async function GET(
         email: participant.user.email,
         phone: participant.user.phone,
         participantId: participant.id,
+        teamRole: participant.teamRole,
+        additionalInfo: participant.additionalInfo,
         user: {
           city: participant.user.city,
-          nationality: participant.user.nationality
+          nationality: participant.user.nationality,
+          preferredRole: participant.user.preferredRole
         }
       }))
     }))

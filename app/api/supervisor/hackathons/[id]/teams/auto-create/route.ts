@@ -414,15 +414,21 @@ export async function POST(
       delayBetweenBatches: 3000
     })
 
+    const finalUnassignedCount = approvedParticipants.length - assignedParticipants.size
+    
     return NextResponse.json({
       message: `تم تكوين ${createdTeams.length} فريق بنجاح`,
       teams: createdTeams.length,
       totalMembers: totalMembers,
+      totalParticipants: approvedParticipants.length,
+      assignedParticipants: assignedParticipants.size,
+      unassignedParticipants: finalUnassignedCount,
       emailStats: {
         sent: bulkResults.sent,
         failed: bulkResults.failed,
         total: bulkResults.total
-      }
+      },
+      warning: finalUnassignedCount > 0 ? `⚠️ ${finalUnassignedCount} مشاركين لم يتم تعيينهم بسبب قواعد التوزيع` : null
     })
 
   } catch (error) {
