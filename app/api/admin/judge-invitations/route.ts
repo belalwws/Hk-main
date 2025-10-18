@@ -187,9 +187,9 @@ export async function POST(request: NextRequest) {
         emailMessage
       )
 
-      // Prepare email options
+      // Prepare email options with hackathon name as sender
       const mailOptions: any = {
-        from: `"نظام إدارة الهاكاثونات" <${process.env.GMAIL_USER || process.env.EMAIL_USER}>`,
+        from: `"${hackathon.title}" <${process.env.GMAIL_USER || process.env.EMAIL_USER}>`,
         to: email,
         subject: emailContent.subject,
         html: emailContent.html,

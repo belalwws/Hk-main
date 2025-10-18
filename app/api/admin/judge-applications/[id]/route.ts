@@ -259,7 +259,7 @@ export async function PATCH(
         )
 
         await transporter.sendMail({
-          from: `"نظام إدارة الهاكاثونات" <${process.env.GMAIL_USER || process.env.EMAIL_USER}>`,
+          from: `"${hackathon.title}" <${process.env.GMAIL_USER || process.env.EMAIL_USER}>`,
           to: application.email,
           subject: emailContent.subject,
           html: emailContent.html,
