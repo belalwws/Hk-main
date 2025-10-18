@@ -4,16 +4,41 @@
  */
 
 import nodemailer from 'nodemailer'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export interface EmailOptions {
   to: string
   subject: string
   html: string
   from?: string
+  hackathonId?: string
 }
 
 export interface EmailTransporter {
   sendMail: (options: EmailOptions) => Promise<any>
+}
+
+/**
+ * Get hackathon name for email sender
+ */
+export async function getHackathonEmailSender(hackathonId: string): Promise<string> {
+  try {
+    const hackathon = await prisma.hackathon.findUnique({
+      where: { id: hackathonId },
+      select: { title: true }
+    })
+    
+    if (hackathon) {
+      return `"${hackathon.title}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`
+    }
+  } catch (error) {
+    console.error('❌ Failed to get hackathon name:', error)
+  }
+  
+  // Fallback
+  return process.env.MAIL_FROM || `هاكاثون الابتكار التقني <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`
 }
 
 /**
@@ -54,8 +79,17 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       return false
     }
 
+    // Get sender name from hackathon if provided
+    let fromAddress = options.from
+    if (!fromAddress && options.hackathonId) {
+      fromAddress = await getHackathonEmailSender(options.hackathonId)
+    }
+    if (!fromAddress) {
+      fromAddress = process.env.MAIL_FROM || `هاكاثون الابتكار التقني <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`
+    }
+
     const mailOptions = {
-      from: options.from || process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
+      from: fromAddress,
       to: options.to,
       subject: options.subject,
       html: options.html

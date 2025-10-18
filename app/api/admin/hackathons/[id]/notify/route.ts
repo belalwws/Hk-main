@@ -219,7 +219,7 @@ ${process.env.NEXTAUTH_URL || 'https://hackathon-platform-601l.onrender.com'}/ha
         `
 
         await transporter.sendMail({
-          from: process.env.MAIL_FROM || `هاكاثون الابتكار التقني <${process.env.GMAIL_USER}>`,
+          from: `"${hackathon.title}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`,
           to: user.email,
           subject: emailSubject,
           text: emailContent,

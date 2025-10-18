@@ -82,9 +82,9 @@ export async function POST(request: NextRequest) {
     userEmail = record.user.email
     hackathonTitle = record.hackathon?.title || 'الهاكاثون'
 
-    // Send email with certificate
+    // Send email with certificate using hackathon name as sender
     await transporter.sendMail({
-      from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
+      from: `"${hackathonTitle}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`,
       to: userEmail,
       subject: `🏆 شهادة تقدير - ${hackathonTitle}`,
       html: getCertificateEmailContent(userName, hackathonTitle, roleTitle, certificateUrl)

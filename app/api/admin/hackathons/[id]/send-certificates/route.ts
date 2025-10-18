@@ -141,7 +141,7 @@ export async function POST(
           )
 
           await transporter.sendMail({
-            from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
+            from: `"${hackathon.title}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`,
             to: participant.user.email,
             subject: emailSubject,
             html: emailHtml,
