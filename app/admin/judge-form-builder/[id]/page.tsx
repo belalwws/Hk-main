@@ -63,6 +63,13 @@ export default function JudgeFormBuilderPage() {
       label: 'رقم الهاتف',
       placeholder: '05xxxxxxxx',
       required: false
+    },
+    {
+      id: 'profileImage',
+      type: 'file',
+      label: 'صورة شخصية',
+      required: false,
+      description: 'الرجاء رفع صورة شخصية واضحة'
     }
   ])
 

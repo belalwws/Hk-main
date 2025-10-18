@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { uploadToCloudinary } from '@/lib/cloudinary'
 
 const prisma = new PrismaClient()
 
@@ -73,18 +74,27 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Handle profile image upload
+    // Handle profile image upload to Cloudinary
     let profileImageUrl: string | null = null
     if (profileImage && profileImage.size > 0) {
-      // Convert image to base64 for storage (for simplicity)
-      // In production, use a proper file storage service like Cloudinary or S3
-      const bytes = await profileImage.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-      const base64 = buffer.toString('base64')
-      const mimeType = profileImage.type
-      profileImageUrl = `data:${mimeType};base64,${base64}`
-      
-      console.log('📸 Profile image uploaded:', profileImage.name, profileImage.size, 'bytes')
+      try {
+        const bytes = await profileImage.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+        
+        // Upload to Cloudinary instead of base64
+        const cloudinaryResult = await uploadToCloudinary(
+          buffer,
+          'hackathon/judges',
+          `judge-${Date.now()}-${profileImage.name}`
+        )
+        
+        profileImageUrl = cloudinaryResult.url
+        console.log('📸 Profile image uploaded to Cloudinary:', cloudinaryResult.url)
+      } catch (uploadError) {
+        console.error('❌ Failed to upload image to Cloudinary:', uploadError)
+        // Continue without image rather than failing the whole application
+        profileImageUrl = null
+      }
     }
 
     // Create application
