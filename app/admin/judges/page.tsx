@@ -280,10 +280,11 @@ export default function AdminJudgesPage() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('upload_preset', 'hackathon_pdfs') // Set this in Cloudinary
+      formData.append('upload_preset', 'hackathon_pdfs')
+      formData.append('resource_type', 'raw') // ✅ مهم للـ PDF
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`, // ✅ raw بدلاً من image
         {
           method: 'POST',
           body: formData
