@@ -17,7 +17,9 @@ import {
   Download,
   Trash2,
   IdCard,
-  Building
+  Building,
+  FileText,
+  Link as LinkIcon
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -521,20 +523,32 @@ export default function JudgeApplicationsPage() {
                   <img
                     src={selectedApplication.profileImage}
                     alt={selectedApplication.name}
-                    className="w-32 h-32 rounded-full object-cover border-4 border-[#01645e]"
+                    className="w-32 h-32 rounded-full object-cover border-4 border-[#01645e] shadow-lg"
                   />
                 </div>
               )}
 
+              {/* Quick Summary */}
+              <div className="bg-gradient-to-r from-[#01645e] to-[#3ab666] p-4 rounded-lg text-white text-center">
+                <h3 className="text-xl font-bold mb-1">{selectedApplication.name}</h3>
+                <p className="text-sm opacity-90">{selectedApplication.email}</p>
+                {selectedApplication.workplace && (
+                  <p className="text-sm opacity-90 mt-1">{selectedApplication.workplace}</p>
+                )}
+              </div>
+
               {/* Basic Info Grid */}
               <div className="grid grid-cols-2 gap-4 p-4 bg-[#c3e956]/10 rounded-lg">
+                {/* الاسم الكامل */}
                 <div className="flex items-start gap-2">
                   <User className="w-4 h-4 text-[#01645e] mt-1" />
                   <div>
                     <Label className="text-[#01645e] font-bold text-sm">الاسم الكامل</Label>
-                    <p className="text-sm">{selectedApplication.name}</p>
+                    <p className="text-sm font-semibold">{selectedApplication.name}</p>
                   </div>
                 </div>
+                
+                {/* البريد الإلكتروني */}
                 <div className="flex items-start gap-2">
                   <Mail className="w-4 h-4 text-[#01645e] mt-1" />
                   <div>
@@ -542,6 +556,8 @@ export default function JudgeApplicationsPage() {
                     <p className="text-xs break-all">{selectedApplication.email}</p>
                   </div>
                 </div>
+                
+                {/* رقم الهاتف */}
                 {selectedApplication.phone && (
                   <div className="flex items-start gap-2">
                     <Phone className="w-4 h-4 text-[#01645e] mt-1" />
@@ -551,15 +567,8 @@ export default function JudgeApplicationsPage() {
                     </div>
                   </div>
                 )}
-                {selectedApplication.expertise && (
-                  <div className="flex items-start gap-2">
-                    <Briefcase className="w-4 h-4 text-[#01645e] mt-1" />
-                    <div>
-                      <Label className="text-[#01645e] font-bold text-sm">المؤهل العلمي</Label>
-                      <p className="text-sm">{selectedApplication.expertise}</p>
-                    </div>
-                  </div>
-                )}
+                
+                {/* رقم الهوية */}
                 {selectedApplication.nationalId && (
                   <div className="flex items-start gap-2">
                     <IdCard className="w-4 h-4 text-[#01645e] mt-1" />
@@ -569,6 +578,8 @@ export default function JudgeApplicationsPage() {
                     </div>
                   </div>
                 )}
+                
+                {/* جهة العمل */}
                 {selectedApplication.workplace && (
                   <div className="flex items-start gap-2">
                     <Building className="w-4 h-4 text-[#01645e] mt-1" />
@@ -578,30 +589,42 @@ export default function JudgeApplicationsPage() {
                     </div>
                   </div>
                 )}
-                {selectedApplication.education && (
+                
+                {/* المؤهل العلمي */}
+                {(selectedApplication.education || selectedApplication.expertise) && (
                   <div className="flex items-start gap-2">
                     <Briefcase className="w-4 h-4 text-[#01645e] mt-1" />
                     <div>
-                      <Label className="text-[#01645e] font-bold text-sm">التعليم</Label>
-                      <p className="text-sm">{selectedApplication.education}</p>
+                      <Label className="text-[#01645e] font-bold text-sm">المؤهل العلمي</Label>
+                      <p className="text-sm">{selectedApplication.education || selectedApplication.expertise}</p>
                     </div>
                   </div>
                 )}
-                {selectedApplication.previousHackathons && (
+                
+                {/* مشاركات سابقة */}
+                {(selectedApplication.previousHackathons || selectedApplication.experience) && (
                   <div className="flex items-start gap-2">
-                    <Calendar className="w-4 h-4 text-[#01645e] mt-1" />
+                    <CheckCircle className="w-4 h-4 text-[#01645e] mt-1" />
                     <div>
-                      <Label className="text-[#01645e] font-bold text-sm">مشاركات سابقة</Label>
-                      <p className="text-sm">{selectedApplication.previousHackathons}</p>
+                      <Label className="text-[#01645e] font-bold text-sm">هل شارك في هاكاثونات سابقة؟</Label>
+                      <p className="text-sm">{selectedApplication.previousHackathons || selectedApplication.experience}</p>
                     </div>
                   </div>
                 )}
+                
+                {/* تاريخ التقديم */}
                 <div className="flex items-start gap-2 col-span-2">
                   <Calendar className="w-4 h-4 text-[#01645e] mt-1" />
                   <div>
                     <Label className="text-[#01645e] font-bold text-sm">تاريخ التقديم</Label>
                     <p className="text-sm">
-                      {new Date(selectedApplication.createdAt).toLocaleDateString('ar-SA')}
+                      {new Date(selectedApplication.createdAt).toLocaleDateString('ar-SA', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </p>
                   </div>
                 </div>
@@ -610,15 +633,12 @@ export default function JudgeApplicationsPage() {
               {/* نبذة عن المحكم */}
               {selectedApplication.bio && (
                 <div className="p-4 bg-white border rounded-lg">
-                  <Label className="text-[#01645e] font-bold">نبذة عن المحكم المشارك</Label>
-                  <p className="text-sm text-[#8b7632] mt-2 whitespace-pre-wrap">{selectedApplication.bio}</p>
-                </div>
-              )}              {/* المشاركات السابقة */}
-              {selectedApplication.experience && (
-                <div className="p-4 bg-white border rounded-lg">
-                  <Label className="text-[#01645e] font-bold">هل شارك في هاكاثونات افتراضية من قبل؟</Label>
-                  <p className="text-sm text-[#8b7632] mt-2">
-                    {selectedApplication.experience}
+                  <Label className="text-[#01645e] font-bold flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    نبذة عن المحكم المشارك
+                  </Label>
+                  <p className="text-sm text-[#8b7632] mt-2 whitespace-pre-wrap leading-relaxed">
+                    {selectedApplication.bio}
                   </p>
                 </div>
               )}
