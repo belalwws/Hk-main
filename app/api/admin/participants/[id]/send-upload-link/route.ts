@@ -122,7 +122,8 @@ export async function POST(
           teamName: participant.team.name,
           uploadLink: uploadLink,
           expiryDate: expiryDate
-        }
+        },
+        participant.hackathonId
       )
       console.log('✅ [send-upload-link] Email sent successfully to:', participant.user.email)
     } catch (emailError) {

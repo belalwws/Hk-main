@@ -134,7 +134,8 @@ export async function POST(
               teamName: team.name,
               uploadLink: uploadLink,
               expiryDate: expiryDate
-            }
+            },
+            team.hackathonId
           )
           console.log('✅ [send-upload-links] Email sent to:', participant.user.email)
           successCount++

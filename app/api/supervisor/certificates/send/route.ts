@@ -80,10 +80,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'لم يتم رفع الشهادة بعد' }, { status: 400 })
     }
 
-    certificateUrl = record.certificateUrl!
+    certificateUrl = record.certificateUrl
     userName = record.user.name
     userEmail = record.user.email
     hackathonTitle = record.hackathon?.title || 'الهاكاثون'
+    const hackathonId = record.hackathonId
 
     // Send email with certificate using template system
     try {
@@ -98,7 +99,8 @@ export async function POST(request: NextRequest) {
           downloadUrl: certificateUrl,
           organizerName: 'فريق الهاكاثون',
           organizerEmail: process.env.MAIL_FROM || 'no-reply@hackathon.com'
-        }
+        },
+        hackathonId
       )
     } catch (emailError) {
       console.error('Failed to send templated email, falling back to direct email:', emailError)
