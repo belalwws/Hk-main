@@ -57,6 +57,8 @@ export async function GET(
           coverImage: (existingForm as any).coverImage,
           colors: (existingForm as any).colors,
           isActive: existingForm.isActive,
+          openAt: (existingForm as any).openAt,
+          closeAt: (existingForm as any).closeAt,
           fields: JSON.parse(existingForm.fields),
           settings: JSON.parse(existingForm.settings)
         }
@@ -78,6 +80,8 @@ export async function GET(
           coverImage: dynamicForm.coverImage,
           colors: dynamicForm.colors,
           isActive: dynamicForm.isActive,
+          openAt: dynamicForm.openAt,
+          closeAt: dynamicForm.closeAt,
           fields: dynamicForm.fields || [],
           settings: dynamicForm.settings || {
             allowMultipleSubmissions: false,

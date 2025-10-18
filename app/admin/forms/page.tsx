@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, FileText, Eye, Edit, Trash2, Users, Calendar, BarChart3, Share2, Mail, Copy, Send, Award, UserCheck, Palette, ExternalLink, Settings, MessageSquare } from 'lucide-react'
+import { Plus, FileText, Eye, Edit, Trash2, Users, Calendar, BarChart3, Share2, Mail, Copy, Send, Award, UserCheck, Palette, ExternalLink, Settings, MessageSquare, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -394,6 +394,13 @@ export default function FormsManagement() {
                           </Button>
                         </Link>
 
+                        <Link href={`/admin/hackathons/${selectedHackathon}/registration-form-schedule`}>
+                          <Button variant="outline" className="w-full border-purple-500 text-purple-600 hover:bg-purple-50">
+                            <Clock className="w-4 h-4 ml-2" />
+                            جدولة المواعيد
+                          </Button>
+                        </Link>
+
                         <Link href={`/admin/hackathons/${selectedHackathon}/register-form-design`}>
                           <Button variant="outline" className="w-full border-[#01645e] text-[#01645e]">
                             <Palette className="w-4 h-4 ml-2" />
@@ -404,7 +411,7 @@ export default function FormsManagement() {
                         <Button
                           variant="outline"
                           className="w-full"
-                          onClick={() => window.open(`/hackathons/${selectedHackathon}/register-form?preview=1`, '_blank')}
+                          onClick={() => window.open(`/hackathons/${selectedHackathon}/register-form`, '_blank')}
                         >
                           <ExternalLink className="w-4 h-4 ml-2" />
                           معاينة الفورم

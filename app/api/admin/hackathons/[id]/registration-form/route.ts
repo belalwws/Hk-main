@@ -34,7 +34,9 @@ export async function GET(
             colors: (existingForm as any).colors,
             isActive: existingForm.isActive,
             fields: JSON.parse(existingForm.fields),
-            settings: JSON.parse(existingForm.settings)
+            settings: JSON.parse(existingForm.settings),
+            openAt: (existingForm as any).openAt,
+            closeAt: (existingForm as any).closeAt
           }
         })
       }

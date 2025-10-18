@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
+import { FormCountdown } from '@/components/FormCountdown'
+import { FormClosed } from '@/components/FormClosed'
 
 interface FormField {
   id: string
@@ -23,6 +25,8 @@ interface Form {
   status: 'draft' | 'published' | 'closed'
   isPublic: boolean
   fields: FormField[]
+  openAt?: string | null
+  closeAt?: string | null
 }
 
 export default function FormPage({ params }: { params: { id: string } }) {
@@ -37,6 +41,30 @@ export default function FormPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchForm()
   }, [params.id])
+
+  useEffect(() => {
+    // Auto-refresh when form opens or closes
+    if (form) {
+      const checkFormStatus = () => {
+        const now = new Date()
+        const openAt = form.openAt ? new Date(form.openAt) : null
+        const closeAt = form.closeAt ? new Date(form.closeAt) : null
+
+        // Refresh page when form opens
+        if (openAt && now >= openAt && !isFormOpen()) {
+          window.location.reload()
+        }
+
+        // Refresh page when form closes
+        if (closeAt && now >= closeAt && !isFormClosed()) {
+          window.location.reload()
+        }
+      }
+
+      const interval = setInterval(checkFormStatus, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [form])
 
   const fetchForm = async () => {
     try {
@@ -53,6 +81,39 @@ export default function FormPage({ params }: { params: { id: string } }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const isFormOpen = (): boolean => {
+    if (!form) return false
+    const now = new Date()
+    const openAt = form.openAt ? new Date(form.openAt) : null
+    const closeAt = form.closeAt ? new Date(form.closeAt) : null
+
+    // If openAt is set and current time is before openAt
+    if (openAt && now < openAt) {
+      return false
+    }
+
+    // If closeAt is set and current time is after closeAt
+    if (closeAt && now >= closeAt) {
+      return false
+    }
+
+    return true
+  }
+
+  const isFormClosed = (): boolean => {
+    if (!form || !form.closeAt) return false
+    const now = new Date()
+    const closeAt = new Date(form.closeAt)
+    return now >= closeAt
+  }
+
+  const shouldShowCountdown = (): boolean => {
+    if (!form || !form.openAt) return false
+    const now = new Date()
+    const openAt = new Date(form.openAt)
+    return now < openAt
   }
 
   const handleInputChange = (fieldId: string, value: any) => {
@@ -116,6 +177,28 @@ export default function FormPage({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
       </div>
+    )
+  }
+
+  // Show countdown if form hasn't opened yet
+  if (shouldShowCountdown()) {
+    return (
+      <FormCountdown 
+        targetDate={new Date(form.openAt!)} 
+        type="opening" 
+        formTitle={form.title}
+      />
+    )
+  }
+
+  // Show closed message if form is closed
+  if (isFormClosed()) {
+    return (
+      <FormClosed 
+        formTitle={form.title}
+        closedAt={form.closeAt ? new Date(form.closeAt) : undefined}
+        message="عذراً، لقد انتهى موعد قبول الردود على هذا النموذج"
+      />
     )
   }
 

@@ -408,6 +408,11 @@ model HackathonForm {
   isActive     Boolean  @default(true)
   fields       String   // JSON string of form fields (includes idNumber type)
   settings     String   // JSON string of form settings
+  
+  // Form Scheduling - توقيت فتح وإغلاق الفورم
+  openAt       DateTime? // تاريخ ووقت فتح الفورم
+  closeAt      DateTime? // تاريخ ووقت إغلاق الفورم
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

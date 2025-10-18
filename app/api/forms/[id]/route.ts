@@ -25,9 +25,46 @@ export async function GET(
       return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })
     }
 
-    const form = await prismaClient.form.findUnique({
+    // Try to find in general forms first
+    let form = await prismaClient.form.findUnique({
       where: { id: params.id }
     })
+
+    // If not found, try hackathon forms
+    if (!form) {
+      form = await prismaClient.hackathonForm.findUnique({
+        where: { id: params.id },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          fields: true,
+          isActive: true,
+          openAt: true,
+          closeAt: true,
+          coverImage: true,
+          colors: true
+        }
+      })
+
+      if (form) {
+        // Parse fields if it's a string
+        if (typeof form.fields === 'string') {
+          try {
+            form.fields = JSON.parse(form.fields)
+          } catch (e) {
+            console.error('Error parsing form fields:', e)
+          }
+        }
+
+        // Map to general form format
+        form = {
+          ...form,
+          status: form.isActive ? 'published' : 'closed',
+          isPublic: true
+        }
+      }
+    }
 
     if (!form) {
       return NextResponse.json({ error: 'Form not found' }, { status: 404 })

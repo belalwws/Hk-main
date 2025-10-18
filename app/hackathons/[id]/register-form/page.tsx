@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { FormCountdown } from '@/components/FormCountdown'
+import { FormClosed } from '@/components/FormClosed'
 import { 
   Send, 
   CheckCircle,
@@ -56,6 +58,8 @@ interface RegistrationForm {
     sendConfirmationEmail: boolean
     redirectUrl?: string
   }
+  openAt?: string | null
+  closeAt?: string | null
 }
 
 export default function HackathonRegisterFormPage() {
@@ -75,6 +79,63 @@ export default function HackathonRegisterFormPage() {
     checkCustomDesign()
     fetchForm()
   }, [hackathonId])
+
+  useEffect(() => {
+    // Auto-refresh when form opens or closes
+    if (form) {
+      const checkFormStatus = () => {
+        const now = new Date()
+        const openAt = form.openAt ? new Date(form.openAt) : null
+        const closeAt = form.closeAt ? new Date(form.closeAt) : null
+
+        // Refresh page when form opens
+        if (openAt && now >= openAt && !isFormOpen()) {
+          window.location.reload()
+        }
+
+        // Refresh page when form closes
+        if (closeAt && now >= closeAt && !isFormClosed()) {
+          window.location.reload()
+        }
+      }
+
+      const interval = setInterval(checkFormStatus, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [form])
+
+  const isFormOpen = (): boolean => {
+    if (!form) return false
+    const now = new Date()
+    const openAt = form.openAt ? new Date(form.openAt) : null
+    const closeAt = form.closeAt ? new Date(form.closeAt) : null
+
+    // If openAt is set and current time is before openAt
+    if (openAt && now < openAt) {
+      return false
+    }
+
+    // If closeAt is set and current time is after closeAt
+    if (closeAt && now >= closeAt) {
+      return false
+    }
+
+    return true
+  }
+
+  const isFormClosed = (): boolean => {
+    if (!form || !form.closeAt) return false
+    const now = new Date()
+    const closeAt = new Date(form.closeAt)
+    return now >= closeAt
+  }
+
+  const shouldShowCountdown = (): boolean => {
+    if (!form || !form.openAt) return false
+    const now = new Date()
+    const openAt = new Date(form.openAt)
+    return now < openAt
+  }
 
   const checkCustomDesign = async () => {
     try {
@@ -463,6 +524,28 @@ export default function HackathonRegisterFormPage() {
           <p className="text-xl text-gray-600 font-medium">جاري تحميل النموذج...</p>
         </div>
       </div>
+    )
+  }
+
+  // Show countdown if form hasn't opened yet
+  if (form && shouldShowCountdown()) {
+    return (
+      <FormCountdown 
+        targetDate={new Date(form.openAt!)} 
+        type="opening" 
+        formTitle={form.title}
+      />
+    )
+  }
+
+  // Show closed message if form is closed
+  if (form && isFormClosed()) {
+    return (
+      <FormClosed 
+        formTitle={form.title}
+        closedAt={form.closeAt ? new Date(form.closeAt) : undefined}
+        message="عذراً، لقد انتهى موعد قبول التسجيلات في هذا الهاكاثون"
+      />
     )
   }
 
