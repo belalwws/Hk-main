@@ -34,17 +34,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check if email already exists as a user
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
-
-    if (existingUser) {
-      return NextResponse.json({
-        error: 'هذا البريد الإلكتروني مسجل بالفعل في النظام'
-      }, { status: 400 })
-    }
-
+    // ✅ السماح بالتسجيل حتى لو الإيميل موجود في النظام
+    // فقط تحقق من عدم وجود طلب معلق لنفس الإيميل في نفس الهاكاثون
+    
     // Check if there's already a pending application for this email and hackathon
     const existingApplication = await prisma.judgeApplication.findFirst({
       where: {

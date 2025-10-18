@@ -292,7 +292,7 @@ export default function JudgeApplicationPage() {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)` }}>
+    <div className="min-h-screen p-6" style={{ background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)` }} dir="rtl">
       <div className="max-w-3xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Card>
