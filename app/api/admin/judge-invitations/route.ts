@@ -120,10 +120,11 @@ export async function POST(request: NextRequest) {
       where: { email }
     })
 
+    // ⚠️ تحذير فقط، لا نمنع الإرسال
     if (existingUser) {
-      return NextResponse.json({
-        error: 'هذا البريد الإلكتروني مسجل بالفعل في النظام'
-      }, { status: 400 })
+      console.log('⚠️ Warning: Email already exists in system:', email)
+      console.log('⚠️ User role:', existingUser.role)
+      // نكمل العملية - يمكن إرسال دعوة حتى لو البريد موجود
     }
 
     // Check if there's already a pending invitation for this email and hackathon

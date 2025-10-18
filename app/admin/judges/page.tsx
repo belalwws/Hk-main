@@ -268,6 +268,13 @@ export default function AdminJudgesPage() {
       return
     }
 
+    // Use NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME or fallback to server-side variable
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'djva3nfy5'
+    if (!cloudName) {
+      showError('إعدادات Cloudinary غير متوفرة. يمكنك المتابعة بدون مرفق.')
+      return
+    }
+
     setUploadingPdf(true)
 
     try {
@@ -276,7 +283,7 @@ export default function AdminJudgesPage() {
       formData.append('upload_preset', 'hackathon_pdfs') // Set this in Cloudinary
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/upload`,
         {
           method: 'POST',
           body: formData
@@ -288,7 +295,9 @@ export default function AdminJudgesPage() {
         setInviteFormData({ ...inviteFormData, attachmentUrl: data.secure_url })
         showSuccess('تم رفع المرفق بنجاح!')
       } else {
-        showError('فشل في رفع المرفق')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Cloudinary error:', errorData)
+        showError('فشل في رفع المرفق. تأكد من إعدادات Cloudinary.')
       }
     } catch (error) {
       console.error('Error uploading PDF:', error)
@@ -299,24 +308,26 @@ export default function AdminJudgesPage() {
   }
 
   const cancelInvitation = async (invitationId: string) => {
-    const confirmed = await showConfirm('هل أنت متأكد من إلغاء هذه الدعوة؟')
-    if (!confirmed) return
+    showConfirm(
+      'هل أنت متأكد من إلغاء هذه الدعوة؟',
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/judge-invitations/${invitationId}`, {
+            method: 'DELETE'
+          })
 
-    try {
-      const response = await fetch(`/api/admin/judge-invitations/${invitationId}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        showSuccess('تم إلغاء الدعوة بنجاح')
-        fetchInvitations()
-      } else {
-        showError('فشل في إلغاء الدعوة')
+          if (response.ok) {
+            showSuccess('تم إلغاء الدعوة بنجاح')
+            fetchInvitations()
+          } else {
+            showError('فشل في إلغاء الدعوة')
+          }
+        } catch (error) {
+          console.error('Error cancelling invitation:', error)
+          showError('حدث خطأ في إلغاء الدعوة')
+        }
       }
-    } catch (error) {
-      console.error('Error cancelling invitation:', error)
-      showError('حدث خطأ في إلغاء الدعوة')
-    }
+    )
   }
 
   const copyInvitationLink = async (token: string) => {
