@@ -48,7 +48,8 @@ export async function PATCH(
         },
         hackathon: {
           select: {
-            title: true
+            title: true,
+            socialMedia: true  // للحصول على رابط واتساب
           }
         }
       }
@@ -78,8 +79,22 @@ export async function PATCH(
     // Send emails to participants
     const emailPromises = participants.map(async (participant) => {
       try {
+        // استخراج رابط واتساب من socialMedia
+        let whatsappLink = ''
+        try {
+          const socialMedia = participant.hackathon.socialMedia
+          if (socialMedia && typeof socialMedia === 'string') {
+            const parsed = JSON.parse(socialMedia)
+            whatsappLink = parsed.whatsapp || ''
+          } else if (socialMedia && typeof socialMedia === 'object') {
+            whatsappLink = (socialMedia as any).whatsapp || ''
+          }
+        } catch (e) {
+          console.log('No WhatsApp link found')
+        }
+
         const emailContent = normalizedStatus === 'approved'
-          ? getApprovalEmailContent(participant.user.name, participant.hackathon.title)
+          ? getApprovalEmailContent(participant.user.name, participant.hackathon.title, whatsappLink)
           : getRejectionEmailContent(participant.user.name, participant.hackathon.title)
 
         await transporter.sendMail({
@@ -118,7 +133,7 @@ export async function PATCH(
   }
 }
 
-function getApprovalEmailContent(userName: string, hackathonTitle: string) {
+function getApprovalEmailContent(userName: string, hackathonTitle: string, whatsappLink: string = '') {
   return {
     subject: `🎉 تم قبولك في ${hackathonTitle}!`,
     html: `
@@ -150,8 +165,19 @@ function getApprovalEmailContent(userName: string, hackathonTitle: string) {
               <h3 style="color: #01645e; margin: 0; font-size: 20px;">📋 ${hackathonTitle}</h3>
             </div>
 
+            ${whatsappLink ? `
+            <div style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
+              <h3 style="color: white; margin: 0 0 15px 0; font-size: 20px;">💬 انضم لمجموعة واتساب المقبولين</h3>
+              <p style="color: #e8f5e8; margin: 0 0 20px 0; font-size: 15px;">تواصل مع زملائك المشاركين واحصل على آخر التحديثات</p>
+              <a href="${whatsappLink}" target="_blank" style="background: white; color: #25D366; padding: 15px 35px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                📱 انضم الآن للمجموعة
+              </a>
+            </div>
+            ` : ''}
+
             <h3 style="color: #01645e; margin: 30px 0 15px 0;">🚀 الخطوات التالية:</h3>
             <ul style="color: #333; line-height: 1.8; padding-right: 20px;">
+              ${whatsappLink ? '<li style="margin-bottom: 10px;">انضم لمجموعة واتساب المقبولين</li>' : ''}
               <li style="margin-bottom: 10px;">انتظر تكوين الفرق التلقائي</li>
               <li style="margin-bottom: 10px;">ستصلك رسالة بتفاصيل فريقك قريباً</li>
               <li style="margin-bottom: 10px;">تابع بريدك الإلكتروني للتحديثات</li>
@@ -159,7 +185,7 @@ function getApprovalEmailContent(userName: string, hackathonTitle: string) {
             </ul>
 
             <div style="text-align: center; margin: 35px 0;">
-              <a href="${process.env.NEXTAUTH_URL || 'https://hackathon-platform-601l.onrender.com'}/profile" style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; transition: transform 0.3s;">
+              <a href="${process.env.NEXTAUTH_URL || 'https://clownfish-app-px9sc.ondigitalocean.app'}/profile" style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; transition: transform 0.3s;">
                 🏠 زيارة الملف الشخصي
               </a>
             </div>

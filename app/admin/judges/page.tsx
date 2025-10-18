@@ -96,8 +96,33 @@ export default function AdminJudgesPage() {
     email: '',
     name: '',
     hackathonId: '',
-    expiresInDays: 7
+    expiresInDays: 7,
+    registrationLink: '',
+    attachmentUrl: '',
+    emailMessage: `سعادة / [الاسم الكامل]
+الموضوع / دعوة للمشاركة كعضو لجنة تحكيم
+
+السلام عليكم ورحمة الله وبركاته،،
+
+تتشرف اللجنة التنظيمية لإدارة هاكاثون الصحة النفسية الافتراضي 2025 بدعوتكم للمشاركة كعضو في لجنة التحكيم الخاصة بالهاكاثون، الذي يُقام خلال الفترة من يوم الثلاثاء الموافق 21 أكتوبر 2025 إلى يوم الخميس الموافق 23 أكتوبر 2025، وذلك عن بُعد عبر منصة زووم.
+
+تتولى لجنة التحكيم مهمة تقييم الحلول والأفكار الابتكارية التي يقدمها المشاركون، وفق معايير محددة تهدف إلى ضمان اختيار أفضل المشاريع وأكثرها تأثيرًا في تعزيز الصحة النفسية وجودة الحياة.
+
+إن خبرتكم المتميزة ستكون إضافة قيّمة تسهم في إنجاح الفعالية وتحقيق أهدافها.
+
+كما نود إفادتكم بأنه تم تخصيص نموذج تسجيل إلكتروني لأعضاء لجنة التحكيم لاستكمال البيانات اللوجستية واعتماد المشاركة.
+نأمل منكم تعبئته في أسرع وقت ممكن، وقبل يوم الاحد 19 اكتوبر 2025 الساعة 11:59 مساءً عبر الرابط التالي:
+👉 [رابط التسجيل]
+
+نرجو منكم التكرم بتأكيد موافقتكم على المشاركة عبر الرد على هذا البريد الإلكتروني بعد استكمال التسجيل.
+
+وتفضلوا بقبول فائق الاحترام،،
+
+مع أطيب التحيات،
+فريق اللجنة التنظيمية
+هاكاثون الصحة النفسية الافتراضي 2025`
   })
+  const [uploadingPdf, setUploadingPdf] = useState(false)
   const [approveFormData, setApproveFormData] = useState({
     password: '',
     reviewNotes: ''
@@ -187,6 +212,16 @@ export default function AdminJudgesPage() {
       return
     }
 
+    if (!inviteFormData.name) {
+      showWarning('اسم المحكم مطلوب')
+      return
+    }
+
+    if (!inviteFormData.registrationLink) {
+      showWarning('رابط التسجيل مطلوب')
+      return
+    }
+
     try {
       const response = await fetch('/api/admin/judge-invitations', {
         method: 'POST',
@@ -198,14 +233,16 @@ export default function AdminJudgesPage() {
         const result = await response.json()
         showSuccess('تم إرسال الدعوة بنجاح!')
 
-        // Copy invitation link to clipboard
-        if (result.invitationLink) {
-          await navigator.clipboard.writeText(result.invitationLink)
-          showSuccess('تم نسخ رابط الدعوة إلى الحافظة!')
-        }
-
         setShowInviteDialog(false)
-        setInviteFormData({ email: '', name: '', hackathonId: '', expiresInDays: 7 })
+        setInviteFormData({ 
+          email: '', 
+          name: '', 
+          hackathonId: '', 
+          expiresInDays: 7,
+          registrationLink: '',
+          attachmentUrl: '',
+          emailMessage: inviteFormData.emailMessage // Keep default message
+        })
         fetchInvitations()
       } else {
         const error = await response.json()
@@ -214,6 +251,50 @@ export default function AdminJudgesPage() {
     } catch (error) {
       console.error('Error sending invitation:', error)
       showError('حدث خطأ في إرسال الدعوة')
+    }
+  }
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.type !== 'application/pdf') {
+      showError('يرجى رفع ملف PDF فقط')
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+      showError('حجم الملف يجب أن يكون أقل من 10 ميجابايت')
+      return
+    }
+
+    setUploadingPdf(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('upload_preset', 'hackathon_pdfs') // Set this in Cloudinary
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        setInviteFormData({ ...inviteFormData, attachmentUrl: data.secure_url })
+        showSuccess('تم رفع المرفق بنجاح!')
+      } else {
+        showError('فشل في رفع المرفق')
+      }
+    } catch (error) {
+      console.error('Error uploading PDF:', error)
+      showError('حدث خطأ في رفع المرفق')
+    } finally {
+      setUploadingPdf(false)
     }
   }
 
@@ -724,37 +805,40 @@ export default function AdminJudgesPage() {
 
       {/* Invite Judge Dialog */}
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-[#01645e]" />
               إرسال دعوة محكم
             </DialogTitle>
             <DialogDescription>
-              أرسل دعوة للمحكم للتسجيل في الهاكاثون
+              أرسل دعوة مخصصة للمحكم مع مرفق PDF
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="invite-email">البريد الإلكتروني *</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                placeholder="judge@example.com"
-                value={inviteFormData.email}
-                onChange={(e) => setInviteFormData({ ...inviteFormData, email: e.target.value })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="invite-name">اسم المحكم *</Label>
+                <Input
+                  id="invite-name"
+                  type="text"
+                  placeholder="د. أحمد محمد"
+                  value={inviteFormData.name}
+                  onChange={(e) => setInviteFormData({ ...inviteFormData, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invite-email">البريد الإلكتروني *</Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  placeholder="judge@example.com"
+                  value={inviteFormData.email}
+                  onChange={(e) => setInviteFormData({ ...inviteFormData, email: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="invite-name">الاسم (اختياري)</Label>
-              <Input
-                id="invite-name"
-                type="text"
-                placeholder="اسم المحكم"
-                value={inviteFormData.name}
-                onChange={(e) => setInviteFormData({ ...inviteFormData, name: e.target.value })}
-              />
-            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="invite-hackathon">الهاكاثون *</Label>
               <Select
@@ -773,23 +857,78 @@ export default function AdminJudgesPage() {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="invite-expires">صلاحية الدعوة (أيام)</Label>
+              <Label htmlFor="invite-registration-link">رابط التسجيل *</Label>
               <Input
-                id="invite-expires"
-                type="number"
-                min="1"
-                max="30"
-                value={inviteFormData.expiresInDays}
-                onChange={(e) => setInviteFormData({ ...inviteFormData, expiresInDays: parseInt(e.target.value) })}
+                id="invite-registration-link"
+                type="url"
+                placeholder="https://example.com/register"
+                value={inviteFormData.registrationLink}
+                onChange={(e) => setInviteFormData({ ...inviteFormData, registrationLink: e.target.value })}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="invite-pdf">رفع مرفق PDF (اختياري)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="invite-pdf"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfUpload}
+                  disabled={uploadingPdf}
+                  className="flex-1"
+                />
+                {uploadingPdf && (
+                  <div className="text-sm text-[#01645e]">جاري الرفع...</div>
+                )}
+              </div>
+              {inviteFormData.attachmentUrl && (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle className="w-4 h-4" />
+                  تم رفع المرفق بنجاح
+                  <a href={inviteFormData.attachmentUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                    عرض
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="invite-message">صياغة الرسالة *</Label>
+              <Textarea
+                id="invite-message"
+                value={inviteFormData.emailMessage}
+                onChange={(e) => setInviteFormData({ ...inviteFormData, emailMessage: e.target.value })}
+                rows={15}
+                className="font-arabic text-sm"
+                placeholder="اكتب نص الدعوة هنا..."
+              />
+              <p className="text-xs text-[#8b7632]">
+                استخدم [الاسم الكامل] و [رابط التسجيل] كمتغيرات سيتم استبدالها تلقائياً
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="invite-expires">صلاحية الدعوة (أيام)</Label>
+                <Input
+                  id="invite-expires"
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={inviteFormData.expiresInDays}
+                  onChange={(e) => setInviteFormData({ ...inviteFormData, expiresInDays: parseInt(e.target.value) })}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
               إلغاء
             </Button>
-            <Button onClick={sendInvitation} className="bg-gradient-to-r from-[#01645e] to-[#3ab666]">
+            <Button onClick={sendInvitation} className="bg-gradient-to-r from-[#01645e] to-[#3ab666]" disabled={uploadingPdf}>
               <Send className="w-4 h-4 ml-2" />
               إرسال الدعوة
             </Button>
