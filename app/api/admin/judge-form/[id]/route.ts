@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/auth'
 
 // GET - Get judge form configuration
 export async function GET(
   request: NextRequest,
-  { params }: { params: { hackathonId: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: hackathonId } = params
+    // ✅ التحقق من الـ authentication
+    const token = request.cookies.get('auth-token')?.value
+    if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+
+    const payload = await verifyToken(token)
+    if (!payload || payload.role !== 'admin') {
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+    }
+
+    const params = await context.params
+    const hackathonId = params.id
 
     // Check if form exists
     const form = await prisma.judgeFormDesign.findUnique({
@@ -49,10 +60,20 @@ export async function GET(
 // POST - Save judge form configuration
 export async function POST(
   request: NextRequest,
-  { params }: { params: { hackathonId: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: hackathonId } = params
+    // ✅ التحقق من الـ authentication
+    const token = request.cookies.get('auth-token')?.value
+    if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+
+    const payload = await verifyToken(token)
+    if (!payload || payload.role !== 'admin') {
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+    }
+
+    const params = await context.params
+    const hackathonId = params.id
     const body = await request.json()
 
     const {
