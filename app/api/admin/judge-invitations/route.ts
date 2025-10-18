@@ -10,8 +10,7 @@ const prisma = new PrismaClient()
 function getJudgeInvitationEmailContent(
   judgeName: string, 
   registrationLink: string, 
-  customMessage: string,
-  attachmentUrl?: string
+  customMessage: string
 ) {
   // Replace placeholders in custom message
   let messageContent = customMessage
@@ -28,38 +27,25 @@ function getJudgeInvitationEmailContent(
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; padding: 20px; }
-    .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; }
-    .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
-    .content { padding: 40px 30px; }
-    .message { font-size: 16px; line-height: 1.8; color: #4a5568; white-space: pre-wrap; }
-    .register-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 15px 40px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 25px 0; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
-    .attachment-box { background: #f7fafc; border: 2px solid #667eea; border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center; }
-    .footer { background: #f7fafc; padding: 30px; text-align: center; color: #718096; font-size: 14px; border-top: 1px solid #e2e8f0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+    .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
+    .content { padding: 30px; }
+    .message { font-size: 16px; line-height: 1.8; color: #333; }
+    .footer { background: #f9f9f9; padding: 20px; text-align: center; color: #666; font-size: 13px; border-radius: 0 0 12px 12px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>✨ دعوة للمشاركة</h1>
+      <h1 style="margin: 0;">✨ دعوة للمشاركة</h1>
     </div>
-    
     <div class="content">
       <div class="message">${messageContent}</div>
-      
-      ${attachmentUrl ? `
-      <div class="attachment-box">
-        <h3 style="color: #667eea; margin: 0 0 15px;">📎 مرفق إضافي</h3>
-        <a href="${attachmentUrl}" style="color: #667eea; text-decoration: underline;">تحميل المرفق (PDF)</a>
-      </div>
-      ` : ''}
     </div>
-    
     <div class="footer">
-      <p style="color: #a0aec0;">© 2025 نظام إدارة الهاكاثونات. جميع الحقوق محفوظة.</p>
+      <p>© 2025 نظام إدارة الهاكاثونات</p>
     </div>
   </div>
 </body>
@@ -198,8 +184,7 @@ export async function POST(request: NextRequest) {
       const emailContent = getJudgeInvitationEmailContent(
         name,
         registrationLink,
-        emailMessage,
-        undefined // لا نحتاج URL لأننا سنرسل الملف مباشرة
+        emailMessage
       )
 
       // Prepare email options

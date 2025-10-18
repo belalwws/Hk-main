@@ -28,7 +28,7 @@ import { useModal } from '@/hooks/use-modal'
 export default function JudgeFormBuilderPage() {
   const params = useParams()
   const router = useRouter()
-  const hackathonId = params.hackathonId as string
+  const hackathonId = params.id as string
   const { showSuccess, showError } = useModal()
 
   const [loading, setLoading] = useState(true)
