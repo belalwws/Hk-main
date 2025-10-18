@@ -49,7 +49,7 @@ export async function POST(
       take: 1
     })
 
-    const startingTeamNumber = existingTeams.length > 0 ? existingTeams[0].teamNumber + 1 : 1
+    const startingTeamNumber = existingTeams.length > 0 ? (existingTeams[0]?.teamNumber || 0) + 1 : 1
 
     // Get hackathon with settings
     const hackathon = await prisma.hackathon.findUnique({
@@ -130,10 +130,13 @@ export async function POST(
           value = (participant as any)[rule.fieldId] || 'غير محدد'
         }
 
-        if (!groups[rule.fieldId][value]) {
-          groups[rule.fieldId][value] = []
+        const fieldKey = rule.fieldId || 'default'
+        const valueKey = value || 'غير محدد'
+        
+        if (!groups[fieldKey][valueKey]) {
+          groups[fieldKey][valueKey] = []
         }
-        groups[rule.fieldId][value].push(participant)
+        groups[fieldKey][valueKey].push(participant)
       })
     }
 
