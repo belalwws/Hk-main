@@ -81,21 +81,31 @@ export default function HackathonRegisterFormPage() {
   }, [hackathonId])
 
   useEffect(() => {
+    // تتبع حالة الفورم لمنع Refresh المتكرر
+    let hasRefreshed = false
+    
     // Auto-refresh when form opens or closes
     if (form) {
       const checkFormStatus = () => {
+        // لو عملنا refresh مرة، نوقف التحقق
+        if (hasRefreshed) return
+
         const now = new Date()
         const openAt = form.openAt ? new Date(form.openAt) : null
         const closeAt = form.closeAt ? new Date(form.closeAt) : null
 
-        // Refresh page when form opens
-        if (openAt && now >= openAt && !isFormOpen()) {
-          window.location.reload()
+        // Refresh page when form opens (مرة واحدة فقط)
+        if (openAt && now >= openAt && shouldShowCountdown()) {
+          hasRefreshed = true
+          setTimeout(() => window.location.reload(), 1000)
+          return
         }
 
-        // Refresh page when form closes
-        if (closeAt && now >= closeAt && !isFormClosed()) {
-          window.location.reload()
+        // Refresh page when form closes (مرة واحدة فقط)
+        if (closeAt && now >= closeAt && isFormOpen()) {
+          hasRefreshed = true
+          setTimeout(() => window.location.reload(), 1000)
+          return
         }
       }
 

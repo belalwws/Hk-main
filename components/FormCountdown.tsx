@@ -36,7 +36,11 @@ export function FormCountdown({ targetDate, type, formTitle }: FormCountdownProp
 
       if (difference <= 0) {
         setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 })
-        return
+        // عند انتهاء الوقت، نعمل refresh واحد فقط
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+        return true // نرجع true عشان نوقف الـ interval
       }
 
       const days = Math.floor(difference / (1000 * 60 * 60 * 24))
@@ -45,10 +49,16 @@ export function FormCountdown({ targetDate, type, formTitle }: FormCountdownProp
       const seconds = Math.floor((difference % (1000 * 60)) / 1000)
 
       setTimeRemaining({ days, hours, minutes, seconds, total: difference })
+      return false
     }
 
     calculateTimeRemaining()
-    const interval = setInterval(calculateTimeRemaining, 1000)
+    const interval = setInterval(() => {
+      const shouldStop = calculateTimeRemaining()
+      if (shouldStop) {
+        clearInterval(interval)
+      }
+    }, 1000)
 
     return () => clearInterval(interval)
   }, [targetDate])
