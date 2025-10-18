@@ -98,7 +98,7 @@ export async function PATCH(
           : getRejectionEmailContent(participant.user.name, participant.hackathon.title)
 
         await transporter.sendMail({
-          from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
+          from: `"${participant.hackathon.title}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`,
           to: participant.user.email,
           subject: emailContent.subject,
           html: emailContent.html

@@ -317,7 +317,7 @@ async function sendTeamAssignmentEmail(
 ): Promise<void> {
   try {
     await transporter.sendMail({
-      from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
+      from: `"${hackathonTitle}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`,
       to: email,
       subject: `🎉 تم تعيينك في ${teamName} - ${hackathonTitle}`,
       html: getTeamAssignmentEmailContent(userName, hackathonTitle, teamName, userRole, teamMembers)
