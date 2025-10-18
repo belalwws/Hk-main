@@ -14,7 +14,10 @@ import {
   Briefcase,
   Calendar,
   Filter,
-  Download
+  Download,
+  Trash2,
+  IdCard,
+  Building
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -188,6 +191,44 @@ export default function JudgeApplicationsPage() {
     } catch (error) {
       console.error('Error rejecting application:', error)
       showError('حدث خطأ في رفض الطلب')
+    }
+  }
+
+  const deleteApplication = async (applicationId: string, applicantName: string) => {
+    showConfirm(
+      `هل أنت متأكد من حذف طلب "${applicantName}"؟`,
+      async () => {
+        try {
+          const response = await fetch(`/api/admin/judge-applications/${applicationId}`, {
+            method: 'DELETE'
+          })
+
+          if (response.ok) {
+            showSuccess('تم حذف الطلب بنجاح')
+            setShowDetailsDialog(false)
+            fetchApplications()
+          } else {
+            const error = await response.json()
+            showError(error.error || 'فشل في حذف الطلب')
+          }
+        } catch (error) {
+          console.error('Error deleting application:', error)
+          showError('حدث خطأ في حذف الطلب')
+        }
+      },
+      '🗑️ حذف الطلب',
+      'حذف',
+      'إلغاء',
+      'danger'
+    )
+  }
+
+  const parseAdditionalData = (bioString: string | null) => {
+    if (!bioString) return { bio: '', nationalId: '', workplace: '' }
+    try {
+      return JSON.parse(bioString)
+    } catch {
+      return { bio: bioString, nationalId: '', workplace: '' }
     }
   }
 
@@ -495,7 +536,7 @@ export default function JudgeApplicationsPage() {
                 <div className="flex items-start gap-2">
                   <User className="w-4 h-4 text-[#01645e] mt-1" />
                   <div>
-                    <Label className="text-[#01645e] font-bold text-sm">الاسم</Label>
+                    <Label className="text-[#01645e] font-bold text-sm">الاسم الكامل</Label>
                     <p className="text-sm">{selectedApplication.name}</p>
                   </div>
                 </div>
@@ -503,14 +544,14 @@ export default function JudgeApplicationsPage() {
                   <Mail className="w-4 h-4 text-[#01645e] mt-1" />
                   <div>
                     <Label className="text-[#01645e] font-bold text-sm">البريد الإلكتروني</Label>
-                    <p className="text-xs">{selectedApplication.email}</p>
+                    <p className="text-xs break-all">{selectedApplication.email}</p>
                   </div>
                 </div>
                 {selectedApplication.phone && (
                   <div className="flex items-start gap-2">
                     <Phone className="w-4 h-4 text-[#01645e] mt-1" />
                     <div>
-                      <Label className="text-[#01645e] font-bold text-sm">الهاتف</Label>
+                      <Label className="text-[#01645e] font-bold text-sm">رقم الهاتف</Label>
                       <p className="text-sm">{selectedApplication.phone}</p>
                     </div>
                   </div>
@@ -519,11 +560,36 @@ export default function JudgeApplicationsPage() {
                   <div className="flex items-start gap-2">
                     <Briefcase className="w-4 h-4 text-[#01645e] mt-1" />
                     <div>
-                      <Label className="text-[#01645e] font-bold text-sm">مجال الخبرة</Label>
+                      <Label className="text-[#01645e] font-bold text-sm">المؤهل العلمي</Label>
                       <p className="text-sm">{selectedApplication.expertise}</p>
                     </div>
                   </div>
                 )}
+                {(() => {
+                  const additionalData = parseAdditionalData(selectedApplication.bio)
+                  return (
+                    <>
+                      {additionalData.nationalId && (
+                        <div className="flex items-start gap-2">
+                          <IdCard className="w-4 h-4 text-[#01645e] mt-1" />
+                          <div>
+                            <Label className="text-[#01645e] font-bold text-sm">رقم الهوية</Label>
+                            <p className="text-sm">{additionalData.nationalId}</p>
+                          </div>
+                        </div>
+                      )}
+                      {additionalData.workplace && (
+                        <div className="flex items-start gap-2">
+                          <Building className="w-4 h-4 text-[#01645e] mt-1" />
+                          <div>
+                            <Label className="text-[#01645e] font-bold text-sm">جهة العمل</Label>
+                            <p className="text-sm">{additionalData.workplace}</p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
                 <div className="flex items-start gap-2 col-span-2">
                   <Calendar className="w-4 h-4 text-[#01645e] mt-1" />
                   <div>
@@ -535,19 +601,22 @@ export default function JudgeApplicationsPage() {
                 </div>
               </div>
 
-              {/* Bio */}
-              {selectedApplication.bio && (
-                <div className="p-4 bg-white border rounded-lg">
-                  <Label className="text-[#01645e] font-bold">نبذة</Label>
-                  <p className="text-sm text-[#8b7632] mt-2">{selectedApplication.bio}</p>
-                </div>
-              )}
+              {/* نبذة عن المحكم */}
+              {(() => {
+                const additionalData = parseAdditionalData(selectedApplication.bio)
+                return additionalData.bio && (
+                  <div className="p-4 bg-white border rounded-lg">
+                    <Label className="text-[#01645e] font-bold">نبذة عن المحكم المشارك</Label>
+                    <p className="text-sm text-[#8b7632] mt-2 whitespace-pre-wrap">{additionalData.bio}</p>
+                  </div>
+                )
+              })()}
 
-              {/* Experience */}
+              {/* المشاركات السابقة */}
               {selectedApplication.experience && (
                 <div className="p-4 bg-white border rounded-lg">
-                  <Label className="text-[#01645e] font-bold">الخبرة العملية</Label>
-                  <p className="text-sm text-[#8b7632] mt-2 whitespace-pre-wrap">
+                  <Label className="text-[#01645e] font-bold">هل شارك في هاكاثونات افتراضية من قبل؟</Label>
+                  <p className="text-sm text-[#8b7632] mt-2">
                     {selectedApplication.experience}
                   </p>
                 </div>
@@ -686,6 +755,21 @@ export default function JudgeApplicationsPage() {
                   </div>
                 </div>
               )}
+
+              {/* زر الحذف - متاح للجميع */}
+              <div className="border-t pt-4">
+                <Button
+                  onClick={() => deleteApplication(selectedApplication.id, selectedApplication.name)}
+                  variant="outline"
+                  className="w-full border-red-600 text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 ml-2" />
+                  حذف الطلب نهائياً
+                </Button>
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  ⚠️ لا يمكن التراجع عن هذا الإجراء
+                </p>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

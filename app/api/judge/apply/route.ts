@@ -14,16 +14,37 @@ export async function POST(request: NextRequest) {
     // Parse the JSON form data
     const parsedData = formDataJson ? JSON.parse(formDataJson) : {}
 
-    const name = parsedData.name || formDataRaw.get('name') as string
-    const email = parsedData.email || formDataRaw.get('email') as string
-    const phone = parsedData.phone || formDataRaw.get('phone') as string | null
-    const bio = parsedData.bio || formDataRaw.get('bio') as string | null
-    const expertise = parsedData.expertise || formDataRaw.get('expertise') as string | null
-    const experience = parsedData.experience || formDataRaw.get('experience') as string | null
+    const name = parsedData.name || parsedData['الاسم الكامل'] || formDataRaw.get('name') as string
+    const email = parsedData.email || parsedData['البريد الإلكتروني'] || formDataRaw.get('email') as string
+    const phone = parsedData.phone || parsedData['رقم الهاتف'] || formDataRaw.get('phone') as string | null
+    
+    // جمع البيانات الإضافية في حقل bio
+    const bioText = parsedData.bio || parsedData['نبذه عن المحكم المشارك'] || ''
+    const nationalId = parsedData.nationalId || parsedData['رقم الهويه'] || ''
+    const workplace = parsedData.workplace || parsedData['جهه العمل'] || ''
+    
+    // تخزين البيانات كـ JSON في bio
+    const bioData = {
+      bio: bioText,
+      nationalId: nationalId,
+      workplace: workplace
+    }
+    const bio = JSON.stringify(bioData)
+    
+    // المؤهل العلمي في expertise
+    const expertise = parsedData.expertise || parsedData['المؤهل العلمي'] || parsedData.education || null
+    
+    // المشاركات السابقة في experience  
+    const previousHackathons = parsedData.previousHackathons || parsedData['هل شاركت في هاكثونات افتراضيه عبر الانترنت من قبب'] || null
+    const experience = previousHackathons ? `مشاركات سابقة: ${previousHackathons}` : null
+    
     const linkedin = parsedData.linkedin || formDataRaw.get('linkedin') as string | null
     const twitter = parsedData.twitter || formDataRaw.get('twitter') as string | null
     const website = parsedData.website || formDataRaw.get('website') as string | null
-    const profileImage = formDataRaw.get('profileImage') as File | null
+    
+    // معالجة الصورة الشخصية
+    const profileImageFile = formDataRaw.get('profileImage') || formDataRaw.get('صوره شخصيه')
+    const profileImage = (profileImageFile && typeof profileImageFile !== 'string') ? profileImageFile as File : null
 
     console.log('📝 Submitting judge application:', { name, email, hackathonId })
 
