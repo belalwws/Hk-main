@@ -21,14 +21,35 @@ export async function POST(
 
     console.log(`🚀 Starting automatic team creation for hackathon: ${hackathonId}`)
 
-    // Get the highest team number to continue numbering
+    // Check if teams already exist
     const existingTeams = await prisma.team.findMany({
-      where: { hackathonId: hackathonId },
-      orderBy: { teamNumber: 'desc' },
-      take: 1
+      where: { hackathonId: hackathonId }
     })
 
-    const startingTeamNumber = existingTeams.length > 0 ? (existingTeams[0]?.teamNumber ?? 0) + 1 : 1
+    if (existingTeams.length > 0) {
+      console.log(`⚠️ Found ${existingTeams.length} existing teams. Deleting them first...`)
+      
+      // Remove all participants from teams first
+      await prisma.participant.updateMany({
+        where: {
+          hackathonId: hackathonId,
+          teamId: { not: null }
+        },
+        data: {
+          teamId: null,
+          teamRole: null
+        }
+      })
+
+      // Delete all existing teams
+      await prisma.team.deleteMany({
+        where: { hackathonId: hackathonId }
+      })
+
+      console.log(`✅ Deleted ${existingTeams.length} teams successfully`)
+    }
+
+    const startingTeamNumber = 1
 
     // Get hackathon with settings to determine team size
     const hackathon = await prisma.hackathon.findUnique({
@@ -142,16 +163,49 @@ export async function POST(
       console.log('📊 Role distribution (fallback):', Object.keys(roleGroups).map(role => `${role}: ${roleGroups[role].length}`))
     }
 
+    // ترتيب القواعد حسب الأولوية
+    const sortedRules = [...rules].sort((a, b) => (a.priority || 999) - (b.priority || 999))
+
+    // حساب عدد الفرق الذكي بناءً على قواعد التوزيع
+    let numberOfTeams: number
+    
+    if (sortedRules.length > 0 && sortedRules[0].distribution === 'one_per_team') {
+      // إذا كان التوزيع "واحد لكل فريق"، نحسب بناءً على أقل عدد من أي دور
+      const primaryRule = sortedRules[0]
+      const fieldGroups = groups[primaryRule.fieldId] || {}
+      const values = Object.keys(fieldGroups)
+      
+      // نحسب الحد الأقصى لعدد الفرق بناءً على التوزيع المتاح
+      const maxPerTeam = primaryRule.maxPerTeam || 1
+      const minCount = Math.min(...values.map(v => fieldGroups[v].length))
+      
+      // عدد الفرق = أقل عدد متاح من أي دور / maxPerTeam
+      numberOfTeams = Math.max(
+        Math.floor(minCount / maxPerTeam),
+        Math.ceil(approvedParticipants.length / teamFormationSettings.maxTeamSize)
+      )
+      
+      // التأكد من أن عدد الفرق معقول
+      numberOfTeams = Math.min(
+        numberOfTeams,
+        Math.ceil(approvedParticipants.length / teamFormationSettings.minTeamSize)
+      )
+      
+      console.log(`📊 Calculated ${numberOfTeams} teams based on role distribution`)
+      console.log(`   - Min available per role: ${minCount}`)
+      console.log(`   - MaxPerTeam: ${maxPerTeam}`)
+    } else {
+      // التوزيع العادي
+      numberOfTeams = Math.ceil(approvedParticipants.length / teamSize)
+      console.log(`📊 Calculated ${numberOfTeams} teams based on team size ${teamSize}`)
+    }
+
     // Create balanced teams using the configured team size and rules
     const teams: Array<{
       name: string
       teamNumber: number
       members: typeof approvedParticipants
     }> = []
-
-    // Calculate number of teams needed
-    const totalParticipants = approvedParticipants.length
-    const numberOfTeams = Math.ceil(totalParticipants / teamSize)
 
     console.log(`🎯 Creating ${numberOfTeams} teams with ~${teamSize} members each`)
 
@@ -166,9 +220,6 @@ export async function POST(
 
     // Distribute participants based on rules
     const assignedParticipants = new Set<string>()
-
-    // Sort rules by priority
-    const sortedRules = [...rules].sort((a, b) => (a.priority || 999) - (b.priority || 999))
 
     // استراتيجية Round-Robin الصحيحة: نوزع بالتناوب بين كل القيم والفرق
     for (const rule of sortedRules) {
