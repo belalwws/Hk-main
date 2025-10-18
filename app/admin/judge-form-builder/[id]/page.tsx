@@ -65,6 +65,41 @@ export default function JudgeFormBuilderPage() {
       required: false
     },
     {
+      id: 'nationalId',
+      type: 'text',
+      label: 'رقم الهوية',
+      placeholder: 'أدخل رقم الهوية',
+      required: false
+    },
+    {
+      id: 'workplace',
+      type: 'text',
+      label: 'جهة العمل',
+      placeholder: 'أدخل جهة العمل',
+      required: false
+    },
+    {
+      id: 'education',
+      type: 'text',
+      label: 'المؤهل العلمي',
+      placeholder: 'مثال: بكالوريوس علوم حاسب',
+      required: false
+    },
+    {
+      id: 'previousHackathons',
+      type: 'select',
+      label: 'هل شاركت في هاكاثونات افتراضية من قبل؟',
+      required: false,
+      options: ['نعم', 'لا']
+    },
+    {
+      id: 'bio',
+      type: 'textarea',
+      label: 'نبذة عن المحكم المشارك',
+      placeholder: 'اكتب نبذة مختصرة عنك...',
+      required: false
+    },
+    {
       id: 'profileImage',
       type: 'file',
       label: 'صورة شخصية',
