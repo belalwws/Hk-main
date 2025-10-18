@@ -164,37 +164,71 @@ export async function POST(
       })
     }
 
-    // Distribute participants
+    // Distribute participants based on rules
     const assignedParticipants = new Set<string>()
     const sortedRules = [...rules].sort((a, b) => (a.priority || 999) - (b.priority || 999))
 
+    // استراتيجية جديدة: نوزع كل قيمة (role) على كل الفرق أولاً قبل ما نكررها
     for (const rule of sortedRules) {
       if (rule.distribution === 'ignore' || !groups[rule.fieldId]) continue
 
       const fieldGroups = groups[rule.fieldId]
       const values = Object.keys(fieldGroups)
-      let currentTeamIndex = 0
 
-      for (const value of values) {
-        const participants = fieldGroups[value].filter(p => !assignedParticipants.has(p.id))
+      if (rule.distribution === 'one_per_team') {
+        // لكل قيمة (مثلاً "مطور")، وزع واحد على كل فريق
+        for (const value of values) {
+          const participants = fieldGroups[value].filter(p => !assignedParticipants.has(p.id))
+          const maxPerTeam = rule.maxPerTeam || 1
+          
+          // وزع على كل الفرق بالتساوي
+          let teamIndex = 0
+          for (const participant of participants) {
+            // ابحث عن أول فريق لم يصل للحد الأقصى من هذه القيمة
+            let assigned = false
+            let attempts = 0
+            
+            while (!assigned && attempts < numberOfTeams) {
+              const currentCount = teams[teamIndex].members.filter(m => {
+                let mValue: string | undefined
+                if (rule.fieldId === 'preferredRole' || rule.fieldLabel.includes('دور')) {
+                  mValue = m.user.preferredRole || 'غير محدد'
+                } else if (m.additionalInfo) {
+                  const additionalInfo = m.additionalInfo as any
+                  mValue = additionalInfo[rule.fieldId] || additionalInfo[rule.fieldLabel] || 'غير محدد'
+                } else {
+                  mValue = (m as any)[rule.fieldId] || 'غير محدد'
+                }
+                return mValue === value
+              }).length
 
-        for (const participant of participants) {
-          if (rule.distribution === 'one_per_team') {
-            const maxPerTeam = rule.maxPerTeam || 1
-            const currentCount = teams[currentTeamIndex].members.filter(m => {
-              const mValue = (m.additionalInfo as any)?.[rule.fieldId] || m.user.preferredRole
-              return mValue === value
-            }).length
-
-            if (currentCount >= maxPerTeam) {
-              currentTeamIndex = (currentTeamIndex + 1) % numberOfTeams
-              continue
+              if (currentCount < maxPerTeam) {
+                teams[teamIndex].members.push(participant)
+                assignedParticipants.add(participant.id)
+                assigned = true
+              }
+              
+              teamIndex = (teamIndex + 1) % numberOfTeams
+              attempts++
+            }
+            
+            // إذا لم نجد فريق مناسب، نتجاوز هذا المشارك (سيتم تعيينه في المرحلة التالية)
+            if (!assigned) {
+              console.log(`⚠️ Could not assign ${participant.user.name} (${value}) to any team following rules`)
             }
           }
-
-          teams[currentTeamIndex].members.push(participant)
-          assignedParticipants.add(participant.id)
-          currentTeamIndex = (currentTeamIndex + 1) % numberOfTeams
+        }
+      } else {
+        // التوزيع العادي (evenly)
+        let currentTeamIndex = 0
+        for (const value of values) {
+          const participants = fieldGroups[value].filter(p => !assignedParticipants.has(p.id))
+          
+          for (const participant of participants) {
+            teams[currentTeamIndex].members.push(participant)
+            assignedParticipants.add(participant.id)
+            currentTeamIndex = (currentTeamIndex + 1) % numberOfTeams
+          }
         }
       }
     }
