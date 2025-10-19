@@ -199,17 +199,18 @@ export interface EmailTemplates {
 
 /**
  * Get email templates with priority:
- * 1. Database EmailTemplate table (by templateKey)
+ * 1. Database EmailTemplate table (by templateKey) - ACTIVE OR INACTIVE
  * 2. Default hardcoded templates
  */
 export async function getEmailTemplates(hackathonId?: string): Promise<EmailTemplates> {
   try {
     let templates = { ...DEFAULT_TEMPLATES }
 
-    // Get templates from EmailTemplate table
+    // Get templates from EmailTemplate table - GET ALL TEMPLATES (not just active ones)
     try {
       const dbTemplates = await prisma.emailTemplate.findMany({
-        where: { isActive: true }
+        // ✅ REMOVED isActive filter - get ALL templates even if inactive
+        orderBy: { updatedAt: 'desc' }
       })
       
       if (dbTemplates && dbTemplates.length > 0) {
@@ -223,10 +224,11 @@ export async function getEmailTemplates(hackathonId?: string): Promise<EmailTemp
               subject: dbTemplate.subject,
               body: dbTemplate.bodyHtml || dbTemplate.bodyText || DEFAULT_TEMPLATES[templateKey].body
             }
+            console.log(`  ✓ Template loaded: ${templateKey} - "${dbTemplate.nameAr}" (active: ${dbTemplate.isActive})`)
           }
         })
       } else {
-        console.log('⚠️ No active templates in database, using defaults')
+        console.log('⚠️ No templates in database, using defaults')
       }
     } catch (error: any) {
       console.log('⚠️ Error loading templates from database:', error?.message || 'Unknown error')
