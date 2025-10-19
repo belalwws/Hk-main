@@ -61,6 +61,24 @@ export async function POST(
       return NextResponse.json({ error: 'معرف الفريق المستهدف مطلوب' }, { status: 400 })
     }
 
+    // Get hackathon settings to check email notifications
+    const hackathon = await prisma.hackathon.findUnique({
+      where: { id: hackathonId },
+      select: { 
+        settings: true,
+        title: true
+      }
+    })
+
+    if (!hackathon) {
+      return NextResponse.json({ error: 'الهاكاثون غير موجود' }, { status: 404 })
+    }
+
+    // Check if email notifications are enabled for member transfers
+    const settings = hackathon.settings as any
+    const emailNotifications = settings?.emailNotifications || {}
+    const shouldSendEmails = emailNotifications.memberTransfer !== false && !skipEmails
+
     // Check if participant exists and is in the source team
     const participant = await prisma.participant.findFirst({
       where: {
@@ -151,8 +169,9 @@ export async function POST(
       })
     ])
 
-    // Send email notifications only if not skipped
-    if (!skipEmails) {
+    // Send email notifications only if enabled and not skipped
+    if (shouldSendEmails) {
+      console.log('📧 Sending member transfer emails...')
       // Send email notifications to both teams
       if (updatedSourceTeam && updatedSourceTeam.participants.length > 0) {
         await sendTeamUpdateEmails(
@@ -178,12 +197,14 @@ export async function POST(
           updatedTargetTeam.hackathon.title
         )
       }
+    } else {
+      console.log('⚠️ Email notifications for member transfers are disabled or skipped')
     }
 
     return NextResponse.json({
-      message: skipEmails
-        ? `تم نقل ${participant.user.name} من ${sourceTeam?.name} إلى ${targetTeam.name} بنجاح`
-        : `تم نقل ${participant.user.name} من ${sourceTeam?.name} إلى ${targetTeam.name} بنجاح وإرسال الإيميلات`,
+      message: shouldSendEmails
+        ? `تم نقل ${participant.user.name} من ${sourceTeam?.name} إلى ${targetTeam.name} بنجاح وإرسال الإيميلات`
+        : `تم نقل ${participant.user.name} من ${sourceTeam?.name} إلى ${targetTeam.name} بنجاح (بدون إرسال إيميلات)`,
       movedMember: {
         name: participant.user.name,
         email: participant.user.email,

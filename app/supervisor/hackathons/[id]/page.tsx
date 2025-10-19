@@ -1512,6 +1512,12 @@ export default function SupervisorHackathonManagementPage() {
                             إعدادات التكوين
                           </Button>
                         </Link>
+                        <Link href={`/supervisor/hackathons/${params.id}/email-settings`}>
+                          <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                            <Mail className="w-4 h-4 ml-2" />
+                            إعدادات الإيميلات
+                          </Button>
+                        </Link>
                       </div>
                     )}
                   </div>

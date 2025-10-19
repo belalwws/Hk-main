@@ -96,6 +96,10 @@ export async function POST(
       rules: []
     }
 
+    // Check if email notifications are enabled for team formation
+    const emailNotifications = hackathonSettings?.emailNotifications || {}
+    const shouldSendEmails = emailNotifications.teamFormation !== false
+
     const teamSize = teamFormationSettings.teamSize
     const rules = teamFormationSettings.rules || []
 
@@ -422,35 +426,42 @@ export async function POST(
     }
 
     // Send emails in batches using bulk email function
-    console.log(`📧 Preparing to send ${emailData.length} team assignment emails in batches`)
+    let emailStats = { sent: 0, failed: 0, total: 0 }
     
-    const { sendBulkEmails } = await import('@/lib/mailer')
-    const emailsToSend = emailData.map(data => ({
-      to: data.email,
-      subject: `تم تعيينك في ${data.teamName} - ${data.hackathonTitle}`,
-      html: `
-        <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #01645e;">مرحباً ${data.userName}!</h2>
-          <p>تم تعيينك في <strong>${data.teamName}</strong> للمشاركة في <strong>${data.hackathonTitle}</strong></p>
-          <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <h3 style="color: #01645e;">دورك في الفريق:</h3>
-            <p style="font-size: 18px; color: #3ab666;"><strong>${data.userRole}</strong></p>
+    if (shouldSendEmails && emailData.length > 0) {
+      console.log(`📧 Preparing to send ${emailData.length} team assignment emails in batches`)
+      
+      const { sendBulkEmails } = await import('@/lib/mailer')
+      const emailsToSend = emailData.map(data => ({
+        to: data.email,
+        subject: `تم تعيينك في ${data.teamName} - ${data.hackathonTitle}`,
+        html: `
+          <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #01645e;">مرحباً ${data.userName}!</h2>
+            <p>تم تعيينك في <strong>${data.teamName}</strong> للمشاركة في <strong>${data.hackathonTitle}</strong></p>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <h3 style="color: #01645e;">دورك في الفريق:</h3>
+              <p style="font-size: 18px; color: #3ab666;"><strong>${data.userRole}</strong></p>
+            </div>
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #01645e;">أعضاء الفريق:</h3>
+              <pre style="white-space: pre-line;">${data.teamMembers}</pre>
+            </div>
+            <p style="margin-top: 20px;">تواصل مع أعضاء فريقك وابدأوا العمل على مشروعكم!</p>
+            <p style="color: #8b7632;">بالتوفيق! 🚀</p>
           </div>
-          <div style="background: #e8f5e9; padding: 15px; border-radius: 5px;">
-            <h3 style="color: #01645e;">أعضاء الفريق:</h3>
-            <pre style="white-space: pre-line;">${data.teamMembers}</pre>
-          </div>
-          <p style="margin-top: 20px;">تواصل مع أعضاء فريقك وابدأوا العمل على مشروعكم!</p>
-          <p style="color: #8b7632;">بالتوفيق! 🚀</p>
-        </div>
-      `,
-      text: `مرحباً ${data.userName}!\n\nتم تعيينك في ${data.teamName} للمشاركة في ${data.hackathonTitle}\n\nدورك: ${data.userRole}\n\nأعضاء الفريق:\n${data.teamMembers}\n\nبالتوفيق!`
-    }))
-    
-    const bulkResults = await sendBulkEmails(emailsToSend, {
-      batchSize: 5,
-      delayBetweenBatches: 3000
-    })
+        `,
+        text: `مرحباً ${data.userName}!\n\nتم تعيينك في ${data.teamName} للمشاركة في ${data.hackathonTitle}\n\nدورك: ${data.userRole}\n\nأعضاء الفريق:\n${data.teamMembers}\n\nبالتوفيق!`
+      }))
+      
+      const bulkResults = await sendBulkEmails(emailsToSend, {
+        batchSize: 5,
+        delayBetweenBatches: 3000
+      })
+      emailStats = bulkResults
+    } else {
+      console.log(`⚠️ Email notifications for team formation are disabled. Skipping ${emailData.length} emails.`)
+    }
 
     const finalUnassignedCount = approvedParticipants.length - assignedParticipants.size
     
@@ -462,10 +473,11 @@ export async function POST(
       assignedParticipants: assignedParticipants.size,
       unassignedParticipants: finalUnassignedCount,
       emailStats: {
-        sent: bulkResults.sent,
-        failed: bulkResults.failed,
-        total: bulkResults.total
+        sent: emailStats.sent,
+        failed: emailStats.failed,
+        total: emailStats.total
       },
+      emailsEnabled: shouldSendEmails,
       warning: finalUnassignedCount > 0 ? `⚠️ ${finalUnassignedCount} مشاركين لم يتم تعيينهم بسبب قواعد التوزيع` : null
     })
 
