@@ -622,6 +622,29 @@ model JudgeFormDesign {
   @@map("judge_form_designs")
 }
 
+// ExpertFormDesign model - Custom design for expert application forms
+model ExpertFormDesign {
+  id              String   @id @default(cuid())
+  hackathonId     String   @unique
+  isEnabled       Boolean  @default(true)
+  coverImage      String? // Cover image URL
+  primaryColor    String   @default("#0891b2") // cyan-600
+  secondaryColor  String   @default("#3b82f6") // blue-500
+  accentColor     String   @default("#06b6d4") // cyan-500
+  backgroundColor String   @default("#ffffff")
+  title           String? // Custom form title
+  description     String? // Custom form description
+  welcomeMessage  String? // Welcome message
+  successMessage  String? // Success message after submission
+  logoUrl         String? // Logo URL
+  customCss       String? // Custom CSS
+  settings        String? // JSON settings
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("expert_form_designs")
+}
+
 // Hackathon Feedback Form Design - تصميم فورم تقييم الهاكاثون
 model HackathonFeedbackForm {
   id              String   @id @default(cuid())
