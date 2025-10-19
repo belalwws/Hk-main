@@ -224,20 +224,54 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('📧 Sending email...')
+      console.log('📧 Final mail options:', {
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        hasHtml: !!mailOptions.html,
+        hasText: !!mailOptions.text,
+        hasAttachments: !!mailOptions.attachments
+      })
+      
       const info = await transporter.sendMail(mailOptions)
-      console.log('✅ Email sent successfully!')
+      
+      console.log('✅ ========================================')
+      console.log('✅ EMAIL SENT SUCCESSFULLY!')
+      console.log('✅ ========================================')
+      console.log('✅ To:', email)
       console.log('✅ MessageId:', info.messageId)
       console.log('✅ Response:', info.response)
       console.log('✅ Accepted:', info.accepted)
       console.log('✅ Rejected:', info.rejected)
+      console.log('✅ Envelope:', info.envelope)
+      console.log('✅ ========================================')
+      
+      // ⚠️ IMPORTANT: Check if email was actually accepted
+      if (info.rejected && info.rejected.length > 0) {
+        console.warn('⚠️ WARNING: Some emails were REJECTED by the server!')
+        console.warn('⚠️ Rejected addresses:', info.rejected)
+      }
+      
+      if (info.accepted && info.accepted.length > 0) {
+        console.log('✅ Email accepted by server for:', info.accepted)
+      } else {
+        console.warn('⚠️ WARNING: No emails were accepted!')
+      }
 
     } catch (emailError) {
+      console.error('❌ ========================================')
+      console.error('❌ EMAIL SENDING FAILED!')
+      console.error('❌ ========================================')
       console.error('❌ Error sending invitation email:', emailError)
       console.error('❌ Error details:', {
         name: emailError instanceof Error ? emailError.name : 'Unknown',
         message: emailError instanceof Error ? emailError.message : 'Unknown error',
+        code: (emailError as any)?.code,
+        responseCode: (emailError as any)?.responseCode,
+        response: (emailError as any)?.response,
         stack: emailError instanceof Error ? emailError.stack : 'No stack trace'
       })
+      console.error('❌ ========================================')
       // Don't fail the request if email fails - invitation is still created
       // But we should log it clearly for debugging
     }

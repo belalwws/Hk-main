@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Users, Eye, Edit, Trash2, UserCheck, UserX, Mail, Download, Send, Copy, Clock, CheckCircle, XCircle, User } from 'lucide-react'
+import { Plus, Users, Eye, Edit, Trash2, UserCheck, UserX, Mail, Download, Send, Copy, Clock, CheckCircle, XCircle, User, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -129,6 +129,9 @@ export default function AdminExpertsPage() {
     rejectionReason: '',
     reviewNotes: ''
   })
+  const [testEmailDialogOpen, setTestEmailDialogOpen] = useState(false)
+  const [testEmail, setTestEmail] = useState('')
+  const [sendingTestEmail, setSendingTestEmail] = useState(false)
 
   useEffect(() => {
     fetchExperts()
@@ -287,6 +290,37 @@ export default function AdminExpertsPage() {
     // حفظ الملف مباشرة - سيتم إرساله مع الإيميل
     setInviteFormData({ ...inviteFormData, attachmentFile: file })
     showSuccess(`تم اختيار الملف: ${file.name}`)
+  }
+
+  const sendTestEmail = async () => {
+    if (!testEmail) {
+      showWarning('البريد الإلكتروني مطلوب')
+      return
+    }
+
+    setSendingTestEmail(true)
+    try {
+      const response = await fetch('/api/admin/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: testEmail })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        showSuccess(`تم إرسال رسالة اختبار إلى ${testEmail}. تحقق من البريد الوارد أو Spam!`)
+        setTestEmailDialogOpen(false)
+        setTestEmail('')
+      } else {
+        showError(data.error || 'فشل في إرسال رسالة الاختبار')
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error)
+      showError('حدث خطأ في إرسال رسالة الاختبار')
+    } finally {
+      setSendingTestEmail(false)
+    }
   }
 
   const cancelInvitation = async (invitationId: string) => {
@@ -557,6 +591,14 @@ export default function AdminExpertsPage() {
             >
               <Download className="w-4 h-4 ml-2" />
               تصدير Excel ({experts.length})
+            </Button>
+            <Button
+              onClick={() => setTestEmailDialogOpen(true)}
+              variant="outline"
+              className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+            >
+              <Mail className="w-4 h-4 ml-2" />
+              🧪 اختبار الإيميل
             </Button>
             <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
               <DialogTrigger asChild>
@@ -1284,6 +1326,78 @@ export default function AdminExpertsPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Test Email Dialog */}
+      <Dialog open={testEmailDialogOpen} onOpenChange={setTestEmailDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>🧪 اختبار البريد الإلكتروني</DialogTitle>
+            <DialogDescription>
+              أرسل رسالة اختبار للتأكد من أن نظام البريد الإلكتروني يعمل بشكل صحيح
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>البريد الإلكتروني للاختبار</Label>
+              <Input
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                placeholder="test@example.com"
+                disabled={sendingTestEmail}
+              />
+              <p className="text-xs text-gray-500">
+                💡 نصيحة: استخدم بريدك الإلكتروني الشخصي للاختبار
+              </p>
+            </div>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h4 className="font-semibold text-yellow-800 mb-2">ماذا يفعل هذا الاختبار؟</h4>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                <li>✅ يتحقق من إعدادات Gmail</li>
+                <li>✅ يرسل رسالة اختبار بسيطة</li>
+                <li>✅ يسجل جميع التفاصيل في Console</li>
+                <li>✅ يكشف أي مشاكل في الإرسال</li>
+              </ul>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-800 mb-2">بعد إرسال الرسالة:</h4>
+              <ol className="text-sm text-blue-700 space-y-1">
+                <li>1️⃣ تحقق من البريد الوارد</li>
+                <li>2️⃣ تحقق من مجلد Spam/Junk</li>
+                <li>3️⃣ راجع الـ Console للتفاصيل</li>
+              </ol>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setTestEmailDialogOpen(false)}
+              disabled={sendingTestEmail}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={sendTestEmail}
+              disabled={!testEmail || sendingTestEmail}
+              className="bg-gradient-to-r from-orange-500 to-orange-600"
+            >
+              {sendingTestEmail ? (
+                <>
+                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  جاري الإرسال...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 ml-2" />
+                  إرسال رسالة اختبار
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Components */}
       <ModalComponents />
