@@ -9,6 +9,12 @@ const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor
   { prefix: "/api/results", roles: ["admin"] },
   { prefix: "/api/admin/email-templates", roles: ["admin", "supervisor"] }, // Allow supervisors to manage email templates
   { prefix: "/api/admin/hackathons", roles: ["admin", "supervisor"] }, // Allow supervisors to access hackathon APIs
+  { prefix: "/api/admin/experts", roles: ["admin", "supervisor"] }, // Allow supervisors to manage experts
+  { prefix: "/api/admin/expert-invitations", roles: ["admin", "supervisor"] }, // Allow supervisors to manage expert invitations
+  { prefix: "/api/admin/expert-applications", roles: ["admin", "supervisor"] }, // Allow supervisors to manage expert applications
+  { prefix: "/api/admin/judges", roles: ["admin", "supervisor"] }, // Allow supervisors to manage judges
+  { prefix: "/api/admin/judge-invitations", roles: ["admin", "supervisor"] }, // Allow supervisors to manage judge invitations
+  { prefix: "/api/admin/judge-applications", roles: ["admin", "supervisor"] }, // Allow supervisors to manage judge applications
   { prefix: "/api/admin", roles: ["admin"] },
   { prefix: "/api/supervisor", roles: ["supervisor", "admin"] },
   { prefix: "/judge", roles: ["judge"] },
