@@ -166,39 +166,9 @@ export async function POST(
     // ترتيب القواعد حسب الأولوية
     const sortedRules = [...rules].sort((a, b) => (a.priority || 999) - (b.priority || 999))
 
-    // حساب عدد الفرق الذكي بناءً على قواعد التوزيع
-    let numberOfTeams: number
-    
-    if (sortedRules.length > 0 && sortedRules[0].distribution === 'one_per_team') {
-      // إذا كان التوزيع "واحد لكل فريق"، نحسب بناءً على أقل عدد من أي دور
-      const primaryRule = sortedRules[0]
-      const fieldGroups = groups[primaryRule.fieldId] || {}
-      const values = Object.keys(fieldGroups)
-      
-      // نحسب الحد الأقصى لعدد الفرق بناءً على التوزيع المتاح
-      const maxPerTeam = primaryRule.maxPerTeam || 1
-      const minCount = Math.min(...values.map(v => fieldGroups[v].length))
-      
-      // عدد الفرق = أقل عدد متاح من أي دور / maxPerTeam
-      numberOfTeams = Math.max(
-        Math.floor(minCount / maxPerTeam),
-        Math.ceil(approvedParticipants.length / teamFormationSettings.maxTeamSize)
-      )
-      
-      // التأكد من أن عدد الفرق معقول
-      numberOfTeams = Math.min(
-        numberOfTeams,
-        Math.ceil(approvedParticipants.length / teamFormationSettings.minTeamSize)
-      )
-      
-      console.log(`📊 Calculated ${numberOfTeams} teams based on role distribution`)
-      console.log(`   - Min available per role: ${minCount}`)
-      console.log(`   - MaxPerTeam: ${maxPerTeam}`)
-    } else {
-      // التوزيع العادي
-      numberOfTeams = Math.ceil(approvedParticipants.length / teamSize)
-      console.log(`📊 Calculated ${numberOfTeams} teams based on team size ${teamSize}`)
-    }
+    // حساب عدد الفرق بناءً على إجمالي المشاركين، مش أقل دور
+    const numberOfTeams = Math.ceil(approvedParticipants.length / teamSize)
+    console.log(`📊 Creating ${numberOfTeams} teams for ${approvedParticipants.length} participants (teamSize: ${teamSize})`)
 
     // Create balanced teams using the configured team size and rules
     const teams: Array<{
