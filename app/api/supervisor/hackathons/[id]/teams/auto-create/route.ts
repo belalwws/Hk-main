@@ -357,7 +357,14 @@ export async function POST(
               // البحث في formData (من الفورم الديناميكي)
               if (additionalInfo.formData) {
                 const formData = additionalInfo.formData
-                // البحث في كل الحقول الممكنة للدور
+                
+                // أولاً: البحث بالـ ID المحدد للدور (field_1760547826023)
+                if (formData['field_1760547826023']) {
+                  console.log(`✅ Found role by ID: field_1760547826023 = ${formData['field_1760547826023']}`)
+                  return formData['field_1760547826023']
+                }
+                
+                // ثانياً: البحث في كل الحقول الممكنة للدور
                 const roleKeys = Object.keys(formData).filter(key => {
                   const lowerKey = key.toLowerCase()
                   return (
