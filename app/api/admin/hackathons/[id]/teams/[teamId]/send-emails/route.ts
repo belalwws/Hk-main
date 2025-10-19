@@ -21,6 +21,15 @@ export async function POST(
   try {
     const params = await context.params
     const { teamId } = params
+    
+    // Get custom email content from request body
+    const body = await request.json()
+    const { 
+      customSubject, 
+      customMessage, 
+      pdfLink,
+      additionalNotes 
+    } = body
 
     // Get team with members and hackathon info
     const team = await prisma.team.findUnique({
@@ -63,16 +72,21 @@ export async function POST(
     // Send emails to all team members
     const emailPromises = team.participants.map(async (member) => {
       try {
+        const emailSubject = customSubject || `📋 تفاصيل فريقك - ${team.name} - ${team.hackathon.title}`
+        
         await transporter.sendMail({
           from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
           to: member.user.email,
-          subject: `🎉 تحديث معلومات ${team.name} - ${team.hackathon.title}`,
+          subject: emailSubject,
           html: getTeamUpdateEmailContent(
             member.user.name,
             team.hackathon.title,
             team.name,
             member.user.preferredRole || 'مطور',
-            teamMembersList
+            teamMembersList,
+            customMessage,
+            pdfLink,
+            additionalNotes
           )
         })
 
@@ -108,23 +122,29 @@ function getTeamUpdateEmailContent(
   hackathonTitle: string,
   teamName: string,
   userRole: string,
-  teamMembers: string
+  teamMembers: string,
+  customMessage?: string,
+  pdfLink?: string,
+  additionalNotes?: string
 ): string {
+  const defaultMessage = `إليك المعلومات المحدثة عن فريقك في <strong style="color: #3ab666;">${hackathonTitle}</strong>`
+  const message = customMessage || defaultMessage
+  
   return `
     <!DOCTYPE html>
     <html dir="rtl" lang="ar">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>تحديث معلومات الفريق</title>
+      <title>تفاصيل فريقك</title>
     </head>
     <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); margin: 0; padding: 20px;">
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
         
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); padding: 30px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">📋 تحديث معلومات الفريق</h1>
-          <p style="color: #c3e956; margin: 10px 0 0 0; font-size: 18px;">معلومات محدثة عن فريقك</p>
+          <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">📋 تفاصيل فريقك</h1>
+          <p style="color: #c3e956; margin: 10px 0 0 0; font-size: 18px;">معلومات مهمة عن فريقك</p>
         </div>
 
         <!-- Content -->
@@ -132,7 +152,7 @@ function getTeamUpdateEmailContent(
           <h2 style="color: #01645e; margin: 0 0 20px 0; font-size: 24px;">مرحباً ${userName}! 👋</h2>
           
           <p style="color: #333; line-height: 1.8; font-size: 16px; margin-bottom: 25px;">
-            إليك المعلومات المحدثة عن فريقك في <strong style="color: #3ab666;">${hackathonTitle}</strong>
+            ${message}
           </p>
 
           <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-right: 4px solid #3ab666; padding: 25px; margin: 25px 0; border-radius: 10px;">
@@ -144,6 +164,23 @@ function getTeamUpdateEmailContent(
           <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 15px 0;">
             <pre style="color: #333; margin: 0; font-family: inherit; white-space: pre-wrap; line-height: 1.6;">${teamMembers}</pre>
           </div>
+
+          ${pdfLink ? `
+          <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin: 25px 0; text-align: center;">
+            <h3 style="color: #856404; margin: 0 0 15px 0; font-size: 18px;">📚 الكتيب الإرشادي</h3>
+            <p style="color: #856404; margin: 0 0 15px 0; font-size: 14px;">يمكنك تحميل الكتيب الإرشادي الخاص بالهاكاثون من الرابط أدناه</p>
+            <a href="${pdfLink}" style="background: #ffc107; color: #212529; padding: 12px 25px; text-decoration: none; border-radius: 20px; font-weight: bold; display: inline-block; transition: transform 0.3s;">
+              📥 تحميل الكتيب الإرشادي (PDF)
+            </a>
+          </div>
+          ` : ''}
+
+          ${additionalNotes ? `
+          <div style="background: #e3f2fd; border-right: 4px solid #2196f3; border-radius: 8px; padding: 20px; margin: 25px 0;">
+            <h3 style="color: #1565c0; margin: 0 0 10px 0; font-size: 16px;">💡 ملاحظات إضافية:</h3>
+            <p style="color: #1976d2; margin: 0; line-height: 1.8; white-space: pre-wrap;">${additionalNotes}</p>
+          </div>
+          ` : ''}
 
           <h3 style="color: #01645e; margin: 30px 0 15px 0;">💡 نصائح للعمل الجماعي:</h3>
           <ul style="color: #333; line-height: 1.8; padding-right: 20px;">

@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Mail, User, Crown, Trash2, UserMinus, ArrowRightLeft, Eye, Phone, MapPin } from 'lucide-react'
+import { Users, Mail, User, Crown, Trash2, UserMinus, ArrowRightLeft, Eye, Phone, MapPin, FileText, Link as LinkIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 interface TeamMember {
   id: string
@@ -47,6 +50,15 @@ export default function TeamsDisplay({ hackathonId }: TeamsDisplayProps) {
   const [selectedMemberToMove, setSelectedMemberToMove] = useState<{participantId: string, sourceTeamId: string, memberName: string} | null>(null)
   const [targetTeamForMove, setTargetTeamForMove] = useState<string>('')
   const [selectedMemberDetails, setSelectedMemberDetails] = useState<TeamMember | null>(null)
+  
+  // Email customization states
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [selectedTeamForEmail, setSelectedTeamForEmail] = useState<{id: string, name: string} | null>(null)
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailMessage, setEmailMessage] = useState('')
+  const [pdfLink, setPdfLink] = useState('')
+  const [additionalNotes, setAdditionalNotes] = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
 
   useEffect(() => {
     fetchTeams()
@@ -88,25 +100,54 @@ export default function TeamsDisplay({ hackathonId }: TeamsDisplayProps) {
     }
   }
 
-  const sendTeamEmails = async (teamId: string, teamName: string) => {
-    if (!confirm(`هل تريد إرسال إيميلات لجميع أعضاء ${teamName}؟`)) {
-      return
-    }
+  const openEmailModal = (teamId: string, teamName: string) => {
+    // Find team to get hackathon title
+    const team = teams.find(t => t.id === teamId)
+    if (!team) return
+    
+    setSelectedTeamForEmail({ id: teamId, name: teamName })
+    
+    // Set default values
+    setEmailSubject(`📋 تفاصيل فريقك - ${teamName}`)
+    setEmailMessage(`إليك المعلومات والإرشادات الخاصة بفريقك في الهاكاثون. نتمنى لكم التوفيق والنجاح!`)
+    setPdfLink('')
+    setAdditionalNotes('')
+    
+    setShowEmailModal(true)
+  }
 
+  const sendTeamEmails = async () => {
+    if (!selectedTeamForEmail) return
+    
+    setSendingEmail(true)
+    
     try {
-      const response = await fetch(`/api/admin/hackathons/${hackathonId}/teams/${teamId}/send-emails`, {
-        method: 'POST'
+      const response = await fetch(`/api/admin/hackathons/${hackathonId}/teams/${selectedTeamForEmail.id}/send-emails`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customSubject: emailSubject,
+          customMessage: emailMessage,
+          pdfLink: pdfLink || undefined,
+          additionalNotes: additionalNotes || undefined
+        })
       })
 
       if (response.ok) {
         const result = await response.json()
         alert(`تم إرسال الإيميلات بنجاح!\n\nتم إرسال: ${result.emailsSent} إيميل`)
+        setShowEmailModal(false)
+        setSelectedTeamForEmail(null)
       } else {
         alert('فشل في إرسال الإيميلات')
       }
     } catch (error) {
       console.error('Error sending team emails:', error)
       alert('حدث خطأ في إرسال الإيميلات')
+    } finally {
+      setSendingEmail(false)
     }
   }
 
@@ -510,7 +551,7 @@ export default function TeamsDisplay({ hackathonId }: TeamsDisplayProps) {
                 <div className="flex gap-2 pt-2">
                   <Button
                     size="sm"
-                    onClick={() => sendTeamEmails(team.id, team.name)}
+                    onClick={() => openEmailModal(team.id, team.name)}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <Mail className="w-3 h-3 ml-1" />
@@ -559,6 +600,133 @@ export default function TeamsDisplay({ hackathonId }: TeamsDisplayProps) {
           </div>
         </div>
       </div>
+
+      {/* Email Customization Modal */}
+      <Dialog open={showEmailModal} onOpenChange={setShowEmailModal}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-[#01645e] flex items-center gap-2">
+              <Mail className="w-6 h-6" />
+              تخصيص إيميل الفريق
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              قم بتعديل محتوى الإيميل قبل إرساله لأعضاء {selectedTeamForEmail?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-6 py-4">
+            {/* Email Subject */}
+            <div className="space-y-2">
+              <Label htmlFor="emailSubject" className="text-[#01645e] font-semibold flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                عنوان الإيميل
+              </Label>
+              <Input
+                id="emailSubject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="📋 تفاصيل فريقك - اسم الفريق"
+                className="border-[#01645e]/30 focus:border-[#3ab666]"
+              />
+            </div>
+
+            {/* Email Message */}
+            <div className="space-y-2">
+              <Label htmlFor="emailMessage" className="text-[#01645e] font-semibold flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                الرسالة الرئيسية
+              </Label>
+              <Textarea
+                id="emailMessage"
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                placeholder="اكتب الرسالة التي تريد إرسالها لأعضاء الفريق..."
+                rows={4}
+                className="border-[#01645e]/30 focus:border-[#3ab666] resize-none"
+              />
+              <p className="text-xs text-[#8b7632]">
+                سيتم إضافة تفاصيل الفريق وأسماء الأعضاء تلقائياً في الإيميل
+              </p>
+            </div>
+
+            {/* PDF Link */}
+            <div className="space-y-2">
+              <Label htmlFor="pdfLink" className="text-[#01645e] font-semibold flex items-center gap-2">
+                <LinkIcon className="w-4 h-4" />
+                رابط الكتيب الإرشادي (PDF) - اختياري
+              </Label>
+              <Input
+                id="pdfLink"
+                value={pdfLink}
+                onChange={(e) => setPdfLink(e.target.value)}
+                placeholder="https://example.com/hackathon-guide.pdf"
+                type="url"
+                className="border-[#01645e]/30 focus:border-[#3ab666]"
+              />
+              <p className="text-xs text-[#8b7632]">
+                إذا أضفت رابط، سيظهر زر تحميل الكتيب في الإيميل
+              </p>
+            </div>
+
+            {/* Additional Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="additionalNotes" className="text-[#01645e] font-semibold flex items-center gap-2">
+                💡 ملاحظات إضافية - اختياري
+              </Label>
+              <Textarea
+                id="additionalNotes"
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
+                placeholder="أضف أي ملاحظات أو تعليمات إضافية للفريق..."
+                rows={3}
+                className="border-[#01645e]/30 focus:border-[#3ab666] resize-none"
+              />
+            </div>
+
+            {/* Preview Note */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800 font-medium mb-2">📝 معاينة المحتوى:</p>
+              <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
+                <li>سيتم إرسال الإيميل لجميع أعضاء الفريق ({teams.find(t => t.id === selectedTeamForEmail?.id)?.members.length || 0} عضو)</li>
+                <li>سيحتوي الإيميل على: اسم الفريق، أدوار الأعضاء، ونصائح للعمل الجماعي</li>
+                <li>سيتم إضافة المحتوى المخصص الذي كتبته أعلاه</li>
+                {pdfLink && <li className="text-green-700 font-medium">✅ سيتم إضافة زر تحميل الكتيب الإرشادي</li>}
+                {additionalNotes && <li className="text-purple-700 font-medium">✅ سيتم إضافة الملاحظات الإضافية</li>}
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEmailModal(false)
+                setSelectedTeamForEmail(null)
+              }}
+              disabled={sendingEmail}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={sendTeamEmails}
+              disabled={sendingEmail || !emailSubject || !emailMessage}
+              className="bg-gradient-to-r from-[#01645e] to-[#3ab666] hover:from-[#014a46] hover:to-[#2d8f52]"
+            >
+              {sendingEmail ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin ml-2" />
+                  جاري الإرسال...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 ml-2" />
+                  إرسال الإيميلات
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

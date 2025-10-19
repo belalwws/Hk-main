@@ -62,6 +62,15 @@ export async function POST(
       }
     }
 
+    // Get custom email content from request body
+    const body = await request.json()
+    const { 
+      customSubject, 
+      customMessage, 
+      pdfLink,
+      additionalNotes 
+    } = body
+
     // Get team with members and hackathon info
     const team = await prisma.team.findFirst({
       where: {
@@ -106,15 +115,20 @@ export async function POST(
     let emailsSent = 0
     const emailPromises = team.participants.map(async (member: any) => {
       try {
+        const emailSubject = customSubject || `📋 تفاصيل فريقك - ${team.name} - ${team.hackathon.title}`
+        
         await transporter.sendMail({
           from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
           to: member.user.email,
-          subject: `📋 تفاصيل فريقك - ${team.name} - ${team.hackathon.title}`,
+          subject: emailSubject,
           html: getTeamEmailContent(
             member.user.name,
             team.hackathon.title,
             team.name,
-            teamMembersList
+            teamMembersList,
+            customMessage,
+            pdfLink,
+            additionalNotes
           )
         })
         emailsSent++
@@ -161,8 +175,14 @@ function getTeamEmailContent(
   userName: string,
   hackathonTitle: string,
   teamName: string,
-  teamMembersList: string
+  teamMembersList: string,
+  customMessage?: string,
+  pdfLink?: string,
+  additionalNotes?: string
 ): string {
+  const defaultMessage = `نود إعلامك بتفاصيل فريقك في <strong>${hackathonTitle}</strong>`
+  const message = customMessage || defaultMessage
+  
   return `
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -185,7 +205,7 @@ function getTeamEmailContent(
       </p>
 
       <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
-        نود إعلامك بتفاصيل فريقك في <strong>${hackathonTitle}</strong>:
+        ${message}
       </p>
 
       <div style="background-color: #f0f9ff; border-right: 4px solid #3ab666; padding: 15px; margin: 20px 0; border-radius: 5px;">
@@ -198,6 +218,23 @@ function getTeamEmailContent(
       <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; white-space: pre-line; font-size: 14px; color: #333;">
 ${teamMembersList}
       </div>
+
+      ${pdfLink ? `
+      <div style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #ffc107; border-radius: 10px; text-align: center;">
+        <h3 style="color: #856404; margin: 0 0 15px 0; font-size: 18px;">📚 الكتيب الإرشادي</h3>
+        <p style="color: #856404; margin: 0 0 15px 0; font-size: 14px;">يمكنك تحميل الكتيب الإرشادي الخاص بالهاكاثون من الرابط أدناه</p>
+        <a href="${pdfLink}" style="background: #ffc107; color: #212529; padding: 12px 25px; text-decoration: none; border-radius: 20px; font-weight: bold; display: inline-block;">
+          📥 تحميل الكتيب الإرشادي (PDF)
+        </a>
+      </div>
+      ` : ''}
+
+      ${additionalNotes ? `
+      <div style="margin-top: 25px; padding: 20px; background-color: #e3f2fd; border-right: 4px solid #2196f3; border-radius: 8px;">
+        <h3 style="color: #1565c0; margin: 0 0 10px 0; font-size: 16px;">💡 ملاحظات إضافية:</h3>
+        <p style="color: #1976d2; margin: 0; line-height: 1.8; white-space: pre-wrap;">${additionalNotes}</p>
+      </div>
+      ` : ''}
 
       <div style="margin-top: 30px; padding: 20px; background-color: #fff8e1; border-radius: 5px; border-right: 4px solid #c3e956;">
         <p style="margin: 0; color: #8b7632; font-size: 14px;">
