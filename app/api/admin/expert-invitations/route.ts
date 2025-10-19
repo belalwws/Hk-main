@@ -172,6 +172,13 @@ export async function POST(request: NextRequest) {
     console.log('🔗 Invitation link:', invitationLink)
 
     // Send invitation email with PDF attachment
+    console.log('📧 Attempting to send email...')
+    console.log('📧 Email config:', {
+      service: 'gmail',
+      user: process.env.GMAIL_USER || process.env.EMAIL_USER,
+      hasPassword: !!(process.env.GMAIL_PASS || process.env.EMAIL_PASS)
+    })
+    
     try {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -181,11 +188,20 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      console.log('📧 Transporter created successfully')
+
       const emailContent = getExpertInvitationEmailContent(
         name,
         registrationLink,
         emailMessage
       )
+
+      console.log('📧 Email content generated:', {
+        subject: emailContent.subject,
+        to: email,
+        from: hackathon.title,
+        messageLength: emailContent.html.length
+      })
 
       // Prepare email options with hackathon name as sender
       const mailOptions: any = {
@@ -204,15 +220,26 @@ export async function POST(request: NextRequest) {
           content: buffer,
           contentType: 'application/pdf'
         }]
-        console.log('📎 Adding PDF attachment:', attachmentFile.name)
+        console.log('📎 Adding PDF attachment:', attachmentFile.name, 'Size:', buffer.length, 'bytes')
       }
 
-      await transporter.sendMail(mailOptions)
+      console.log('📧 Sending email...')
+      const info = await transporter.sendMail(mailOptions)
+      console.log('✅ Email sent successfully!')
+      console.log('✅ MessageId:', info.messageId)
+      console.log('✅ Response:', info.response)
+      console.log('✅ Accepted:', info.accepted)
+      console.log('✅ Rejected:', info.rejected)
 
-      console.log('✅ Invitation email sent successfully to:', email)
     } catch (emailError) {
       console.error('❌ Error sending invitation email:', emailError)
+      console.error('❌ Error details:', {
+        name: emailError instanceof Error ? emailError.name : 'Unknown',
+        message: emailError instanceof Error ? emailError.message : 'Unknown error',
+        stack: emailError instanceof Error ? emailError.stack : 'No stack trace'
+      })
       // Don't fail the request if email fails - invitation is still created
+      // But we should log it clearly for debugging
     }
 
     return NextResponse.json({
