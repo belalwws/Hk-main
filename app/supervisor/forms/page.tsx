@@ -211,7 +211,7 @@ export default function SupervisorFormsManagement() {
                         نسخ الرابط
                       </Button>
 
-                      <Link href="/supervisor/judges">
+                      <Link href="/admin/judge-applications">
                         <Button variant="outline" className="w-full border-orange-300">
                           <Users className="w-4 h-4 ml-2" />
                           إدارة الطلبات
@@ -237,7 +237,7 @@ export default function SupervisorFormsManagement() {
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
                     <div className="flex flex-col gap-2">
-                      <Link href="/supervisor/judges">
+                      <Link href="/admin/judge-applications">
                         <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
                           <Mail className="w-4 h-4 ml-2" />
                           إدارة الدعوات
@@ -298,7 +298,7 @@ export default function SupervisorFormsManagement() {
                         نسخ الرابط
                       </Button>
 
-                      <Link href="/supervisor/experts">
+                      <Link href="/supervisor/expert-applications">
                         <Button variant="outline" className="w-full border-cyan-300">
                           <Users className="w-4 h-4 ml-2" />
                           إدارة الطلبات
@@ -334,7 +334,7 @@ export default function SupervisorFormsManagement() {
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
                     <div className="flex flex-col gap-2">
-                      <Link href="/supervisor/experts">
+                      <Link href="/supervisor/expert-applications">
                         <Button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600">
                           <Mail className="w-4 h-4 ml-2" />
                           إدارة الدعوات
