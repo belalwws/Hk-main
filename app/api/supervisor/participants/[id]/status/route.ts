@@ -101,28 +101,44 @@ export async function PATCH(
       
       if (status === 'approved') {
         templateType = 'acceptance'
+        console.log(`📧 [status-update] Processing ACCEPTANCE email for ${updatedParticipant.user.email}`)
       } else if (status === 'rejected') {
         templateType = 'rejection'
+        console.log(`📧 [status-update] Processing REJECTION email for ${updatedParticipant.user.email}`)
       }
 
       if (templateType) {
+        console.log(`📧 [status-update] Loading template type: ${templateType}`)
+        
         const emailContent = await processEmailTemplate(templateType, {
           participantName: updatedParticipant.user.name,
           hackathonTitle: updatedParticipant.hackathon.title,
           feedback: feedback || ''
         })
 
+        console.log(`📧 [status-update] Template loaded successfully`)
+        console.log(`📧 [status-update] Subject: ${emailContent.subject}`)
+        console.log(`📧 [status-update] Body preview: ${emailContent.body.substring(0, 100)}...`)
+        console.log(`📧 [status-update] Sending to: ${updatedParticipant.user.email}`)
+
         // Send email
-        await sendMail({
+        const mailResult = await sendMail({
           to: updatedParticipant.user.email,
           subject: emailContent.subject,
           html: emailContent.body
         })
 
-        console.log(`Email sent to ${updatedParticipant.user.email} for ${status}`)
+        console.log(`✅ [status-update] Email sent successfully to ${updatedParticipant.user.email}`)
+        console.log(`✅ [status-update] Mail result:`, mailResult)
+        console.log(`✅ [status-update] Message ID: ${mailResult?.messageId}`)
+        console.log(`✅ [status-update] Actually mailed: ${mailResult?.actuallyMailed}`)
+      } else {
+        console.log(`⚠️ [status-update] No email template for status: ${status}`)
       }
-    } catch (emailError) {
-      console.error('Error sending email notification:', emailError)
+    } catch (emailError: any) {
+      console.error('❌ [status-update] Error sending email notification:', emailError)
+      console.error('❌ [status-update] Error details:', emailError.message)
+      console.error('❌ [status-update] Error stack:', emailError.stack)
       // Don't fail the request if email fails
     }
 

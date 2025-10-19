@@ -284,10 +284,23 @@ export async function processEmailTemplate(
   variables: Record<string, any>,
   hackathonId?: string
 ): Promise<{ subject: string; body: string }> {
+  console.log(`📧 [email-templates] Processing template: ${templateType}`)
+  console.log(`📧 [email-templates] Variables:`, Object.keys(variables))
+  
   const template = await getEmailTemplate(templateType, hackathonId)
   
-  return {
+  console.log(`📧 [email-templates] Template loaded:`)
+  console.log(`📧 [email-templates] Subject: ${template.subject}`)
+  console.log(`📧 [email-templates] Body preview: ${template.body.substring(0, 150)}...`)
+  
+  const result = {
     subject: replaceTemplateVariables(template.subject, variables),
     body: replaceTemplateVariables(template.body, variables)
   }
+  
+  console.log(`📧 [email-templates] After variable replacement:`)
+  console.log(`📧 [email-templates] Subject: ${result.subject}`)
+  console.log(`📧 [email-templates] Body preview: ${result.body.substring(0, 150)}...`)
+  
+  return result
 }
