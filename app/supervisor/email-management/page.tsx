@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { RichTextEditor } from "@/components/admin/RichTextEditor"
+import { FileUploader } from "@/components/admin/FileUploader"
 import {
   Mail,
   Send,
@@ -30,6 +32,14 @@ import {
   Loader2
 } from "lucide-react"
 
+interface UploadedFile {
+  url: string
+  name: string
+  type: string
+  size: number
+  uploadedAt: Date
+}
+
 interface EmailTemplate {
   id: string
   templateKey: string
@@ -40,6 +50,7 @@ interface EmailTemplate {
   bodyText?: string
   category: string
   variables?: Record<string, string>
+  attachments?: UploadedFile[]
   isActive: boolean
   isSystem: boolean
   description?: string
@@ -73,8 +84,9 @@ export default function SupervisorEmailManagementPage() {
   const [sendingTest, setSendingTest] = useState(false) // حالة إرسال الإيميل التجريبي
   const [searchQuery, setSearchQuery] = useState('')
   const [previewMode, setPreviewMode] = useState(false)
-  const [simpleMode, setSimpleMode] = useState(true) // محرر بسيط أو متقدم
+  const [editorMode, setEditorMode] = useState<'simple' | 'rich' | 'html'>('rich') // simple, rich, html
   const [simpleText, setSimpleText] = useState('') // النص البسيط للمحرر
+  const [attachments, setAttachments] = useState<UploadedFile[]>([]) // الملفات المرفقة
   const [testEmail, setTestEmail] = useState('') // الإيميل التجريبي
   const [showTestResultModal, setShowTestResultModal] = useState(false) // modal نتيجة الإرسال
   const [testResultSuccess, setTestResultSuccess] = useState(false) // نجاح أو فشل
@@ -334,13 +346,17 @@ export default function SupervisorEmailManagementPage() {
     `
   }
 
-  // تحديث النص البسيط عند تغيير القالب المحدد
+  // تحديث النص البسيط والمرفقات عند تغيير القالب المحدد
   useEffect(() => {
-    if (selectedTemplate && simpleMode) {
-      const extracted = htmlToSimpleText(selectedTemplate.bodyHtml)
-      setSimpleText(extracted)
+    if (selectedTemplate) {
+      if (editorMode === 'simple') {
+        const extracted = htmlToSimpleText(selectedTemplate.bodyHtml)
+        setSimpleText(extracted)
+      }
+      // تحديث المرفقات من القالب
+      setAttachments(selectedTemplate.attachments || [])
     }
-  }, [selectedTemplate?.id, simpleMode])
+  }, [selectedTemplate?.id, editorMode])
 
   const resetSingleTemplate = async (templateKey: string) => {
     // تأكيد من المستخدم
@@ -889,31 +905,39 @@ export default function SupervisorEmailManagementPage() {
                         />
                       </div>
 
-                      {/* محرر بسيط */}
+                      {/* محرر النصوص المتقدم */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <Label className="text-slate-700 text-lg">محتوى الرسالة</Label>
                           <div className="flex gap-2">
                             <Button
-                              variant={simpleMode ? "default" : "outline"}
+                              variant={editorMode === 'simple' ? "default" : "outline"}
                               size="sm"
-                              onClick={() => setSimpleMode(true)}
-                              className={simpleMode ? "bg-indigo-600" : ""}
+                              onClick={() => setEditorMode('simple')}
+                              className={editorMode === 'simple' ? "bg-indigo-600" : ""}
                             >
                               محرر بسيط
                             </Button>
                             <Button
-                              variant={!simpleMode ? "default" : "outline"}
+                              variant={editorMode === 'rich' ? "default" : "outline"}
                               size="sm"
-                              onClick={() => setSimpleMode(false)}
-                              className={!simpleMode ? "bg-indigo-600" : ""}
+                              onClick={() => setEditorMode('rich')}
+                              className={editorMode === 'rich' ? "bg-indigo-600" : ""}
                             >
-                              محرر متقدم (HTML)
+                              محرر احترافي
+                            </Button>
+                            <Button
+                              variant={editorMode === 'html' ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setEditorMode('html')}
+                              className={editorMode === 'html' ? "bg-indigo-600" : ""}
+                            >
+                              محرر HTML
                             </Button>
                           </div>
                         </div>
 
-                        {simpleMode ? (
+                        {editorMode === 'simple' ? (
                           <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
                             <Alert className="bg-blue-50 border-blue-200">
                               <AlertCircle className="h-4 w-4 text-blue-600" />
@@ -956,6 +980,29 @@ export default function SupervisorEmailManagementPage() {
 نتطلع لرؤيتك!`}
                             />
                           </div>
+                        ) : editorMode === 'rich' ? (
+                          <div className="space-y-3">
+                            <Alert className="bg-gradient-to-r from-blue-50 to-indigo-50 border-indigo-200">
+                              <Sparkles className="h-4 w-4 text-indigo-600" />
+                              <AlertDescription className="text-indigo-800">
+                                ✨ محرر نصوص احترافي مع إمكانيات تنسيق متقدمة - استخدم الأدوات أعلاه لتنسيق النص، إضافة روابط، وإدراج متغيرات!
+                              </AlertDescription>
+                            </Alert>
+                            <RichTextEditor
+                              value={selectedTemplate.bodyHtml}
+                              onChange={(value) => {
+                                setHasUnsavedChanges(true)
+                                const updatedTemplate = {
+                                  ...selectedTemplate,
+                                  bodyHtml: value
+                                }
+                                setSelectedTemplate(updatedTemplate)
+                                autoSaveTemplate(updatedTemplate)
+                              }}
+                              placeholder="ابدأ بكتابة محتوى الإيميل هنا..."
+                              minHeight="400px"
+                            />
+                          </div>
                         ) : (
                           <div>
                             <Label className="text-slate-700">محتوى HTML (للمستخدمين المتقدمين)</Label>
@@ -975,6 +1022,37 @@ export default function SupervisorEmailManagementPage() {
                             />
                           </div>
                         )}
+                      </div>
+
+                      {/* File Attachments */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-slate-700 text-lg">المرفقات</Label>
+                          <Badge variant="secondary" className="bg-indigo-100 text-indigo-700">
+                            اختياري - سيتم إرفاقها تلقائياً عند الإرسال
+                          </Badge>
+                        </div>
+                        <Alert className="bg-yellow-50 border-yellow-200">
+                          <AlertCircle className="h-4 w-4 text-yellow-600" />
+                          <AlertDescription className="text-yellow-800">
+                            📎 يمكنك رفع ملفات PDF وصور لإرفاقها تلقائياً مع هذا القالب. الملفات المرفوعة سيتم إرسالها مع كل إيميل يستخدم هذا القالب.
+                          </AlertDescription>
+                        </Alert>
+                        <FileUploader
+                          files={attachments}
+                          onFilesChange={(newFiles) => {
+                            setAttachments(newFiles)
+                            setHasUnsavedChanges(true)
+                            const updatedTemplate = {
+                              ...selectedTemplate,
+                              attachments: newFiles
+                            }
+                            setSelectedTemplate(updatedTemplate)
+                            autoSaveTemplate(updatedTemplate)
+                          }}
+                          maxFiles={5}
+                          accept="image/*,application/pdf"
+                        />
                       </div>
 
                       {selectedTemplate.variables && (

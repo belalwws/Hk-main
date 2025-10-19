@@ -820,6 +820,7 @@ model EmailTemplate {
   bodyText     String?  @db.Text // محتوى نصي (اختياري)
   category     String // participant, judge, supervisor, team, general
   variables    Json? // المتغيرات المتاحة {name: description}
+  attachments  String?  @db.Text // الملفات المرفقة (JSON string)
   isActive     Boolean  @default(true)
   isSystem     Boolean  @default(false) // هل القالب أساسي (لا يمكن حذفه)
   description  String? // وصف القالب
