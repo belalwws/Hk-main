@@ -139,10 +139,14 @@ export default function FormsManagement() {
             transition={{ delay: 0.2 }}
           >
             <Tabs defaultValue="judges" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
                 <TabsTrigger value="judges">
                   <Award className="w-4 h-4 ml-2" />
                   فورم المحكمين
+                </TabsTrigger>
+                <TabsTrigger value="experts">
+                  <Users className="w-4 h-4 ml-2" />
+                  فورم الخبراء
                 </TabsTrigger>
                 <TabsTrigger value="supervision">
                   <UserCheck className="w-4 h-4 ml-2" />
@@ -238,6 +242,103 @@ export default function FormsManagement() {
                         <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
                           <p className="font-medium mb-1">📧 نظام الدعوات</p>
                           <p className="text-xs">يمكنك إرسال دعوات مخصصة للمحكمين مع روابط تسجيل فريدة</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Expert Forms Tab */}
+              <TabsContent value="experts">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Expert Application Form */}
+                  <Card className="hover:shadow-xl transition-shadow border-2 border-cyan-200">
+                    <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50">
+                      <div className="flex items-center justify-between">
+                        <Users className="w-8 h-8 text-cyan-600" />
+                        <Badge className="bg-cyan-600 text-white">خبراء</Badge>
+                      </div>
+                      <CardTitle className="text-xl text-cyan-900 mt-4">
+                        فورم طلب الانضمام كخبير
+                      </CardTitle>
+                      <CardDescription>
+                        فورم ديناميكي لاستقبال طلبات الخبراء - أضف الحقول والصور التي تريدها
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Link href={`/admin/expert-form-builder/${selectedHackathon}`}>
+                          <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600">
+                            <Settings className="w-4 h-4 ml-2" />
+                            بناء الفورم
+                          </Button>
+                        </Link>
+                        
+                        <Button
+                          variant="outline"
+                          className="w-full border-cyan-500 text-cyan-600 hover:bg-cyan-50"
+                          onClick={() => window.open(`/expert/apply/${selectedHackathon}`, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                          معاينة الفورم
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => copyLink(`${window.location.origin}/expert/apply/${selectedHackathon}`, 'فورم الخبراء')}
+                        >
+                          <Copy className="w-4 h-4 ml-2" />
+                          نسخ الرابط
+                        </Button>
+
+                        <Link href="/admin/experts">
+                          <Button variant="outline" className="w-full border-cyan-300">
+                            <Users className="w-4 h-4 ml-2" />
+                            إدارة الطلبات
+                          </Button>
+                        </Link>
+                      </div>
+                      
+                      <div className="bg-cyan-50 p-3 rounded-lg text-sm text-cyan-800 mt-4">
+                        <p className="font-medium mb-1">✨ مميزات الفورم</p>
+                        <ul className="text-xs space-y-1">
+                          <li>• رفع صورة الخبير على Cloudinary</li>
+                          <li>• حقول ديناميكية قابلة للتخصيص</li>
+                          <li>• دعم المرفقات والملفات</li>
+                          <li>• معلومات احترافية للخبير</li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Expert Invitation Form */}
+                  <Card className="hover:shadow-xl transition-shadow border-2 border-teal-200">
+                    <CardHeader className="bg-gradient-to-r from-teal-50 to-cyan-50">
+                      <div className="flex items-center justify-between">
+                        <Mail className="w-8 h-8 text-teal-600" />
+                        <Badge className="bg-teal-600 text-white">دعوات</Badge>
+                      </div>
+                      <CardTitle className="text-xl text-teal-900 mt-4">
+                        نظام دعوات الخبراء
+                      </CardTitle>
+                      <CardDescription>
+                        إرسال دعوات مخصصة للخبراء عبر البريد الإلكتروني
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Link href="/admin/experts">
+                          <Button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600">
+                            <Mail className="w-4 h-4 ml-2" />
+                            إدارة الدعوات
+                          </Button>
+                        </Link>
+
+                        <div className="bg-teal-50 p-3 rounded-lg text-sm text-teal-800">
+                          <p className="font-medium mb-1">📧 نظام الدعوات</p>
+                          <p className="text-xs">يمكنك إرسال دعوات مخصصة للخبراء مع روابط تسجيل فريدة</p>
                         </div>
                       </div>
                     </CardContent>
