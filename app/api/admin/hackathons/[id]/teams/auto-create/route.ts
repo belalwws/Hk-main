@@ -271,85 +271,36 @@ export async function POST(
       }
     }
 
-    // Assign remaining participants (with rule checking)
+    // Assign remaining participants (بدون تحقق من القواعد - الأولوية إنهم يتوزعوا)
     const remainingParticipants = approvedParticipants.filter(p => !assignedParticipants.has(p.id))
     let currentTeamIndex = 0
 
     console.log(`⚠️ ${remainingParticipants.length} participants remaining after rule-based assignment`)
+    console.log(`📌 Distributing remaining participants equally across teams (rules already applied for diversity)`)
 
+    // توزيع الباقي بالتساوي بدون قيود - القواعد اتطبقت عشان التنوع، دلوقتي نوزع الباقي
     for (const participant of remainingParticipants) {
-      let assigned = false
-      let attempts = 0
+      // ابحث عن أصغر فريق عشان نوازن العدد
+      let smallestTeamIndex = 0
+      let smallestTeamSize = teams[0].members.length
       
-      // Try to assign while respecting rules
-      while (!assigned && attempts < numberOfTeams) {
-        const teamIndex = (currentTeamIndex + attempts) % numberOfTeams
-        let canAssign = true
-        
-        // Check all rules for this participant
-        for (const rule of sortedRules) {
-          if (rule.distribution === 'ignore') continue
-          if (rule.distribution !== 'one_per_team') continue
-          
-          // Get participant's value for this rule
-          let participantValue: string | undefined
-          if (rule.fieldId === 'preferredRole' || rule.fieldLabel.includes('دور')) {
-            participantValue = participant.user.preferredRole || 'غير محدد'
-          } else if (participant.additionalInfo) {
-            const additionalInfo = participant.additionalInfo as any
-            participantValue = additionalInfo[rule.fieldId] || additionalInfo[rule.fieldLabel] || 'غير محدد'
-          } else {
-            participantValue = (participant as any)[rule.fieldId] || 'غير محدد'
-          }
-          
-          // Count how many members with same value already in team
-          const maxPerTeam = rule.maxPerTeam || 1
-          const currentCount = teams[teamIndex].members.filter(m => {
-            let mValue: string | undefined
-            if (rule.fieldId === 'preferredRole' || rule.fieldLabel.includes('دور')) {
-              mValue = m.user.preferredRole || 'غير محدد'
-            } else if (m.additionalInfo) {
-              const additionalInfo = m.additionalInfo as any
-              mValue = additionalInfo[rule.fieldId] || additionalInfo[rule.fieldLabel] || 'غير محدد'
-            } else {
-              mValue = (m as any)[rule.fieldId] || 'غير محدد'
-            }
-            return mValue === participantValue
-          }).length
-          
-          // If adding this participant would exceed maxPerTeam, can't assign
-          if (currentCount >= maxPerTeam) {
-            canAssign = false
-            break
-          }
-        }
-        
-        if (canAssign) {
-          teams[teamIndex].members.push(participant)
-          assignedParticipants.add(participant.id)
-          assigned = true
-          console.log(`✅ Assigned remaining participant ${participant.user.name} to Team ${teamIndex + 1}`)
-        } else {
-          attempts++
+      for (let i = 1; i < teams.length; i++) {
+        if (teams[i].members.length < smallestTeamSize) {
+          smallestTeamSize = teams[i].members.length
+          smallestTeamIndex = i
         }
       }
       
-      if (!assigned) {
-        console.log(`⚠️ Could not assign ${participant.user.name} to any team while respecting rules`)
-        console.log(`   Role: ${participant.user.preferredRole}`)
-        console.log(`   This participant will NOT be added to preserve team diversity`)
-      }
-      
-      currentTeamIndex = (currentTeamIndex + 1) % numberOfTeams
+      teams[smallestTeamIndex].members.push(participant)
+      assignedParticipants.add(participant.id)
+      console.log(`✅ Assigned ${participant.user.name} (${participant.user.preferredRole}) to Team ${smallestTeamIndex + 1} (now ${teams[smallestTeamIndex].members.length} members)`)
     }
 
-    const unassignedCount = remainingParticipants.length - remainingParticipants.filter(p => assignedParticipants.has(p.id)).length
-    if (unassignedCount > 0) {
-      console.log(`⚠️ Warning: ${unassignedCount} participants could not be assigned due to distribution rules`)
-    }
+    console.log(`✅ All ${approvedParticipants.length} participants distributed across ${numberOfTeams} teams`)
+    console.log(`📊 Team sizes: ${teams.map((t, i) => `Team ${i+1}: ${t.members.length}`).join(', ')}`)
 
     console.log('🔄 Team formation completed')
-    console.log(`📊 Assigned by rules: ${assignedParticipants.size}, Unassigned: ${unassignedCount}`)
+    console.log(`📊 Total assigned: ${assignedParticipants.size} out of ${approvedParticipants.length}`)
 
     // Create teams in database and assign participants
     const createdTeams: any[] = []
