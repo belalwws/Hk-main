@@ -178,6 +178,7 @@ export async function sendTemplatedEmail(
 
     console.log(`📧 [mailer] Sending templated email (${templateType}) to:`, to)
     console.log(`📎 [mailer] Attachments found:`, attachments?.length || 0)
+    console.log(`📎 [mailer] Attachments data:`, JSON.stringify(attachments, null, 2))
 
     // Fetch hackathon name for dynamic sender if hackathonId is provided
     let fromAddress: string | undefined = undefined
@@ -210,16 +211,27 @@ export async function sendTemplatedEmail(
     }
 
     // ✅ Add attachments if available
-    if (attachments && attachments.length > 0) {
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
       console.log(`📎 [mailer] Processing ${attachments.length} attachments...`)
 
       // Download attachments from URLs and prepare for nodemailer
       const attachmentPromises = attachments.map(async (att: any) => {
         try {
-          console.log(`📥 [mailer] Downloading attachment: ${att.name} from ${att.url}`)
+          console.log(`📥 [mailer] Downloading attachment:`, {
+            name: att.name,
+            url: att.url,
+            type: att.type,
+            size: att.size
+          })
+
+          if (!att.url) {
+            console.error(`❌ [mailer] Attachment ${att.name} has no URL`)
+            return null
+          }
+
           const response = await fetch(att.url)
           if (!response.ok) {
-            console.error(`❌ [mailer] Failed to download attachment ${att.name}: ${response.status}`)
+            console.error(`❌ [mailer] Failed to download attachment ${att.name}: ${response.status} ${response.statusText}`)
             return null
           }
 
@@ -229,7 +241,7 @@ export async function sendTemplatedEmail(
           return {
             filename: att.name,
             content: buffer,
-            contentType: att.type
+            contentType: att.type || 'application/octet-stream'
           }
         } catch (error) {
           console.error(`❌ [mailer] Error downloading attachment ${att.name}:`, error)
@@ -242,8 +254,24 @@ export async function sendTemplatedEmail(
       if (downloadedAttachments.length > 0) {
         mailOptions.attachments = downloadedAttachments
         console.log(`✅ [mailer] Added ${downloadedAttachments.length} attachments to email`)
+        console.log(`📎 [mailer] Attachment details:`, downloadedAttachments.map(a => ({
+          filename: a.filename,
+          size: a.content.length,
+          type: a.contentType
+        })))
+      } else {
+        console.warn(`⚠️ [mailer] No attachments were successfully downloaded`)
       }
+    } else {
+      console.log(`ℹ️ [mailer] No attachments to process (attachments:`, attachments, `)`)
     }
+
+    console.log(`📧 [mailer] Final mail options:`, {
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      hasHtml: !!mailOptions.html,
+      attachmentCount: mailOptions.attachments?.length || 0
+    })
 
     return await sendMail(mailOptions)
   } catch (error) {
