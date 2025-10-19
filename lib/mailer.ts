@@ -196,11 +196,14 @@ export async function sendTemplatedEmail(
       }
     }
 
+    // Check if body is already HTML (contains HTML tags)
+    const isHtml = /<[a-z][\s\S]*>/i.test(body)
+    
     return await sendMail({
       to,
       subject,
-      html: body.replace(/\n/g, '<br>'),
-      text: body,
+      html: isHtml ? body : body.replace(/\n/g, '<br>'),
+      text: body.replace(/<[^>]*>/g, ''), // Strip HTML tags for text version
       ...(fromAddress && { from: fromAddress })
     })
   } catch (error) {
