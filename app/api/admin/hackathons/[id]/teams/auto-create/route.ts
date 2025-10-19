@@ -356,12 +356,19 @@ export async function POST(
               if (additionalInfo.formData) {
                 const formData = additionalInfo.formData
                 // البحث في كل الحقول الممكنة للدور
-                const roleKeys = Object.keys(formData).filter(key => 
-                  key.toLowerCase().includes('role') || 
-                  key.includes('دور') || 
-                  key.includes('الدور')
-                )
+                const roleKeys = Object.keys(formData).filter(key => {
+                  const lowerKey = key.toLowerCase()
+                  return (
+                    lowerKey.includes('role') || 
+                    key.includes('دور') || 
+                    key.includes('الدور') ||
+                    key.includes('تلعبه') ||
+                    key.includes('الفريق') ||
+                    key.includes('الفربق')  // الفريق بالتاء المربوطة
+                  )
+                })
                 if (roleKeys.length > 0 && formData[roleKeys[0]]) {
+                  console.log(`✅ Found role in formData: ${roleKeys[0]} = ${formData[roleKeys[0]]}`)
                   return formData[roleKeys[0]]
                 }
               }
