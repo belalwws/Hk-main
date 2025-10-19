@@ -22,14 +22,22 @@ export async function POST(
     const params = await context.params
     const { teamId } = params
     
-    // Get custom email content from request body
-    const body = await request.json()
-    const { 
-      customSubject, 
-      customMessage, 
-      pdfLink,
-      additionalNotes 
-    } = body
+    // Get custom email content from request body (optional)
+    let customSubject: string | undefined
+    let customMessage: string | undefined
+    let pdfLink: string | undefined
+    let additionalNotes: string | undefined
+    
+    try {
+      const body = await request.json()
+      customSubject = body.customSubject
+      customMessage = body.customMessage
+      pdfLink = body.pdfLink
+      additionalNotes = body.additionalNotes
+    } catch (e) {
+      // No body sent, use defaults
+      console.log('📧 [send-emails] No custom content provided, using defaults')
+    }
 
     // Get team with members and hackathon info
     const team = await prisma.team.findUnique({
