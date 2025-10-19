@@ -67,11 +67,63 @@ export async function POST(request: NextRequest) {
     console.log('📧 [test-email] Sending email...')
     console.log('📧 [test-email] Subject:', subject)
 
-    const result = await sendMail({
+    // ✅ Get attachments from template
+    let attachments: any[] = []
+    try {
+      const attachmentsField = (template as any).attachments
+      console.log('📎 [test-email] Attachments field:', attachmentsField)
+
+      if (attachmentsField && typeof attachmentsField === 'string' && attachmentsField.trim().length > 0) {
+        attachments = JSON.parse(attachmentsField)
+        console.log(`📎 [test-email] Found ${attachments.length} attachments`)
+      }
+    } catch (parseError) {
+      console.error('❌ [test-email] Failed to parse attachments:', parseError)
+    }
+
+    // Prepare mail options
+    const mailOptions: any = {
       to: testEmail,
       subject,
       html: body
-    })
+    }
+
+    // ✅ Download and attach files if available
+    if (attachments && attachments.length > 0) {
+      console.log(`📎 [test-email] Processing ${attachments.length} attachments...`)
+
+      const attachmentPromises = attachments.map(async (att: any) => {
+        try {
+          console.log(`📥 [test-email] Downloading: ${att.name} from ${att.url}`)
+          const response = await fetch(att.url)
+          if (!response.ok) {
+            console.error(`❌ [test-email] Failed to download ${att.name}: ${response.status}`)
+            return null
+          }
+
+          const buffer = Buffer.from(await response.arrayBuffer())
+          console.log(`✅ [test-email] Downloaded ${att.name}, size: ${buffer.length} bytes`)
+
+          return {
+            filename: att.name,
+            content: buffer,
+            contentType: att.type
+          }
+        } catch (error) {
+          console.error(`❌ [test-email] Error downloading ${att.name}:`, error)
+          return null
+        }
+      })
+
+      const downloadedAttachments = (await Promise.all(attachmentPromises)).filter(a => a !== null)
+
+      if (downloadedAttachments.length > 0) {
+        mailOptions.attachments = downloadedAttachments
+        console.log(`✅ [test-email] Added ${downloadedAttachments.length} attachments to email`)
+      }
+    }
+
+    const result = await sendMail(mailOptions)
 
     console.log('✅ [test-email] Email result:', result)
 

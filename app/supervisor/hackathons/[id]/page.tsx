@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Shuffle, AlertCircle, Shield, Send, Plus, Crown, RefreshCw, GripVertical, Phone, User, Loader2, Sliders, X, Check, CheckCircle2, XCircle } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Shuffle, AlertCircle, Shield, Send, Plus, Crown, RefreshCw, GripVertical, Phone, User, Loader2, Sliders, X, Check, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -409,7 +409,7 @@ export default function SupervisorHackathonManagementPage() {
     }
   }
 
-  const updateParticipantStatus = async (participantId: string, status: 'approved' | 'rejected') => {
+  const updateParticipantStatus = async (participantId: string, status: 'approved' | 'rejected' | 'pending') => {
     try {
       const response = await fetch(`/api/supervisor/participants/${participantId}/status`, {
         method: 'PATCH',
@@ -419,7 +419,8 @@ export default function SupervisorHackathonManagementPage() {
       })
 
       if (response.ok) {
-        alert(`تم ${status === 'approved' ? 'قبول' : 'رفض'} المشارك بنجاح`)
+        const statusMessage = status === 'approved' ? 'قبول' : status === 'rejected' ? 'رفض' : 'إرجاع إلى قائمة الانتظار'
+        alert(`تم ${statusMessage} المشارك بنجاح`)
         fetchHackathon()
       } else {
         alert('فشل في تحديث حالة المشارك')
@@ -1435,15 +1436,27 @@ export default function SupervisorHackathonManagementPage() {
                               </div>
                             )}
                             {permissions.canManageParticipants && participant.status !== 'pending' && (
-                              <Button
-                                onClick={() => loadParticipantDetails(participant.id)}
-                                size="sm"
-                                variant="outline"
-                                className="text-blue-600 hover:text-blue-700 border-blue-600"
-                              >
-                                <Eye className="w-4 h-4 ml-1" />
-                                عرض التفاصيل
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => loadParticipantDetails(participant.id)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-blue-600 hover:text-blue-700 border-blue-600"
+                                >
+                                  <Eye className="w-4 h-4 ml-1" />
+                                  عرض التفاصيل
+                                </Button>
+                                <Button
+                                  onClick={() => updateParticipantStatus(participant.id, 'pending')}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-yellow-600 hover:text-yellow-700 border-yellow-600"
+                                  title="إرجاع إلى قائمة الانتظار"
+                                >
+                                  <Clock className="w-4 h-4 ml-1" />
+                                  إرجاع للانتظار
+                                </Button>
+                              </div>
                             )}
                           </div>
                         </div>

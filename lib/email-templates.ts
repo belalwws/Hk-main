@@ -318,13 +318,29 @@ export async function processEmailTemplate(
       where: { templateKey: templateType as string }
     })
 
+    console.log(`📎 [email-templates] DB Template found:`, !!dbTemplate)
+    console.log(`📎 [email-templates] Attachments field:`, (dbTemplate as any)?.attachments)
+
     if (dbTemplate && (dbTemplate as any).attachments) {
       const attachmentsField = (dbTemplate as any).attachments
-      attachments = JSON.parse(attachmentsField as string)
-      console.log(`📎 [email-templates] Found ${attachments.length} attachments in template`)
+
+      // Check if it's a valid JSON string
+      if (typeof attachmentsField === 'string' && attachmentsField.trim().length > 0) {
+        try {
+          attachments = JSON.parse(attachmentsField)
+          console.log(`📎 [email-templates] Found ${attachments.length} attachments in template`)
+          console.log(`📎 [email-templates] Attachments:`, JSON.stringify(attachments, null, 2))
+        } catch (parseError) {
+          console.error(`❌ [email-templates] Failed to parse attachments JSON:`, parseError)
+        }
+      } else {
+        console.log(`⚠️ [email-templates] Attachments field is empty or not a string`)
+      }
+    } else {
+      console.log(`⚠️ [email-templates] No attachments field in template`)
     }
   } catch (error) {
-    console.log(`⚠️ [email-templates] No attachments found for template ${templateType}`)
+    console.error(`❌ [email-templates] Error fetching attachments for template ${templateType}:`, error)
   }
 
   const result = {
