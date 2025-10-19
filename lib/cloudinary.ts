@@ -92,7 +92,7 @@ export async function uploadRawToCloudinary(
 ) {
   try {
     const base64 = file.toString('base64')
-    
+
     // Detect file type from filename
     let mimeType = 'application/octet-stream'
     if (filename) {
@@ -115,6 +115,8 @@ export async function uploadRawToCloudinary(
         folder: folder,
         public_id: filename,
         resource_type: 'raw',
+        type: 'upload', // Make files publicly accessible
+        access_mode: 'public', // Ensure public access
         overwrite: true,
         invalidate: true,
       }

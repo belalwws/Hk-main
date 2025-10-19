@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const token = request.cookies.get('auth-token')?.value
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     const payload = await verifyToken(token)
-    if (!payload || payload.role !== 'admin') return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+    if (!payload || !['admin', 'supervisor'].includes(payload.role)) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     const prismaClient = await getPrisma()
     if (!prismaClient) return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const token = request.cookies.get('auth-token')?.value
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     const payload = await verifyToken(token)
-    if (!payload || payload.role !== 'admin') return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+    if (!payload || !['admin', 'supervisor'].includes(payload.role)) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
     const body = await request.json()
     const {
