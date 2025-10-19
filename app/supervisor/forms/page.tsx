@@ -143,30 +143,35 @@ export default function SupervisorFormsManagement() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <Tabs defaultValue="judges" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-6">
-              <TabsTrigger value="judges">
-                <Award className="w-4 h-4 ml-2" />
-                فورم المحكمين
-              </TabsTrigger>
-              <TabsTrigger value="supervision">
-                <UserCheck className="w-4 h-4 ml-2" />
-                فورم الإشراف
-              </TabsTrigger>
-              <TabsTrigger value="feedback">
-                <MessageSquare className="w-4 h-4 ml-2" />
-                فورم التقييم
-              </TabsTrigger>
-              <TabsTrigger value="registration">
-                <Users className="w-4 h-4 ml-2" />
-                فورم التسجيل
-              </TabsTrigger>
-            </TabsList>
-
+            <Tabs defaultValue="judges" className="w-full">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
+                <TabsTrigger value="judges">
+                  <Award className="w-4 h-4 ml-2" />
+                  فورم المحكمين
+                </TabsTrigger>
+                <TabsTrigger value="experts">
+                  <Users className="w-4 h-4 ml-2" />
+                  فورم الخبراء
+                </TabsTrigger>
+                <TabsTrigger value="supervision">
+                  <UserCheck className="w-4 h-4 ml-2" />
+                  فورم الإشراف
+                </TabsTrigger>
+                <TabsTrigger value="feedback">
+                  <MessageSquare className="w-4 h-4 ml-2" />
+                  فورم التقييم
+                </TabsTrigger>
+                <TabsTrigger value="registration">
+                  <Users className="w-4 h-4 ml-2" />
+                  فورم التسجيل
+                </TabsTrigger>
+              </TabsList>
+            
             {/* Judge Forms Tab */}
             <TabsContent value="judges">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="hover:shadow-lg transition-shadow border-2 border-orange-200">
+                {/* Judge Application Form */}
+                <Card className="hover:shadow-xl transition-shadow border-2 border-orange-200">
                   <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
                     <div className="flex items-center justify-between">
                       <Award className="w-8 h-8 text-orange-600" />
@@ -176,11 +181,18 @@ export default function SupervisorFormsManagement() {
                       فورم طلب الانضمام كمحكم
                     </CardTitle>
                     <CardDescription>
-                      متابعة طلبات المحكمين وتحميل البيانات
+                      فورم ديناميكي لاستقبال طلبات المحكمين - أضف الحقول التي تريدها
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
                     <div className="flex flex-col gap-2">
+                      <Link href={`/supervisor/judge-form-builder/${selectedHackathon}`}>
+                        <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600">
+                          <Settings className="w-4 h-4 ml-2" />
+                          بناء الفورم
+                        </Button>
+                      </Link>
+                      
                       <Button
                         variant="outline"
                         className="w-full border-orange-500 text-orange-600 hover:bg-orange-50"
@@ -202,17 +214,137 @@ export default function SupervisorFormsManagement() {
                       <Link href="/supervisor/judges">
                         <Button variant="outline" className="w-full border-orange-300">
                           <Users className="w-4 h-4 ml-2" />
-                          متابعة الردود
+                          إدارة الطلبات
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Judge Invitation Form */}
+                <Card className="hover:shadow-xl transition-shadow border-2 border-blue-200">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <div className="flex items-center justify-between">
+                      <Mail className="w-8 h-8 text-blue-600" />
+                      <Badge className="bg-blue-600 text-white">دعوات</Badge>
+                    </div>
+                    <CardTitle className="text-xl text-blue-900 mt-4">
+                      نظام دعوات المحكمين
+                    </CardTitle>
+                    <CardDescription>
+                      إرسال دعوات مخصصة للمحكمين عبر البريد الإلكتروني
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <Link href="/supervisor/judges">
+                        <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                          <Mail className="w-4 h-4 ml-2" />
+                          إدارة الدعوات
                         </Button>
                       </Link>
 
+                      <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
+                        <p className="font-medium mb-1">📧 نظام الدعوات</p>
+                        <p className="text-xs">يمكنك إرسال دعوات مخصصة للمحكمين مع روابط تسجيل فريدة</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Expert Forms Tab */}
+            <TabsContent value="experts">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Expert Application Form */}
+                <Card className="hover:shadow-xl transition-shadow border-2 border-cyan-200">
+                  <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50">
+                    <div className="flex items-center justify-between">
+                      <Users className="w-8 h-8 text-cyan-600" />
+                      <Badge className="bg-cyan-600 text-white">خبراء</Badge>
+                    </div>
+                    <CardTitle className="text-xl text-cyan-900 mt-4">
+                      فورم طلب الانضمام كخبير
+                    </CardTitle>
+                    <CardDescription>
+                      فورم ديناميكي لاستقبال طلبات الخبراء - أضف الحقول والصور التي تريدها
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <Link href={`/supervisor/expert-form-builder/${selectedHackathon}`}>
+                        <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600">
+                          <Settings className="w-4 h-4 ml-2" />
+                          بناء الفورم
+                        </Button>
+                      </Link>
+                      
                       <Button
-                        className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600"
-                        onClick={() => downloadSubmissions('judges', 'طلبات_المحكمين')}
+                        variant="outline"
+                        className="w-full border-cyan-500 text-cyan-600 hover:bg-cyan-50"
+                        onClick={() => window.open(`/expert/apply/${selectedHackathon}`, '_blank')}
                       >
-                        <Download className="w-4 h-4 ml-2" />
-                        تحميل Excel
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                        معاينة الفورم
                       </Button>
+
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => copyLink(`${window.location.origin}/expert/apply/${selectedHackathon}`, 'فورم الخبراء')}
+                      >
+                        <Copy className="w-4 h-4 ml-2" />
+                        نسخ الرابط
+                      </Button>
+
+                      <Link href="/supervisor/experts">
+                        <Button variant="outline" className="w-full border-cyan-300">
+                          <Users className="w-4 h-4 ml-2" />
+                          إدارة الطلبات
+                        </Button>
+                      </Link>
+                    </div>
+                    
+                    <div className="bg-cyan-50 p-3 rounded-lg text-sm text-cyan-800 mt-4">
+                      <p className="font-medium mb-1">✨ مميزات الفورم</p>
+                      <ul className="text-xs space-y-1">
+                        <li>• رفع صورة الخبير على Cloudinary</li>
+                        <li>• حقول ديناميكية قابلة للتخصيص</li>
+                        <li>• دعم المرفقات والملفات</li>
+                        <li>• معلومات احترافية للخبير</li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Expert Invitation Form */}
+                <Card className="hover:shadow-xl transition-shadow border-2 border-teal-200">
+                  <CardHeader className="bg-gradient-to-r from-teal-50 to-cyan-50">
+                    <div className="flex items-center justify-between">
+                      <Mail className="w-8 h-8 text-teal-600" />
+                      <Badge className="bg-teal-600 text-white">دعوات</Badge>
+                    </div>
+                    <CardTitle className="text-xl text-teal-900 mt-4">
+                      نظام دعوات الخبراء
+                    </CardTitle>
+                    <CardDescription>
+                      إرسال دعوات مخصصة للخبراء عبر البريد الإلكتروني
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <Link href="/supervisor/experts">
+                        <Button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600">
+                          <Mail className="w-4 h-4 ml-2" />
+                          إدارة الدعوات
+                        </Button>
+                      </Link>
+
+                      <div className="bg-teal-50 p-3 rounded-lg text-sm text-teal-800">
+                        <p className="font-medium mb-1">📧 نظام الدعوات</p>
+                        <p className="text-xs">يمكنك إرسال دعوات مخصصة للخبراء مع روابط تسجيل فريدة</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
