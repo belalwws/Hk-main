@@ -114,9 +114,11 @@ export async function POST(
     }
 
     // Prepare team members list
-    const teamMembersList = team.participants.map((member: any) => 
-      `${member.user.name} (${member.user.preferredRole || 'مطور'})`
-    ).join('\n')
+    // By default, only show names. Roles are shown if explicitly set by user.
+    const teamMembersList = team.participants.map((member: any) => {
+      const role = member.user.preferredRole
+      return role ? `${member.user.name} (${role})` : member.user.name
+    }).join('\n')
 
     // Send emails to all team members
     const transporter = getTransporter()

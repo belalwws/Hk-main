@@ -67,6 +67,23 @@ const DEFAULT_TEMPLATES = {
 مع أطيب التحيات,
 فريق الهاكاثون`
   },
+  team_details: {
+    subject: '📋 تفاصيل فريقك - {{hackathonTitle}}',
+    body: `مرحباً {{participantName}},
+
+نود إعلامك بتفاصيل فريقك في {{hackathonTitle}}
+
+اسم الفريق: {{teamName}}
+
+👥 أعضاء الفريق:
+
+{{teamMembers}}
+
+💡 نصيحة: تواصل مع أعضاء فريقك لتنسيق العمل على المشروع!
+
+مع أطيب التحيات,
+فريق الهاكاثون`
+  },
   evaluation_results: {
     subject: 'نتائج التقييم - {{hackathonTitle}}',
     body: `مرحباً {{participantName}},
@@ -190,6 +207,7 @@ export interface EmailTemplates {
   acceptance: EmailTemplate
   rejection: EmailTemplate
   team_formation: EmailTemplate
+  team_details: EmailTemplate
   evaluation_results: EmailTemplate
   reminder: EmailTemplate
   welcome: EmailTemplate

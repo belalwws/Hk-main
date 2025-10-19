@@ -303,6 +303,73 @@ async function initializeTemplates() {
     isActive: true
   },
   {
+    templateKey: 'team_details',
+    nameAr: '📋 تفاصيل فريقك',
+    nameEn: 'Team Details',
+    category: 'team',
+    subject: '📋 تفاصيل فريقك - {{hackathonTitle}}',
+    description: 'يُرسل لإعلام أعضاء الفريق بتفاصيل فريقهم وأسماء الأعضاء',
+    bodyHtml: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl; background: #f8f9fa;">
+  <!-- Header with gradient -->
+  <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+    <div style="font-size: 60px; margin-bottom: 10px;">🏆</div>
+    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">تفاصيل فريقك</h1>
+    <p style="color: #e9d5ff; margin: 10px 0 0 0; font-size: 16px;">معلومات هامة عن فريقك في الهاكاثون</p>
+  </div>
+  
+  <!-- Main Content -->
+  <div style="background: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+    <p style="font-size: 18px; color: #1f2937; margin: 0 0 20px 0;">
+      مرحباً <strong>{{participantName}}</strong>،
+    </p>
+    
+    <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 25px 0;">
+      نود إعلامك بتفاصيل فريقك في <strong style="color: #6366f1;">{{hackathonTitle}}</strong>
+    </p>
+    
+    <!-- Team Name Box -->
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-right: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
+      <h2 style="color: #92400e; margin: 0; font-size: 24px;">اسم الفريق: {{teamName}}</h2>
+    </div>
+    
+    <!-- Team Members Section -->
+    <div style="background: #f0f9ff; border-right: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <h3 style="color: #1e40af; margin: 0 0 15px 0; font-size: 18px;">👥 أعضاء الفريق:</h3>
+      <div style="line-height: 2; color: #1e3a8a;">
+        {{teamMembers}}
+      </div>
+    </div>
+    
+    <!-- Tips Box -->
+    <div style="background: #ecfdf5; border-right: 4px solid #10b981; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <h3 style="color: #059669; margin: 0 0 10px 0; font-size: 16px;">💡 نصيحة:</h3>
+      <p style="color: #065f46; margin: 0; line-height: 1.6;">
+        تواصل مع أعضاء فريقك لتنسيق العمل على المشروع!
+      </p>
+    </div>
+    
+    <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0; line-height: 1.6;">
+      نتمنى لكم التوفيق في الهاكاثون! 🚀
+    </p>
+    
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+      <p style="font-size: 14px; color: #9ca3af; margin: 0;">
+        مع أطيب التحيات،<br/>
+        <strong style="color: #6b7280;">فريق إدارة الهاكاثونات</strong>
+      </p>
+    </div>
+  </div>
+</div>`,
+    variables: { 
+      'participantName': 'اسم المشارك', 
+      'hackathonTitle': 'عنوان الهاكاثون', 
+      'teamName': 'اسم الفريق',
+      'teamMembers': 'قائمة أعضاء الفريق (بدون أدوار افتراضياً)'
+    },
+    isSystem: true,
+    isActive: true
+  },
+  {
     templateKey: 'team_member_added',
     nameAr: 'إضافة عضو للفريق',
     nameEn: 'Team Member Added',
