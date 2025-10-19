@@ -120,29 +120,34 @@ export async function POST(
       return role ? `${member.user.name} (${role})` : member.user.name
     }).join('\n')
 
-    // Send emails to all team members
-    const transporter = getTransporter()
+    // Send emails to all team members using templated email system
+    const { sendTemplatedEmail } = await import('@/lib/mailer')
     let emailsSent = 0
+    
     const emailPromises = team.participants.map(async (member: any) => {
       try {
-        const emailSubject = customSubject || `📋 تفاصيل فريقك - ${team.name} - ${team.hackathon.title}`
+        console.log(`� Sending team details email to ${member.user.email}`)
         
-        await transporter.sendMail({
-          from: process.env.MAIL_FROM || 'هاكاثون الابتكار التقني <racein668@gmail.com>',
-          to: member.user.email,
-          subject: emailSubject,
-          html: getTeamEmailContent(
-            member.user.name,
-            team.hackathon.title,
-            team.name,
-            teamMembersList,
-            customMessage,
-            pdfLink,
-            additionalNotes
-          )
-        })
+        // Use the templated email system to get the template from database
+        await sendTemplatedEmail(
+          'team_details',
+          member.user.email,
+          {
+            participantName: member.user.name,
+            hackathonTitle: team.hackathon.title,
+            teamName: team.name,
+            teamMembers: teamMembersList,
+            // Optional custom fields for template variables
+            customSubject: customSubject, // Will be used in template subject if provided
+            customMessage: customMessage,
+            pdfLink: pdfLink,
+            additionalNotes: additionalNotes
+          },
+          team.hackathonId
+        )
+        
         emailsSent++
-        console.log(`📧 Email sent to ${member.user.email}`)
+        console.log(`✅ Team details email sent to ${member.user.email}`)
       } catch (error) {
         console.error(`❌ Failed to send email to ${member.user.email}:`, error)
       }
@@ -180,91 +185,4 @@ export async function POST(
   }
 }
 
-// Email template for team information
-function getTeamEmailContent(
-  userName: string,
-  hackathonTitle: string,
-  teamName: string,
-  teamMembersList: string,
-  customMessage?: string,
-  pdfLink?: string,
-  additionalNotes?: string
-): string {
-  const defaultMessage = `نود إعلامك بتفاصيل فريقك في <strong>${hackathonTitle}</strong>`
-  const message = customMessage || defaultMessage
-  
-  return `
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تفاصيل فريقك</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); padding: 30px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 28px;">📋 تفاصيل فريقك</h1>
-    </div>
-
-    <!-- Content -->
-    <div style="padding: 30px;">
-      <p style="font-size: 18px; color: #333; margin-bottom: 20px;">
-        مرحباً <strong>${userName}</strong>،
-      </p>
-
-      <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
-        ${message}
-      </p>
-
-      <div style="background-color: #f0f9ff; border-right: 4px solid #3ab666; padding: 15px; margin: 20px 0; border-radius: 5px;">
-        <p style="margin: 0; color: #01645e; font-size: 18px;">
-          <strong>اسم الفريق:</strong> ${teamName}
-        </p>
-      </div>
-
-      <h3 style="color: #01645e; margin-top: 30px; margin-bottom: 15px;">👥 أعضاء الفريق:</h3>
-      <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; white-space: pre-line; font-size: 14px; color: #333;">
-${teamMembersList}
-      </div>
-
-      ${pdfLink ? `
-      <div style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #ffc107; border-radius: 10px; text-align: center;">
-        <h3 style="color: #856404; margin: 0 0 15px 0; font-size: 18px;">📚 الكتيب الإرشادي</h3>
-        <p style="color: #856404; margin: 0 0 15px 0; font-size: 14px;">يمكنك تحميل الكتيب الإرشادي الخاص بالهاكاثون من الرابط أدناه</p>
-        <a href="${pdfLink}" style="background: #ffc107; color: #212529; padding: 12px 25px; text-decoration: none; border-radius: 20px; font-weight: bold; display: inline-block;">
-          📥 تحميل الكتيب الإرشادي (PDF)
-        </a>
-      </div>
-      ` : ''}
-
-      ${additionalNotes ? `
-      <div style="margin-top: 25px; padding: 20px; background-color: #e3f2fd; border-right: 4px solid #2196f3; border-radius: 8px;">
-        <h3 style="color: #1565c0; margin: 0 0 10px 0; font-size: 16px;">💡 ملاحظات إضافية:</h3>
-        <p style="color: #1976d2; margin: 0; line-height: 1.8; white-space: pre-wrap;">${additionalNotes}</p>
-      </div>
-      ` : ''}
-
-      <div style="margin-top: 30px; padding: 20px; background-color: #fff8e1; border-radius: 5px; border-right: 4px solid #c3e956;">
-        <p style="margin: 0; color: #8b7632; font-size: 14px;">
-          💡 <strong>نصيحة:</strong> تواصل مع أعضاء فريقك لتنسيق العمل على المشروع!
-        </p>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="background-color: #f5f5f5; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;">
-      <p style="margin: 0; color: #666; font-size: 14px;">
-        بالتوفيق في الهاكاثون! 🚀
-      </p>
-      <p style="margin: 10px 0 0 0; color: #999; font-size: 12px;">
-        ${hackathonTitle}
-      </p>
-    </div>
-  </div>
-</body>
-</html>
-  `
-}
-
+export const dynamic = 'force-dynamic'
