@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Send } from 'lucide-react'
+import { ArrowLeft, Users, Filter, Settings, FileText, Trophy, Eye, UserCheck, UserX, MapPin, Flag, Mail, Trash2, Pin, PinOff, Upload, Download, FormInput, Palette, Star, BarChart3, ExternalLink, Award, Send, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -373,7 +373,7 @@ export default function HackathonManagementPage() {
     approvedWithTeam: 0
   }
 
-  const updateParticipantStatus = async (participantId: string, status: 'approved' | 'rejected', feedback?: string) => {
+  const updateParticipantStatus = async (participantId: string, status: 'approved' | 'rejected' | 'pending', feedback?: string) => {
     try {
       const response = await fetch(`/api/admin/hackathons/${params.id}/participants/${participantId}`, {
         method: 'PATCH',
@@ -383,9 +383,11 @@ export default function HackathonManagementPage() {
 
       if (response.ok) {
         await refreshData() // Refresh data
-        alert(`تم ${status === 'approved' ? 'قبول' : 'رفض'} المشارك بنجاح`)
+        const statusMessage = status === 'approved' ? 'قبول' : status === 'rejected' ? 'رفض' : 'إعادة للانتظار'
+        alert(`تم ${statusMessage} المشارك بنجاح`)
       } else {
-        alert(`فشل في ${status === 'approved' ? 'قبول' : 'رفض'} المشارك`)
+        const statusMessage = status === 'approved' ? 'قبول' : status === 'rejected' ? 'رفض' : 'إعادة للانتظار'
+        alert(`فشل في ${statusMessage} المشارك`)
       }
     } catch (error) {
       console.error('Error updating participant status:', error)
@@ -1161,16 +1163,26 @@ export default function HackathonManagementPage() {
                                   </Button>
                                 </>
                               )}
-
-                              {participant.status === 'approved' && participant.teamId && (
+                              {participant.status === 'approved' && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-blue-600 hover:text-blue-700 border-blue-600 hover:bg-blue-50"
-                                  onClick={() => sendUploadLink(participant.id)}
+                                  className="text-orange-600 hover:text-orange-700 border-orange-600"
+                                  onClick={() => updateParticipantStatus(participant.id, 'pending')}
                                 >
-                                  <Send className="w-4 h-4 ml-1" />
-                                  إرسال رابط الرفع
+                                  <Clock className="w-4 h-4 ml-1" />
+                                  إعادة للانتظار
+                                </Button>
+                              )}
+                              {participant.status === 'rejected' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-blue-600 hover:text-blue-700 border-blue-600"
+                                  onClick={() => updateParticipantStatus(participant.id, 'pending')}
+                                >
+                                  <Clock className="w-4 h-4 ml-1" />
+                                  إعادة للانتظار
                                 </Button>
                               )}
                             </div>

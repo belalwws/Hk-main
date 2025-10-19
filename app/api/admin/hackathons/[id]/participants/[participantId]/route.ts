@@ -28,7 +28,7 @@ export async function PATCH(
     const body = await request.json()
     const { status, feedback } = body
 
-    if (!['approved', 'rejected'].includes(status)) {
+    if (!['approved', 'rejected', 'pending'].includes(status)) {
       return NextResponse.json({ error: 'حالة غير صحيحة' }, { status: 400 })
     }
 
@@ -60,44 +60,49 @@ export async function PATCH(
       }
     })
 
-    // Send notification email
-    console.log(`📧 Preparing to send ${status} email to ${participant.user.email}`)
+    // Send notification email (only for approved/rejected, not for pending)
+    if (status !== 'pending') {
+      console.log(`📧 Preparing to send ${status} email to ${participant.user.email}`)
 
-    try {
-      const isApproved = status === 'approved'
-      const templateType = isApproved ? 'acceptance' : 'rejection'
+      try {
+        const isApproved = status === 'approved'
+        const templateType = isApproved ? 'acceptance' : 'rejection'
 
-      console.log(`📧 Sending ${status} email to ${participant.user.email}`)
+        console.log(`📧 Sending ${status} email to ${participant.user.email}`)
 
-      // Use the new templated email system
-      const { sendTemplatedEmail } = await import('@/lib/mailer')
+        // Use the new templated email system
+        const { sendTemplatedEmail } = await import('@/lib/mailer')
 
-      await sendTemplatedEmail(
-        templateType,
-        participant.user.email,
-        {
-          participantName: participant.user.name,
-          participantEmail: participant.user.email,
-          hackathonTitle: participant.hackathon.title,
-          hackathonDate: participant.hackathon.startDate.toLocaleDateString('ar-SA'),
-          hackathonTime: participant.hackathon.startDate.toLocaleTimeString('ar-SA'),
-          hackathonLocation: 'سيتم الإعلان عنه قريباً',
-          registrationDate: participant.registeredAt.toLocaleDateString('ar-SA'),
-          organizerName: 'فريق الهاكاثون',
-          organizerEmail: process.env.MAIL_FROM || 'no-reply@hackathon.com',
-          teamRole: participant.teamRole || 'مطور'
-        },
-        participant.hackathonId
-      )
+        await sendTemplatedEmail(
+          templateType,
+          participant.user.email,
+          {
+            participantName: participant.user.name,
+            participantEmail: participant.user.email,
+            hackathonTitle: participant.hackathon.title,
+            hackathonDate: participant.hackathon.startDate.toLocaleDateString('ar-SA'),
+            hackathonTime: participant.hackathon.startDate.toLocaleTimeString('ar-SA'),
+            hackathonLocation: 'سيتم الإعلان عنه قريباً',
+            registrationDate: participant.registeredAt.toLocaleDateString('ar-SA'),
+            organizerName: 'فريق الهاكاثون',
+            organizerEmail: process.env.MAIL_FROM || 'no-reply@hackathon.com',
+            teamRole: participant.teamRole || 'مطور'
+          },
+          participant.hackathonId
+        )
 
-      console.log(`✅ ${status} email sent successfully to ${participant.user.email}`)
-    } catch (emailError) {
-      console.error(`❌ Failed to send ${status} email to ${participant.user.email}:`, emailError)
-      // Don't fail the status update if email fails
+        console.log(`✅ ${status} email sent successfully to ${participant.user.email}`)
+      } catch (emailError) {
+        console.error(`❌ Failed to send ${status} email to ${participant.user.email}:`, emailError)
+        // Don't fail the status update if email fails
+      }
+    } else {
+      console.log(`⏸️ Status changed to pending for ${participant.user.email} - no email sent`)
     }
 
+    const statusMessage = status === 'approved' ? 'قبول' : status === 'rejected' ? 'رفض' : 'إعادة للانتظار'
     return NextResponse.json({
-      message: `تم ${status === 'APPROVED' ? 'قبول' : 'رفض'} المشارك بنجاح`,
+      message: `تم ${statusMessage} المشارك بنجاح`,
       participant: {
         id: updatedParticipant.id,
         status: updatedParticipant.status,
