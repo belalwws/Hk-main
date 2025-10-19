@@ -558,6 +558,35 @@ export default function SupervisorTeamsPage() {
                                 {member.name}
                               </div>
                               <div className="text-xs text-gray-500 truncate">{member.email}</div>
+                              {(() => {
+                                // Get role from additionalInfo.formData
+                                let role = 'مشارك'
+                                if (member.additionalInfo?.formData) {
+                                  const formData = member.additionalInfo.formData
+                                  // Check field_1760547826023 first
+                                  if (formData['field_1760547826023']) {
+                                    role = formData['field_1760547826023']
+                                  } else {
+                                    // Search for role field
+                                    const roleKeys = Object.keys(formData).filter(key => 
+                                      key.toLowerCase().includes('role') || 
+                                      key.includes('دور') || 
+                                      key.includes('الدور') ||
+                                      key.includes('تلعبه') ||
+                                      key.includes('الفريق') ||
+                                      key.includes('الفربق')
+                                    )
+                                    if (roleKeys.length > 0 && formData[roleKeys[0]]) {
+                                      role = formData[roleKeys[0]]
+                                    }
+                                  }
+                                }
+                                return role !== 'مشارك' && (
+                                  <div className="text-xs font-medium text-blue-600 truncate mt-1">
+                                    {role}
+                                  </div>
+                                )
+                              })()}
                             </div>
                             <div className="flex gap-1 flex-shrink-0">
                               <Button
