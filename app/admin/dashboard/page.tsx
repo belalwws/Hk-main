@@ -140,6 +140,12 @@ export default function AdminDashboard() {
                 المحكمين
               </Button>
             </Link>
+            <Link href="/admin/experts">
+              <Button className="w-full bg-gradient-to-r from-[#c3e956] to-[#8b7632] hover:from-[#a8c247] hover:to-[#6d5a28]">
+                <Star className="w-4 h-4 ml-2" />
+                الخبراء
+              </Button>
+            </Link>
             <Link href="/admin/hackathons">
               <Button variant="outline" className="w-full">
                 <Trophy className="w-4 h-4 ml-2" />

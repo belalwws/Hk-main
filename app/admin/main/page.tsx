@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Users, Calendar, Settings, Plus, BarChart3, FileText, Eye, ArrowRight } from 'lucide-react'
+import { Trophy, Users, Calendar, Settings, Plus, BarChart3, FileText, Eye, ArrowRight, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -189,6 +189,16 @@ export default function AdminMainDashboard() {
                 <Trophy className="w-12 h-12 text-[#c3e956] mx-auto mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-lg font-bold text-[#01645e] mb-2">إدارة المحكمين</h3>
                 <p className="text-[#8b7632] text-sm">تعيين وإدارة المحكمين</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/experts">
+            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
+              <CardContent className="p-6 text-center">
+                <Star className="w-12 h-12 text-[#8b7632] mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-bold text-[#01645e] mb-2">إدارة الخبراء</h3>
+                <p className="text-[#8b7632] text-sm">تعيين وإدارة الخبراء</p>
               </CardContent>
             </Card>
           </Link>
