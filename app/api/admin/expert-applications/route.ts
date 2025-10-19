@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
     const payload = await verifyToken(token)
-    if (!payload || payload.role !== 'admin') {
+    if (!payload || ['admin', 'supervisor'].includes(payload.role) === false) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
@@ -45,3 +45,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'خطأ في جلب الطلبات' }, { status: 500 })
   }
 }
+

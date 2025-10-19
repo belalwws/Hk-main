@@ -481,9 +481,16 @@ export default function SupervisorFormsManagement() {
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
                     <div className="flex flex-col gap-2">
+                      <Link href={`/supervisor/hackathons/${selectedHackathon}/registration-form`}>
+                        <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                          <Settings className="w-4 h-4 ml-2" />
+                          بناء الفورم
+                        </Button>
+                      </Link>
+
                       <Button
                         variant="outline"
-                        className="w-full"
+                        className="w-full border-blue-300"
                         onClick={() => window.open(`/hackathons/${selectedHackathon}/register-form`, '_blank')}
                       >
                         <ExternalLink className="w-4 h-4 ml-2" />

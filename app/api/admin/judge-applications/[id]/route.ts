@@ -151,7 +151,7 @@ export async function PATCH(
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
     const payload = await verifyToken(token)
-    if (!payload || payload.role !== 'admin') {
+    if (!payload || ['admin', 'supervisor'].includes(payload.role) === false) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
@@ -330,7 +330,7 @@ export async function DELETE(
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
     const payload = await verifyToken(token)
-    if (!payload || payload.role !== 'admin') {
+    if (!payload || ['admin', 'supervisor'].includes(payload.role) === false) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
@@ -347,4 +347,5 @@ export async function DELETE(
     return NextResponse.json({ error: 'خطأ في حذف الطلب' }, { status: 500 })
   }
 }
+
 
