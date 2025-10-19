@@ -299,94 +299,132 @@ export default function TeamsDisplay({ hackathonId }: TeamsDisplayProps) {
                               <Eye className="w-3 h-3" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="sm:max-w-[600px]">
+                          <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle>تفاصيل المشارك</DialogTitle>
+                              <DialogTitle className="text-xl text-[#01645e]">بيانات التسجيل الإضافية</DialogTitle>
                               <DialogDescription>
-                                معلومات شاملة عن {selectedMemberDetails?.user.name}
+                                معلومات شاملة عن المشارك {selectedMemberDetails?.user.name}
                               </DialogDescription>
                             </DialogHeader>
                             {selectedMemberDetails && (
-                              <div className="grid gap-6 py-4">
-                                {/* المعلومات الشخصية */}
-                                <div className="space-y-3">
-                                  <h4 className="font-semibold text-[#01645e] flex items-center gap-2">
-                                    <User className="w-4 h-4" />
-                                    المعلومات الشخصية
-                                  </h4>
-                                  <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
-                                    <div>
-                                      <p className="text-[#8b7632] mb-1">الاسم:</p>
-                                      <p className="font-medium text-[#01645e]">{selectedMemberDetails.user.name}</p>
+                              <div className="grid gap-4 py-4">
+                                {/* المعلومات الأساسية */}
+                                <div className="space-y-3 border-b pb-4">
+                                  <div className="space-y-2">
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-semibold text-[#8b7632]">الاسم الثلاثي</p>
+                                      <p className="text-base text-[#01645e]">{selectedMemberDetails.user.name}</p>
                                     </div>
-                                    <div>
-                                      <p className="text-[#8b7632] mb-1">البريد الإلكتروني:</p>
-                                      <p className="font-medium text-[#01645e] truncate" title={selectedMemberDetails.user.email}>
-                                        {selectedMemberDetails.user.email}
+                                    
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-semibold text-[#8b7632]">البريد الإلكتروني</p>
+                                      <p className="text-base text-[#01645e]">{selectedMemberDetails.user.email}</p>
+                                    </div>
+                                    
+                                    {(selectedMemberDetails.user.phone || selectedMemberDetails.additionalInfo?.phone) && (
+                                      <div className="space-y-1">
+                                        <p className="text-sm font-semibold text-[#8b7632]">رقم الهاتف</p>
+                                        <p className="text-base text-[#01645e]">
+                                          {selectedMemberDetails.user.phone || selectedMemberDetails.additionalInfo?.phone}
+                                        </p>
+                                      </div>
+                                    )}
+                                    
+                                    {selectedMemberDetails.additionalInfo?.nationalId && (
+                                      <div className="space-y-1">
+                                        <p className="text-sm font-semibold text-[#8b7632]">رقم الهوية</p>
+                                        <p className="text-base text-[#01645e]">{selectedMemberDetails.additionalInfo.nationalId}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* نبذة عن المشارك */}
+                                {selectedMemberDetails.additionalInfo?.bio && (
+                                  <div className="space-y-2 border-b pb-4">
+                                    <p className="text-sm font-semibold text-[#8b7632]">نبذه عن المشارك</p>
+                                    <p className="text-base text-[#01645e] whitespace-pre-wrap">{selectedMemberDetails.additionalInfo.bio}</p>
+                                  </div>
+                                )}
+
+                                {/* الوضع الحالي */}
+                                {selectedMemberDetails.additionalInfo?.currentStatus && (
+                                  <div className="space-y-1 border-b pb-4">
+                                    <p className="text-sm font-semibold text-[#8b7632]">الوضع الحالي</p>
+                                    <p className="text-base text-[#01645e]">{selectedMemberDetails.additionalInfo.currentStatus}</p>
+                                  </div>
+                                )}
+
+                                {/* الخبرة في الهاكاثونات */}
+                                {selectedMemberDetails.additionalInfo?.hasVirtualHackathonExperience && (
+                                  <div className="space-y-1 border-b pb-4">
+                                    <p className="text-sm font-semibold text-[#8b7632]">هل شاركت في هاكاثونات افتراضيه عبر الانترنت من قبل</p>
+                                    <p className="text-base text-[#01645e]">
+                                      {selectedMemberDetails.additionalInfo.hasVirtualHackathonExperience === 'yes' ? 'نعم' : 'لا'}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* جهة العمل */}
+                                {selectedMemberDetails.additionalInfo?.workplace && (
+                                  <div className="space-y-1 border-b pb-4">
+                                    <p className="text-sm font-semibold text-[#8b7632]">جهة العمل</p>
+                                    <p className="text-base text-[#01645e]">{selectedMemberDetails.additionalInfo.workplace}</p>
+                                  </div>
+                                )}
+
+                                {/* الدور المفضل */}
+                                <div className="space-y-1 border-b pb-4">
+                                  <p className="text-sm font-semibold text-[#8b7632]">الدور الذي تريد ان تلعبه في الفريق</p>
+                                  <Badge className="bg-[#3ab666] text-white">
+                                    {selectedMemberDetails.user.preferredRole}
+                                  </Badge>
+                                </div>
+
+                                {/* المدينة والجنسية */}
+                                <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                                  {(selectedMemberDetails.user.city || selectedMemberDetails.additionalInfo?.city) && (
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-semibold text-[#8b7632]">المدينة</p>
+                                      <p className="text-base text-[#01645e]">
+                                        {selectedMemberDetails.user.city || selectedMemberDetails.additionalInfo?.city}
                                       </p>
                                     </div>
-                                    {selectedMemberDetails.user.phone && (
-                                      <div>
-                                        <p className="text-[#8b7632] mb-1 flex items-center gap-1">
-                                          <Phone className="w-3 h-3" />
-                                          رقم الهاتف:
-                                        </p>
-                                        <p className="font-medium text-[#01645e]">{selectedMemberDetails.user.phone}</p>
-                                      </div>
-                                    )}
-                                    {selectedMemberDetails.user.city && (
-                                      <div>
-                                        <p className="text-[#8b7632] mb-1 flex items-center gap-1">
-                                          <MapPin className="w-3 h-3" />
-                                          المدينة:
-                                        </p>
-                                        <p className="font-medium text-[#01645e]">{selectedMemberDetails.user.city}</p>
-                                      </div>
-                                    )}
-                                    {selectedMemberDetails.user.nationality && (
-                                      <div>
-                                        <p className="text-[#8b7632] mb-1">الجنسية:</p>
-                                        <p className="font-medium text-[#01645e]">{selectedMemberDetails.user.nationality}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* معلومات الفريق */}
-                                <div className="space-y-3">
-                                  <h4 className="font-semibold text-[#01645e] flex items-center gap-2">
-                                    <Crown className="w-4 h-4" />
-                                    معلومات الفريق
-                                  </h4>
-                                  <div className="grid grid-cols-2 gap-4 text-sm bg-green-50 p-4 rounded-lg">
-                                    <div>
-                                      <p className="text-[#8b7632] mb-1">الدور المفضل:</p>
-                                      <Badge className="bg-[#3ab666] text-white">
-                                        {selectedMemberDetails.user.preferredRole}
-                                      </Badge>
+                                  )}
+                                  
+                                  {(selectedMemberDetails.user.nationality || selectedMemberDetails.additionalInfo?.nationality) && (
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-semibold text-[#8b7632]">الجنسية</p>
+                                      <p className="text-base text-[#01645e]">
+                                        {selectedMemberDetails.user.nationality || selectedMemberDetails.additionalInfo?.nationality}
+                                      </p>
                                     </div>
-                                    {selectedMemberDetails.teamRole && (
-                                      <div>
-                                        <p className="text-[#8b7632] mb-1">دور الفريق:</p>
-                                        <Badge variant="outline" className="border-[#3ab666] text-[#3ab666]">
-                                          {selectedMemberDetails.teamRole}
-                                        </Badge>
-                                      </div>
-                                    )}
-                                  </div>
+                                  )}
                                 </div>
 
-                                {/* معلومات إضافية */}
+                                {/* دور الفريق (إن وجد) */}
+                                {selectedMemberDetails.teamRole && (
+                                  <div className="space-y-1 border-b pb-4">
+                                    <p className="text-sm font-semibold text-[#8b7632]">دور الفريق المعين</p>
+                                    <Badge variant="outline" className="border-[#3ab666] text-[#3ab666]">
+                                      {selectedMemberDetails.teamRole}
+                                    </Badge>
+                                  </div>
+                                )}
+
+                                {/* باقي المعلومات الإضافية */}
                                 {selectedMemberDetails.additionalInfo && Object.keys(selectedMemberDetails.additionalInfo).length > 0 && (
-                                  <div className="space-y-3">
-                                    <h4 className="font-semibold text-[#01645e]">معلومات إضافية</h4>
-                                    <div className="grid grid-cols-2 gap-4 text-sm bg-blue-50 p-4 rounded-lg">
-                                      {Object.entries(selectedMemberDetails.additionalInfo).map(([key, value]) => (
-                                        <div key={key}>
-                                          <p className="text-[#8b7632] mb-1 capitalize">{key}:</p>
-                                          <p className="font-medium text-[#01645e]">{String(value)}</p>
-                                        </div>
-                                      ))}
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-[#01645e] text-sm">معلومات التسجيل الإضافية</h4>
+                                    <div className="grid gap-3">
+                                      {Object.entries(selectedMemberDetails.additionalInfo)
+                                        .filter(([key]) => !['phone', 'nationalId', 'bio', 'currentStatus', 'hasVirtualHackathonExperience', 'workplace', 'city', 'nationality'].includes(key))
+                                        .map(([key, value]) => (
+                                          <div key={key} className="bg-gray-50 p-3 rounded-lg">
+                                            <p className="text-xs text-[#8b7632] mb-1">{key}</p>
+                                            <p className="text-sm text-[#01645e] font-medium">{String(value)}</p>
+                                          </div>
+                                        ))}
                                     </div>
                                   </div>
                                 )}
