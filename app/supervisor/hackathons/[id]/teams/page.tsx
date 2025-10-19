@@ -44,9 +44,12 @@ interface TeamMember {
   email: string
   phone?: string
   participantId: string
+  teamRole?: string
+  additionalInfo?: any
   user?: {
     city?: string
     nationality?: string
+    preferredRole?: string
   }
 }
 
@@ -711,66 +714,104 @@ export default function SupervisorTeamsPage() {
 
       {/* Member Details Dialog */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>تفاصيل المشارك</DialogTitle>
+            <DialogTitle className="text-xl">تفاصيل المشارك</DialogTitle>
             <DialogDescription>
-              معلومات تفصيلية عن المشارك
+              معلومات تفصيلية عن المشارك وبيانات التسجيل
             </DialogDescription>
           </DialogHeader>
           {selectedMember && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                  {selectedMember.name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">{selectedMember.name}</h3>
-                  <p className="text-sm text-gray-500">مشارك</p>
-                </div>
-              </div>
-
-              <div className="space-y-3 border-t pt-4">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-gray-400" />
+            <div className="space-y-6">
+              {/* المعلومات الأساسية */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900 border-b pb-2">المعلومات الأساسية</h3>
+                
+                <div className="space-y-3">
                   <div>
-                    <p className="text-xs text-gray-500">البريد الإلكتروني</p>
-                    <p className="text-sm font-medium">{selectedMember.email}</p>
+                    <p className="text-sm text-gray-500">الاسم</p>
+                    <p className="text-base font-medium text-gray-900">{selectedMember.name}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-500">البريد الإلكتروني</p>
+                    <p className="text-base font-medium text-gray-900">{selectedMember.email}</p>
+                  </div>
+
+                  {selectedMember.phone && (
+                    <div>
+                      <p className="text-sm text-gray-500">رقم الهاتف</p>
+                      <p className="text-base font-medium text-gray-900">{selectedMember.phone}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* بيانات التسجيل الإضافية */}
+              {selectedMember.additionalInfo?.formData && (
+                <div className="space-y-4 border-t pt-4">
+                  <h3 className="font-semibold text-gray-900 border-b pb-2">بيانات التسجيل الإضافية</h3>
+                  
+                  <div className="grid gap-3">
+                    {Object.entries(selectedMember.additionalInfo.formData).map(([key, value]) => {
+                      // Skip if already shown in basic info
+                      if (['name', 'email', 'phone'].includes(key.toLowerCase())) return null
+                      
+                      // Format field name
+                      let fieldName = key
+                      if (key === 'field_1760542564292') fieldName = 'رقم الهوية'
+                      else if (key === 'field_1760542722892') fieldName = 'نبذه عن المشارك'
+                      else if (key === 'field_1760544735858') fieldName = 'الوضع الحالي'
+                      else if (key === 'field_1760547800823') fieldName = 'هل شاركت في هاكاثونات افتراضيه عبر الانترنت من قبل'
+                      else if (key === 'field_1760547806200') fieldName = 'جهة العمل'
+                      else if (key === 'field_1760547826023') fieldName = 'الدور الذي تريد ان تلعبه في الفريق'
+                      else if (key === 'field_1760636894490') fieldName = 'الجنسية'
+                      
+                      return (
+                        <div key={key} className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-sm font-semibold text-gray-700 mb-1">{fieldName}</p>
+                          <p className="text-base text-gray-900 whitespace-pre-wrap">{String(value)}</p>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
+              )}
 
-                {selectedMember.phone && (
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-gray-400" />
+              {/* معلومات إضافية من user */}
+              {(selectedMember.user?.city || selectedMember.user?.nationality || selectedMember.user?.preferredRole) && (
+                <div className="space-y-3 border-t pt-4">
+                  <h3 className="font-semibold text-gray-900 border-b pb-2">معلومات أخرى</h3>
+                  
+                  {selectedMember.user?.city && (
                     <div>
-                      <p className="text-xs text-gray-500">رقم الهاتف</p>
-                      <p className="text-sm font-medium">{selectedMember.phone}</p>
+                      <p className="text-sm text-gray-500">المدينة</p>
+                      <p className="text-base font-medium text-gray-900">{selectedMember.user.city}</p>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {selectedMember.user?.city && (
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-gray-400" />
+                  {selectedMember.user?.nationality && (
                     <div>
-                      <p className="text-xs text-gray-500">المدينة</p>
-                      <p className="text-sm font-medium">{selectedMember.user.city}</p>
+                      <p className="text-sm text-gray-500">الجنسية</p>
+                      <p className="text-base font-medium text-gray-900">{selectedMember.user.nationality}</p>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {selectedMember.user?.nationality && (
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-gray-400" />
+                  {selectedMember.teamRole && (
                     <div>
-                      <p className="text-xs text-gray-500">الجنسية</p>
-                      <p className="text-sm font-medium">{selectedMember.user.nationality}</p>
+                      <p className="text-sm text-gray-500">دور الفريق المعين</p>
+                      <Badge className="bg-blue-500">{selectedMember.teamRole}</Badge>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
+          <DialogFooter>
+            <Button onClick={() => setDetailsDialogOpen(false)} variant="outline">
+              إغلاق
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
