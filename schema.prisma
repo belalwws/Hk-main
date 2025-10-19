@@ -135,6 +135,7 @@ model User {
 enum UserRole {
   participant
   judge
+  expert
   admin
   supervisor
 }
