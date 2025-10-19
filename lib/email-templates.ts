@@ -295,30 +295,48 @@ export function replaceTemplateVariables(
 }
 
 /**
- * Process email template with variables
+ * Process email template with variables and attachments
  */
 export async function processEmailTemplate(
   templateType: keyof EmailTemplates,
   variables: Record<string, any>,
   hackathonId?: string
-): Promise<{ subject: string; body: string }> {
+): Promise<{ subject: string; body: string; attachments?: any[] }> {
   console.log(`📧 [email-templates] Processing template: ${templateType}`)
   console.log(`📧 [email-templates] Variables:`, Object.keys(variables))
-  
+
   const template = await getEmailTemplate(templateType, hackathonId)
-  
+
   console.log(`📧 [email-templates] Template loaded:`)
   console.log(`📧 [email-templates] Subject: ${template.subject}`)
   console.log(`📧 [email-templates] Body preview: ${template.body.substring(0, 150)}...`)
-  
+
+  // ✅ Get attachments from database if template is from DB
+  let attachments: any[] = []
+  try {
+    const dbTemplate = await prisma.emailTemplate.findFirst({
+      where: { templateKey: templateType as string }
+    })
+
+    if (dbTemplate && (dbTemplate as any).attachments) {
+      const attachmentsField = (dbTemplate as any).attachments
+      attachments = JSON.parse(attachmentsField as string)
+      console.log(`📎 [email-templates] Found ${attachments.length} attachments in template`)
+    }
+  } catch (error) {
+    console.log(`⚠️ [email-templates] No attachments found for template ${templateType}`)
+  }
+
   const result = {
     subject: replaceTemplateVariables(template.subject, variables),
-    body: replaceTemplateVariables(template.body, variables)
+    body: replaceTemplateVariables(template.body, variables),
+    attachments: attachments.length > 0 ? attachments : undefined
   }
-  
+
   console.log(`📧 [email-templates] After variable replacement:`)
   console.log(`📧 [email-templates] Subject: ${result.subject}`)
   console.log(`📧 [email-templates] Body preview: ${result.body.substring(0, 150)}...`)
-  
+  console.log(`📎 [email-templates] Attachments: ${result.attachments?.length || 0}`)
+
   return result
 }

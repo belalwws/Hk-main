@@ -209,13 +209,13 @@ export default function SupervisorEmailManagementPage() {
   const saveTemplate = async (template: EmailTemplate, silent = false) => {
     try {
       setSaving(true)
-      
+
       // ✅ FIX: Always set isActive to true when saving from this page
       const templateToSave = {
         ...template,
         isActive: true  // Force active when saving from email management
       }
-      
+
       const response = await fetch('/api/admin/email-templates', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -224,6 +224,8 @@ export default function SupervisorEmailManagementPage() {
       })
 
       if (response.ok) {
+        const data = await response.json()
+
         if (!silent) {
           toast({
             title: "✅ تم الحفظ",
@@ -231,7 +233,19 @@ export default function SupervisorEmailManagementPage() {
           })
         }
         setHasUnsavedChanges(false)
-        await loadTemplates()
+
+        // ✅ FIX: Update only the saved template in state instead of reloading all
+        // This prevents the refresh/flicker issue during auto-save
+        setTemplates(prevTemplates =>
+          prevTemplates.map(t =>
+            t.id === data.template.id ? data.template : t
+          )
+        )
+
+        // Update selected template if it's the one being saved
+        if (selectedTemplate?.id === data.template.id) {
+          setSelectedTemplate(data.template)
+        }
       } else {
         throw new Error('Failed to save')
       }

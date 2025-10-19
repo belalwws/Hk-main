@@ -440,6 +440,75 @@ async function initializeTemplates() {
     variables: { 'participantName': 'اسم المشارك', 'hackathonTitle': 'عنوان الهاكاثون' },
     isSystem: true,
     isActive: true
+  },
+  {
+    templateKey: 'upload_link',
+    nameAr: 'رابط رفع العرض التقديمي',
+    nameEn: 'Upload Link',
+    category: 'team',
+    subject: '🎉 رابط رفع العرض التقديمي - {{hackathonTitle}}',
+    description: 'يُرسل لإرسال رابط رفع العرض التقديمي للمشاركين',
+    bodyHtml: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl; background: #f8f9fa;">
+  <!-- Header with gradient -->
+  <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+    <div style="font-size: 60px; margin-bottom: 10px;">🎉</div>
+    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">رابط رفع العرض التقديمي</h1>
+    <p style="color: #fef3c7; margin: 10px 0 0 0; font-size: 16px;">يمكنك الآن رفع عرضك التقديمي</p>
+  </div>
+
+  <!-- Main Content -->
+  <div style="background: white; padding: 40px 30px; border-radius: 0 0 12px 12px;">
+    <p style="font-size: 18px; color: #1f2937; margin: 0 0 20px 0;">
+      مرحباً <strong>{{participantName}}</strong>،
+    </p>
+
+    <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 20px 0;">
+      يسعدنا إبلاغك بأنه تم قبولك في <strong style="color: #d97706;">{{hackathonTitle}}</strong>! 🎊
+    </p>
+
+    <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 25px 0;">
+      تم تعيينك في فريق: <strong style="color: #d97706;">{{teamName}}</strong>
+    </p>
+
+    <!-- Upload Link Box -->
+    <div style="background: #fef3c7; border-right: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
+      <p style="color: #92400e; margin: 0 0 15px 0; font-size: 16px;">يمكنك الآن رفع العرض التقديمي الخاص بفريقك:</p>
+      <a href="{{uploadLink}}" style="background: #f59e0b; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;">رفع العرض التقديمي</a>
+    </div>
+
+    <!-- Important Notes -->
+    <div style="background: #fef2f2; border-right: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <h3 style="color: #991b1b; margin: 0 0 15px 0; font-size: 18px;">⚠️ ملاحظات هامة:</h3>
+      <ul style="color: #7f1d1d; margin: 0; padding: 0 0 0 20px; line-height: 1.8;">
+        <li>هذا الرابط صالح حتى <strong>{{expiryDate}}</strong></li>
+        <li>الرابط خاص بك ولا يجب مشاركته مع الآخرين</li>
+        <li>يمكنك رفع العرض التقديمي مرة واحدة فقط</li>
+        <li>الملفات المقبولة: PowerPoint (.ppt, .pptx) أو PDF</li>
+        <li>الحد الأقصى لحجم الملف: 10 ميجابايت</li>
+      </ul>
+    </div>
+
+    <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0; line-height: 1.6;">
+      نتمنى لك التوفيق! 🚀
+    </p>
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+      <p style="font-size: 14px; color: #9ca3af; margin: 0;">
+        مع أطيب التحيات،<br/>
+        <strong style="color: #6b7280;">فريق إدارة الهاكاثونات</strong>
+      </p>
+    </div>
+  </div>
+</div>`,
+    variables: {
+      'participantName': 'اسم المشارك',
+      'hackathonTitle': 'عنوان الهاكاثون',
+      'teamName': 'اسم الفريق',
+      'uploadLink': 'رابط رفع العرض التقديمي',
+      'expiryDate': 'تاريخ انتهاء الرابط'
+    },
+    isSystem: true,
+    isActive: true
   }
   ]
 

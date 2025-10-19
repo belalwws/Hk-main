@@ -164,7 +164,7 @@ export async function sendMail(options: MailOptions) {
 }
 
 /**
- * Send email using template system
+ * Send email using template system with attachments support
  */
 export async function sendTemplatedEmail(
   templateType: keyof import('./email-templates').EmailTemplates,
@@ -174,9 +174,10 @@ export async function sendTemplatedEmail(
 ) {
   try {
     const { processEmailTemplate } = await import('./email-templates')
-    const { subject, body } = await processEmailTemplate(templateType, variables, hackathonId)
+    const { subject, body, attachments } = await processEmailTemplate(templateType, variables, hackathonId)
 
     console.log(`📧 [mailer] Sending templated email (${templateType}) to:`, to)
+    console.log(`📎 [mailer] Attachments found:`, attachments?.length || 0)
 
     // Fetch hackathon name for dynamic sender if hackathonId is provided
     let fromAddress: string | undefined = undefined
@@ -198,14 +199,53 @@ export async function sendTemplatedEmail(
 
     // Check if body is already HTML (contains HTML tags)
     const isHtml = /<[a-z][\s\S]*>/i.test(body)
-    
-    return await sendMail({
+
+    // Prepare mail options
+    const mailOptions: any = {
       to,
       subject,
       html: isHtml ? body : body.replace(/\n/g, '<br>'),
       text: body.replace(/<[^>]*>/g, ''), // Strip HTML tags for text version
       ...(fromAddress && { from: fromAddress })
-    })
+    }
+
+    // ✅ Add attachments if available
+    if (attachments && attachments.length > 0) {
+      console.log(`📎 [mailer] Processing ${attachments.length} attachments...`)
+
+      // Download attachments from URLs and prepare for nodemailer
+      const attachmentPromises = attachments.map(async (att: any) => {
+        try {
+          console.log(`📥 [mailer] Downloading attachment: ${att.name} from ${att.url}`)
+          const response = await fetch(att.url)
+          if (!response.ok) {
+            console.error(`❌ [mailer] Failed to download attachment ${att.name}: ${response.status}`)
+            return null
+          }
+
+          const buffer = Buffer.from(await response.arrayBuffer())
+          console.log(`✅ [mailer] Downloaded ${att.name}, size: ${buffer.length} bytes`)
+
+          return {
+            filename: att.name,
+            content: buffer,
+            contentType: att.type
+          }
+        } catch (error) {
+          console.error(`❌ [mailer] Error downloading attachment ${att.name}:`, error)
+          return null
+        }
+      })
+
+      const downloadedAttachments = (await Promise.all(attachmentPromises)).filter(a => a !== null)
+
+      if (downloadedAttachments.length > 0) {
+        mailOptions.attachments = downloadedAttachments
+        console.log(`✅ [mailer] Added ${downloadedAttachments.length} attachments to email`)
+      }
+    }
+
+    return await sendMail(mailOptions)
   } catch (error) {
     console.error(`❌ [mailer] Failed to send templated email (${templateType}):`, error)
     throw error
