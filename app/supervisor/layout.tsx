@@ -19,7 +19,9 @@ import {
   FileText,
   ClipboardList,
   Award,
-  Mail
+  Mail,
+  Users,
+  Gavel
 } from "lucide-react"
 
 const sidebarItems = [
@@ -59,6 +61,18 @@ const sidebarItems = [
     href: "/supervisor/email-management",
     icon: Mail,
     description: "قوالب الإيميلات التلقائية"
+  },
+  {
+    title: "الخبراء",
+    href: "/supervisor/experts",
+    icon: Users,
+    description: "إدارة الخبراء والدعوات"
+  },
+  {
+    title: "المحكمين",
+    href: "/supervisor/judges",
+    icon: Gavel,
+    description: "إدارة المحكمين والدعوات"
   },
   {
     title: "التقارير",
