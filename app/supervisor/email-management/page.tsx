@@ -197,18 +197,25 @@ export default function SupervisorEmailManagementPage() {
   const saveTemplate = async (template: EmailTemplate, silent = false) => {
     try {
       setSaving(true)
+      
+      // ✅ FIX: Always set isActive to true when saving from this page
+      const templateToSave = {
+        ...template,
+        isActive: true  // Force active when saving from email management
+      }
+      
       const response = await fetch('/api/admin/email-templates', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(template)
+        body: JSON.stringify(templateToSave)
       })
 
       if (response.ok) {
         if (!silent) {
           toast({
             title: "✅ تم الحفظ",
-            description: "تم حفظ القالب بنجاح"
+            description: "تم حفظ القالب بنجاح وتفعيله"
           })
         }
         setHasUnsavedChanges(false)
