@@ -396,7 +396,11 @@ export async function POST(
           
           const teamMembers = teamData.members.map(m => {
             const memberRole = getParticipantRole(m)
-            return `${m.user.name} (${memberRole})`
+            // Only show role if it's not the default 'مشارك'
+            if (memberRole && memberRole !== 'مشارك') {
+              return `${m.user.name} - ${memberRole}`
+            }
+            return m.user.name
           }).join('\n')
           
           const userRole = getParticipantRole(participant)
