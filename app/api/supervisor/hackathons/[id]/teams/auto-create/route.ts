@@ -348,13 +348,28 @@ export async function POST(
 
         // Prepare emails (don't send yet - we'll batch them)
         teamData.members.forEach(participant => {
-          const teamMembers = teamData.members.map(m => `${m.user.name} (${m.user.preferredRole || 'مطور'})`).join('\n')
+          // جلب الدور الحقيقي من additionalInfo أو user.preferredRole
+          const getParticipantRole = (p: typeof participant) => {
+            if (p.additionalInfo) {
+              const additionalInfo = p.additionalInfo as any
+              return additionalInfo.preferredRole || additionalInfo['الدور المفضل'] || additionalInfo.role || p.user.preferredRole || 'مطور'
+            }
+            return p.user.preferredRole || 'مطور'
+          }
+          
+          const teamMembers = teamData.members.map(m => {
+            const memberRole = getParticipantRole(m)
+            return `${m.user.name} (${memberRole})`
+          }).join('\n')
+          
+          const userRole = getParticipantRole(participant)
+          
           emailData.push({
             email: participant.user.email,
             userName: participant.user.name,
             hackathonTitle: hackathon.title,
             teamName: team.name,
-            userRole: participant.user.preferredRole || 'مطور',
+            userRole: userRole,
             teamMembers
           })
         })
