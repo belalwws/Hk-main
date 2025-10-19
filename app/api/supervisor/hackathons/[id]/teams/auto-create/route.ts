@@ -348,13 +348,38 @@ export async function POST(
 
         // Prepare emails (don't send yet - we'll batch them)
         teamData.members.forEach(participant => {
-          // جلب الدور الحقيقي من additionalInfo أو user.preferredRole
+          // جلب الدور الحقيقي من كل الأماكن الممكنة
           const getParticipantRole = (p: typeof participant) => {
+            // البحث في additionalInfo
             if (p.additionalInfo) {
               const additionalInfo = p.additionalInfo as any
-              return additionalInfo.preferredRole || additionalInfo['الدور المفضل'] || additionalInfo.role || p.user.preferredRole || 'مطور'
+              
+              // البحث في formData (من الفورم الديناميكي)
+              if (additionalInfo.formData) {
+                const formData = additionalInfo.formData
+                // البحث في كل الحقول الممكنة للدور
+                const roleKeys = Object.keys(formData).filter(key => 
+                  key.toLowerCase().includes('role') || 
+                  key.includes('دور') || 
+                  key.includes('الدور')
+                )
+                if (roleKeys.length > 0 && formData[roleKeys[0]]) {
+                  return formData[roleKeys[0]]
+                }
+              }
+              
+              // البحث المباشر في additionalInfo
+              const roleValue = additionalInfo.preferredRole || 
+                               additionalInfo['الدور المفضل'] || 
+                               additionalInfo.role ||
+                               additionalInfo['دور الفريق'] ||
+                               additionalInfo.teamRole
+              
+              if (roleValue) return roleValue
             }
-            return p.user.preferredRole || 'مطور'
+            
+            // fallback للـ user.preferredRole
+            return p.user.preferredRole || 'مشارك'
           }
           
           const teamMembers = teamData.members.map(m => {
