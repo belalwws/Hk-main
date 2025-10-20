@@ -21,7 +21,8 @@ import {
   Award,
   Mail,
   Users,
-  Gavel
+  Gavel,
+  Send
 } from "lucide-react"
 
 const sidebarItems = [
@@ -61,6 +62,13 @@ const sidebarItems = [
     href: "/supervisor/email-management",
     icon: Mail,
     description: "قوالب الإيميلات التلقائية"
+  },
+  {
+    title: "إيميل مخصص",
+    href: "/supervisor/custom-email",
+    icon: Send,
+    description: "إرسال إيميلات مخصصة",
+    badge: "جديد"
   },
   {
     title: "الخبراء",

@@ -8,6 +8,7 @@ const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor
   { prefix: "/api/submit-score", roles: ["judge"] },
   { prefix: "/api/results", roles: ["admin"] },
   { prefix: "/api/admin/email-templates", roles: ["admin", "supervisor"] }, // Allow supervisors to manage email templates
+  { prefix: "/api/admin/send-custom-email", roles: ["admin", "supervisor"] }, // Allow supervisors to send custom emails
   { prefix: "/api/admin/hackathons", roles: ["admin", "supervisor"] }, // Allow supervisors to access hackathon APIs
   { prefix: "/api/admin/experts", roles: ["admin", "supervisor"] }, // Allow supervisors to manage experts
   { prefix: "/api/admin/expert-invitations", roles: ["admin", "supervisor"] }, // Allow supervisors to manage expert invitations
