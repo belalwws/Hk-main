@@ -39,7 +39,7 @@ interface RecipientSelectorProps {
 export function RecipientSelector({ selectedRecipients, onRecipientsChange }: RecipientSelectorProps) {
   const [hackathons, setHackathons] = useState<any[]>([])
   const [selectedHackathon, setSelectedHackathon] = useState<string>('')
-  const [recipientType, setRecipientType] = useState<'participants' | 'judges' | 'experts' | ''>('')
+  const [recipientType, setRecipientType] = useState<'participants' | 'judges' | 'experts' | 'judge-applications' | 'expert-applications' | ''>('')
   const [availableRecipients, setAvailableRecipients] = useState<Recipient[]>([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -84,13 +84,17 @@ export function RecipientSelector({ selectedRecipients, onRecipientsChange }: Re
     setLoading(true)
     try {
       let endpoint = ''
-      
+
       if (recipientType === 'participants') {
         endpoint = `/api/admin/hackathons/${selectedHackathon}/participants`
       } else if (recipientType === 'judges') {
         endpoint = `/api/admin/judges?hackathonId=${selectedHackathon}`
       } else if (recipientType === 'experts') {
         endpoint = `/api/admin/experts?hackathonId=${selectedHackathon}`
+      } else if (recipientType === 'judge-applications') {
+        endpoint = `/api/admin/judge-applications?hackathonId=${selectedHackathon}`
+      } else if (recipientType === 'expert-applications') {
+        endpoint = `/api/admin/expert-applications?hackathonId=${selectedHackathon}`
       }
 
       const response = await fetch(endpoint, {
@@ -99,9 +103,9 @@ export function RecipientSelector({ selectedRecipients, onRecipientsChange }: Re
 
       if (response.ok) {
         const data = await response.json()
-        
+
         let recipients: Recipient[] = []
-        
+
         if (recipientType === 'participants') {
           recipients = (data.participants || []).map((p: any) => ({
             id: p.id,
@@ -125,6 +129,22 @@ export function RecipientSelector({ selectedRecipients, onRecipientsChange }: Re
             email: e.user?.email || e.email || '',
             role: 'خبير',
             status: e.isActive ? 'active' : 'inactive'
+          }))
+        } else if (recipientType === 'judge-applications') {
+          recipients = (data.applications || []).map((app: any) => ({
+            id: app.id,
+            name: app.name || 'غير معروف',
+            email: app.email || '',
+            role: 'طلب محكم',
+            status: app.status
+          }))
+        } else if (recipientType === 'expert-applications') {
+          recipients = (data.applications || []).map((app: any) => ({
+            id: app.id,
+            name: app.name || 'غير معروف',
+            email: app.email || '',
+            role: 'طلب خبير',
+            status: app.status
           }))
         }
 
@@ -176,6 +196,8 @@ export function RecipientSelector({ selectedRecipients, onRecipientsChange }: Re
       case 'participants': return <Users className="h-4 w-4" />
       case 'judges': return <Gavel className="h-4 w-4" />
       case 'experts': return <GraduationCap className="h-4 w-4" />
+      case 'judge-applications': return <UserCheck className="h-4 w-4" />
+      case 'expert-applications': return <UserCheck className="h-4 w-4" />
       default: return <Mail className="h-4 w-4" />
     }
   }
@@ -185,6 +207,8 @@ export function RecipientSelector({ selectedRecipients, onRecipientsChange }: Re
       case 'participants': return 'المشاركين'
       case 'judges': return 'المحكمين'
       case 'experts': return 'الخبراء'
+      case 'judge-applications': return 'طلبات المحكمين'
+      case 'expert-applications': return 'طلبات الخبراء'
       default: return 'اختر نوع المستلمين'
     }
   }
@@ -295,6 +319,18 @@ export function RecipientSelector({ selectedRecipients, onRecipientsChange }: Re
                   <div className="flex items-center gap-2">
                     <GraduationCap className="h-4 w-4" />
                     الخبراء
+                  </div>
+                </SelectItem>
+                <SelectItem value="judge-applications">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4" />
+                    طلبات المحكمين (عبر الفورم)
+                  </div>
+                </SelectItem>
+                <SelectItem value="expert-applications">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4" />
+                    طلبات الخبراء (عبر الفورم)
                   </div>
                 </SelectItem>
               </SelectContent>
