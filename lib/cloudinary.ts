@@ -8,6 +8,30 @@ cloudinary.config({
 })
 
 /**
+ * Update existing file on Cloudinary to make it public
+ * @param publicId - The public ID of the file (e.g., "email-attachments/documents/filename.pdf")
+ * @returns Updated file URL
+ */
+export async function makeCloudinaryFilePublic(publicId: string) {
+  try {
+    console.log(`🔄 [cloudinary] Making file public: ${publicId}`)
+
+    // Update the file's access mode to public
+    const result = await cloudinary.uploader.explicit(publicId, {
+      type: 'upload',
+      resource_type: 'raw',
+      access_mode: 'public',
+    })
+
+    console.log(`✅ [cloudinary] File is now public: ${result.secure_url}`)
+    return result.secure_url
+  } catch (error: any) {
+    console.error(`❌ [cloudinary] Failed to make file public:`, error.message)
+    throw error
+  }
+}
+
+/**
  * Upload file to Cloudinary
  * @param file - File buffer or base64 string
  * @param folder - Folder name in Cloudinary
@@ -109,6 +133,18 @@ export async function uploadRawToCloudinary(
 
     const dataUri = `data:${mimeType};base64,${base64}`
 
+    // Try to delete old file first (if exists) to ensure fresh upload with new settings
+    if (filename) {
+      const publicId = `${folder}/${filename}`
+      try {
+        console.log(`🗑️ [cloudinary] Attempting to delete old file: ${publicId}`)
+        await deleteFromCloudinary(publicId, 'raw')
+      } catch (deleteError: any) {
+        // Ignore error if file doesn't exist
+        console.log(`ℹ️ [cloudinary] Old file not found or already deleted: ${deleteError.message}`)
+      }
+    }
+
     const result = await cloudinary.uploader.upload(
       dataUri,
       {
@@ -121,6 +157,23 @@ export async function uploadRawToCloudinary(
         invalidate: true,
       }
     )
+
+    console.log(`✅ [cloudinary] File uploaded: ${result.secure_url}`)
+
+    // IMPORTANT: For raw files, we need to explicitly update access_mode after upload
+    // because Cloudinary doesn't always apply access_mode during upload for raw files
+    try {
+      console.log(`🔄 [cloudinary] Updating access mode to public for: ${result.public_id}`)
+      const updateResult = await cloudinary.uploader.explicit(result.public_id, {
+        type: 'upload',
+        resource_type: 'raw',
+        access_mode: 'public',
+      })
+      console.log(`✅ [cloudinary] File is now PUBLIC: ${updateResult.secure_url}`)
+    } catch (updateError: any) {
+      console.error(`⚠️ [cloudinary] Failed to update access mode:`, updateError.message)
+      // Continue anyway - the file is uploaded
+    }
 
     return {
       url: result.secure_url,
@@ -145,7 +198,10 @@ export async function deleteFromCloudinary(publicId: string, resourceType: 'imag
 
     for (const type of types) {
       try {
-        const result = await cloudinary.uploader.destroy(publicId, { resource_type: type })
+        const result = await cloudinary.uploader.destroy(publicId, {
+          resource_type: type,
+          invalidate: true, // Invalidate CDN cache
+        })
         if (result.result === 'ok') {
           console.log(`✅ Deleted from Cloudinary (${type}):`, publicId)
           return result
