@@ -51,8 +51,8 @@ export async function POST(
     if (!token) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
 
     const payload = await verifyToken(token)
-    if (!payload || payload.role !== 'admin') {
-      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
+    if (!payload || !['admin', 'supervisor'].includes(payload.role)) {
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
     }
 
     const formData = await request.formData()

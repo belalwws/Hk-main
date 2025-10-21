@@ -3,20 +3,33 @@ import type { NextRequest } from "next/server"
 import { verifyToken } from "@/lib/auth"
 
 // Define protected route prefixes and their required roles
-const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor")[] }[] = [
+// IMPORTANT: Order matters! More specific routes MUST come BEFORE general routes
+const protectedRoutes: { prefix: string; roles: ("admin" | "judge" | "supervisor" | "participant")[] }[] = [
   { prefix: "/api/teams", roles: ["judge", "supervisor"] },
   { prefix: "/api/submit-score", roles: ["judge"] },
   { prefix: "/api/results", roles: ["admin"] },
-  { prefix: "/api/admin/email-templates", roles: ["admin", "supervisor"] }, // Allow supervisors to manage email templates
-  { prefix: "/api/admin/send-custom-email", roles: ["admin", "supervisor"] }, // Allow supervisors to send custom emails
-  { prefix: "/api/admin/hackathons", roles: ["admin", "supervisor"] }, // Allow supervisors to access hackathon APIs
-  { prefix: "/api/admin/experts", roles: ["admin", "supervisor"] }, // Allow supervisors to manage experts
-  { prefix: "/api/admin/expert-invitations", roles: ["admin", "supervisor"] }, // Allow supervisors to manage expert invitations
-  { prefix: "/api/admin/expert-applications", roles: ["admin", "supervisor"] }, // Allow supervisors to manage expert applications
-  { prefix: "/api/admin/judges", roles: ["admin", "supervisor"] }, // Allow supervisors to manage judges
-  { prefix: "/api/admin/judge-invitations", roles: ["admin", "supervisor"] }, // Allow supervisors to manage judge invitations
-  { prefix: "/api/admin/judge-applications", roles: ["admin", "supervisor"] }, // Allow supervisors to manage judge applications
+  
+  // Specific admin routes accessible by supervisors (MUST come before general /api/admin)
+  { prefix: "/api/admin/email-templates", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/send-custom-email", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/hackathons", roles: ["admin", "supervisor"] }, // All hackathon management
+  { prefix: "/api/admin/experts", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/expert-invitations", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/expert-applications", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/expert-form", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/expert-form-design", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/judges", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/judge-invitations", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/judge-applications", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/judge-form", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/judge-form-design", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/supervision-form", roles: ["admin", "supervisor"] },
+  { prefix: "/api/admin/feedback-form", roles: ["admin", "supervisor"] },
+  
+  // General admin route (MUST come AFTER specific routes)
   { prefix: "/api/admin", roles: ["admin"] },
+  
+  // Other routes
   { prefix: "/api/supervisor", roles: ["supervisor", "admin"] },
   { prefix: "/judge", roles: ["judge"] },
   { prefix: "/admin", roles: ["admin"] },
@@ -111,11 +124,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Find matching protected route by prefix
-  const route = protectedRoutes.find((r) => pathname.startsWith(r.prefix))
-  if (!route) {
+  // Find matching protected route by prefix - IMPORTANT: Find the LONGEST match
+  const matchingRoutes = protectedRoutes.filter((r) => pathname.startsWith(r.prefix))
+  if (matchingRoutes.length === 0) {
     return NextResponse.next()
   }
+  
+  // Get the most specific (longest) matching route
+  const route = matchingRoutes.reduce((longest, current) => 
+    current.prefix.length > longest.prefix.length ? current : longest
+  )
 
   console.log('🔒 [Middleware] Protected route:', pathname, 'Required roles:', route.roles)
 
