@@ -619,9 +619,9 @@ export default function SupervisorsManagement() {
                   <SelectValue placeholder="اختر مستخدم" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allUsers.filter(u => u.role === 'supervisor' || u.role === 'participant').map((user) => (
+                  {allUsers.filter(u => u.role === 'supervisor').map((user) => (
                     <SelectItem key={user.id} value={user.id}>
-                      {user.name} ({user.email}) - {user.role === 'supervisor' ? 'مشرف' : 'مشارك'}
+                      {user.name} ({user.email})
                     </SelectItem>
                   ))}
                 </SelectContent>
