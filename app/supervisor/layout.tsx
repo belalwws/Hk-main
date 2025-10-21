@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import ErrorBoundary from "@/components/ErrorBoundary"
+import { HeartbeatTracker } from "@/components/heartbeat-tracker"
 import {
   Trophy,
   BarChart3,
@@ -179,10 +180,11 @@ export default function SupervisorLayout({
 
   return (
     <ErrorBoundary>
+      <HeartbeatTracker />
       <div className="min-h-screen bg-gray-50" dir="rtl">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />

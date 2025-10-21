@@ -13,36 +13,31 @@ export function SiteHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-[#c3e956]/30 sticky top-0 z-50">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20">
-          {/* Logo - Enhanced with hover effect */}
+          {/* Logo */}
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
             <Link href="/" className="flex items-center space-x-3 rtl:space-x-reverse hover:opacity-80 transition-all duration-300 group">
               <div className="hidden sm:block">
-                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#01645e] to-[#3ab666] bg-clip-text text-transparent group-hover:from-[#3ab666] group-hover:to-[#01645e] transition-all duration-300">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
                   نظام إدارة الهاكاثون
                 </h1>
-                <p className="text-xs sm:text-sm text-[#8b7632] group-hover:text-[#01645e] transition-colors duration-300">منصة متكاملة لإدارة الهاكاثونات</p>
+                <p className="text-xs sm:text-sm text-slate-600">منصة متكاملة لإدارة الهاكاثونات</p>
               </div>
             </Link>
           </motion.div>
 
           {/* Desktop Navigation */}
           <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="hidden lg:flex items-center space-x-6 rtl:space-x-reverse">
-            <nav className="flex space-x-8 rtl:space-x-reverse">
-              <Link href="/hackathons" className="text-[#01645e] hover:text-[#3ab666] font-medium transition-colors">الهاكاثونات</Link>
-              <Link href="/#features" className="text-[#01645e] hover:text-[#3ab666] font-medium transition-colors">المميزات</Link>
-              <Link href="/#criteria" className="text-[#01645e] hover:text-[#3ab666] font-medium transition-colors">معايير التقييم</Link>
-            </nav>
             {loading ? (
-              <div className="w-8 h-8 border-2 border-[#01645e]/20 border-t-[#01645e] rounded-full animate-spin"></div>
+              <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
             ) : !user ? (
               <div className="hidden sm:flex items-center gap-2 lg:gap-3">
-                <Link href="/register" className="bg-white text-[#01645e] border border-[#01645e] px-3 lg:px-5 py-2 lg:py-2.5 rounded-xl font-semibold shadow hover:bg-[#01645e] hover:text-white transition-colors text-sm lg:text-base">
+                <Link href="/register" className="bg-white text-slate-900 border border-slate-200 px-3 lg:px-5 py-2 lg:py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition-colors text-sm lg:text-base">
                   إنشاء حساب
                 </Link>
-                <Link href="/login" className="bg-gradient-to-r from-[#01645e] to-[#3ab666] text-white px-3 lg:px-5 py-2 lg:py-2.5 rounded-xl font-semibold shadow hover:from-[#014a46] hover:to-[#2d8f52] text-sm lg:text-base">
+                <Link href="/login" className="bg-slate-900 text-white px-3 lg:px-5 py-2 lg:py-2.5 rounded-lg font-semibold hover:bg-slate-800 transition-colors text-sm lg:text-base">
                   تسجيل الدخول
                 </Link>
               </div>
@@ -55,35 +50,35 @@ export function SiteHeader() {
                   >
                     <Button
                       variant="ghost"
-                      className="flex items-center gap-3 bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 hover:from-[#01645e]/20 hover:to-[#3ab666]/20 border border-[#01645e]/20 rounded-xl px-4 py-2 transition-all duration-300 shadow-sm hover:shadow-md"
+                      className="flex items-center gap-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-4 py-2 transition-all duration-300"
                     >
-                      <div className="w-8 h-8 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-semibold text-[#01645e]">{user.name}</div>
-                        <div className="text-xs text-[#8b7632]">
+                        <div className="text-sm font-semibold text-slate-900">{user.name}</div>
+                        <div className="text-xs text-slate-600">
                           {user.role === 'admin' ? 'مدير النظام' :
                            user.role === 'judge' ? 'محكم' :
                            user.role === 'supervisor' ? 'مشرف' : 'مشارك'}
                         </div>
                       </div>
-                      <ChevronDown className="w-4 h-4 text-[#01645e] transition-transform duration-200" />
+                      <ChevronDown className="w-4 h-4 text-slate-600 transition-transform duration-200" />
                     </Button>
                   </motion.div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-64 bg-white/95 backdrop-blur-md border border-[#01645e]/20 shadow-xl rounded-xl p-2"
+                  className="w-64 bg-white border border-slate-200 shadow-lg rounded-lg p-2"
                 >
-                  <div className="px-3 py-2 bg-gradient-to-r from-[#01645e]/5 to-[#3ab666]/5 rounded-lg mb-2 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  <div className="px-3 py-2 bg-slate-50 rounded-lg mb-2 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-[#01645e]">{user.name}</div>
-                      <div className="text-sm text-[#8b7632]">{user.email}</div>
-                      <div className="text-xs text-[#3ab666] mt-1">
+                      <div className="font-semibold text-slate-900">{user.name}</div>
+                      <div className="text-sm text-slate-600">{user.email}</div>
+                      <div className="text-xs text-slate-500 mt-1">
                         {user.role === 'admin' ? '🔧 مدير النظام' :
                          user.role === 'judge' ? '⚖️ محكم معتمد' :
                          user.role === 'supervisor' ? '👨‍🏫 مشرف' : '👨‍💻 مشارك'}
@@ -91,30 +86,30 @@ export function SiteHeader() {
                     </div>
                   </div>
 
-                  <DropdownMenuSeparator className="bg-[#01645e]/10" />
+                  <DropdownMenuSeparator className="bg-slate-200" />
 
                   {user.role === 'admin' && (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#01645e]/10 transition-colors">
-                          <div className="w-8 h-8 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-lg flex items-center justify-center">
+                        <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+                          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
                             <span className="text-white text-sm">🏛️</span>
                           </div>
                           <div>
-                            <div className="font-medium text-[#01645e]">لوحة تحكم الأدمن</div>
-                            <div className="text-xs text-[#8b7632]">إدارة النظام والمشاركين</div>
+                            <div className="font-medium text-slate-900">لوحة تحكم الأدمن</div>
+                            <div className="text-xs text-slate-600">إدارة النظام والمشاركين</div>
                           </div>
                         </Link>
                       </DropdownMenuItem>
 
                       <DropdownMenuItem asChild>
-                        <Link href="/admin/forms" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3ab666]/10 transition-colors">
-                          <div className="w-8 h-8 bg-gradient-to-r from-[#3ab666] to-[#c3e956] rounded-lg flex items-center justify-center">
+                        <Link href="/admin/forms" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+                          <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center">
                             <span className="text-white text-sm">📝</span>
                           </div>
                           <div>
-                            <div className="font-medium text-[#01645e]">إدارة النماذج</div>
-                            <div className="text-xs text-[#8b7632]">إنشاء ومتابعة النماذج</div>
+                            <div className="font-medium text-slate-900">إدارة النماذج</div>
+                            <div className="text-xs text-slate-600">إنشاء ومتابعة النماذج</div>
                           </div>
                         </Link>
                       </DropdownMenuItem>
@@ -123,13 +118,13 @@ export function SiteHeader() {
 
                   {user.role === 'judge' && (
                     <DropdownMenuItem asChild>
-                      <Link href="/judge" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3ab666]/10 transition-colors">
-                        <div className="w-8 h-8 bg-gradient-to-r from-[#3ab666] to-[#c3e956] rounded-lg flex items-center justify-center">
+                      <Link href="/judge" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+                        <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center">
                           <span className="text-white text-sm">⚖️</span>
                         </div>
                         <div>
-                          <div className="font-medium text-[#01645e]">منطقة المحكم</div>
-                          <div className="text-xs text-[#8b7632]">تقييم المشاريع والحلول</div>
+                          <div className="font-medium text-slate-900">منطقة المحكم</div>
+                          <div className="text-xs text-slate-600">تقييم المشاريع والحلول</div>
                         </div>
                       </Link>
                     </DropdownMenuItem>
@@ -137,13 +132,13 @@ export function SiteHeader() {
 
                   {user.role === 'supervisor' && (
                     <DropdownMenuItem asChild>
-                      <Link href="/supervisor/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3ab666]/10 transition-colors">
-                        <div className="w-8 h-8 bg-gradient-to-r from-[#3ab666] to-[#01645e] rounded-lg flex items-center justify-center">
+                      <Link href="/supervisor/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+                        <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center">
                           <span className="text-white text-sm">👨‍🏫</span>
                         </div>
                         <div>
-                          <div className="font-medium text-[#01645e]">لوحة المشرف</div>
-                          <div className="text-xs text-[#8b7632]">إدارة المشاركين والفرق</div>
+                          <div className="font-medium text-slate-900">لوحة المشرف</div>
+                          <div className="text-xs text-slate-600">إدارة المشاركين والفرق</div>
                         </div>
                       </Link>
                     </DropdownMenuItem>
@@ -151,48 +146,48 @@ export function SiteHeader() {
 
                   {user.role === 'participant' && (
                     <DropdownMenuItem asChild>
-                      <Link href="/participant/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#c3e956]/10 transition-colors">
-                        <div className="w-8 h-8 bg-gradient-to-r from-[#c3e956] to-[#8b7632] rounded-lg flex items-center justify-center">
+                      <Link href="/participant/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+                        <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center">
                           <span className="text-white text-sm">👨‍💻</span>
                         </div>
                         <div>
-                          <div className="font-medium text-[#01645e]">لوحة المشارك</div>
-                          <div className="text-xs text-[#8b7632]">متابعة مشروعك وحالة المشاركة</div>
+                          <div className="font-medium text-slate-900">لوحة المشارك</div>
+                          <div className="text-xs text-slate-600">متابعة مشروعك وحالة المشاركة</div>
                         </div>
                       </Link>
                     </DropdownMenuItem>
                   )}
 
-                  <DropdownMenuSeparator className="bg-[#01645e]/10 my-2" />
+                  <DropdownMenuSeparator className="bg-slate-200 my-2" />
 
                   <DropdownMenuItem asChild>
-                    <Link 
-                      href={user.role === 'supervisor' ? '/supervisor/profile' : '/profile'} 
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3ab666]/10 transition-colors"
+                    <Link
+                      href={user.role === 'supervisor' ? '/supervisor/profile' : '/profile'}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors"
                     >
-                      <div className="w-8 h-8 bg-gradient-to-r from-[#3ab666] to-[#c3e956] rounded-lg flex items-center justify-center">
+                      <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center">
                         <span className="text-white text-sm">👤</span>
                       </div>
                       <div>
-                        <div className="font-medium text-[#01645e]">الملف الشخصي</div>
-                        <div className="text-xs text-[#8b7632]">معلوماتك ومشاركاتك</div>
+                        <div className="font-medium text-slate-900">الملف الشخصي</div>
+                        <div className="text-xs text-slate-600">معلوماتك ومشاركاتك</div>
                       </div>
                     </Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild>
-                    <Link href="/hackathons" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#c3e956]/10 transition-colors">
-                      <div className="w-8 h-8 bg-gradient-to-r from-[#c3e956] to-[#8b7632] rounded-lg flex items-center justify-center">
+                    <Link href="/hackathons" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+                      <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center">
                         <span className="text-white text-sm">🏆</span>
                       </div>
                       <div>
-                        <div className="font-medium text-[#01645e]">الهاكاثونات</div>
-                        <div className="text-xs text-[#8b7632]">تصفح الفعاليات المتاحة</div>
+                        <div className="font-medium text-slate-900">الهاكاثونات</div>
+                        <div className="text-xs text-slate-600">تصفح الفعاليات المتاحة</div>
                       </div>
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuSeparator className="bg-[#01645e]/10 my-2" />
+                  <DropdownMenuSeparator className="bg-slate-200 my-2" />
 
                   <DropdownMenuItem
                     onClick={logout}
@@ -222,22 +217,22 @@ export function SiteHeader() {
                     size="sm"
                     className="p-1 rounded-full"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64 p-2">
+                <DropdownMenuContent align="end" className="w-64 p-2 border-slate-200">
                   <DropdownMenuLabel className="text-center pb-2">
-                    <div className="font-semibold text-[#01645e]">{user.name}</div>
-                    <div className="text-xs text-[#8b7632]">
+                    <div className="font-semibold text-slate-900">{user.name}</div>
+                    <div className="text-xs text-slate-600">
                       {user.role === 'admin' ? 'مدير النظام' :
                        user.role === 'judge' ? 'محكم' :
                        user.role === 'supervisor' ? 'مشرف' : 'مشارك'}
                     </div>
                   </DropdownMenuLabel>
 
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-slate-200" />
 
                   {/* Dashboard Links */}
                   {user.role === 'admin' && (
@@ -283,7 +278,7 @@ export function SiteHeader() {
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-slate-200" />
 
                   <DropdownMenuItem
                     onClick={logout}
@@ -303,7 +298,7 @@ export function SiteHeader() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-6 h-6 text-slate-700" /> : <Menu className="w-6 h-6 text-slate-700" />}
             </Button>
           </div>
         </div>
@@ -314,14 +309,14 @@ export function SiteHeader() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden border-t border-[#c3e956]/30 bg-white/98 backdrop-blur-md shadow-lg"
+            className="lg:hidden border-t border-slate-200 bg-white shadow-lg"
           >
             <div className="px-4 py-6 space-y-6">
               {/* User Info for Mobile (if logged in) */}
               {user && (
-                <div className="bg-gradient-to-r from-[#01645e]/10 to-[#3ab666]/10 rounded-xl p-4 border border-[#01645e]/20 shadow-sm">
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 bg-gradient-to-r from-[#01645e] to-[#3ab666] rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md">
+                    <div className="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center text-white font-bold text-xl">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
@@ -336,35 +331,6 @@ export function SiteHeader() {
                   </div>
                 </div>
               )}
-
-              {/* Navigation Links */}
-              <div className="space-y-1">
-                <h3 className="text-sm font-semibold text-[#8b7632] mb-3 px-2">التنقل</h3>
-                <Link
-                  href="/hackathons"
-                  className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Calendar className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-semibold">الهاكاثونات</span>
-                </Link>
-                <Link
-                  href="/#features"
-                  className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <UserIcon className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-semibold">المميزات</span>
-                </Link>
-                <Link
-                  href="/#criteria"
-                  className="flex items-center gap-3 text-[#01645e] hover:text-white hover:bg-gradient-to-r hover:from-[#01645e] hover:to-[#3ab666] font-medium transition-all duration-300 py-3 px-3 rounded-xl shadow-sm hover:shadow-md"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Settings className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-semibold">معايير التقييم</span>
-                </Link>
-              </div>
 
               {/* Dashboard Links for Logged in Users */}
               {user && (

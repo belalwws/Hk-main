@@ -64,9 +64,23 @@ export async function POST(request: NextRequest) {
         include: {
           adminActions: { include: { hackathon: true } },
           judgeAssignments: { include: { hackathon: true } },
-          participations: { include: { hackathon: true } }
+          participations: { include: { hackathon: true } },
+          supervisorAssignments: { include: { hackathon: true } }
         }
       })
+
+      // Update lastLogin, loginCount, isOnline, and lastActivity
+      if (user) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            lastLogin: new Date(),
+            loginCount: { increment: 1 },
+            isOnline: true,
+            lastActivity: new Date()
+          }
+        })
+      }
     } catch (_) {
       user = null
     }

@@ -109,6 +109,8 @@ model User {
   workExperience String?
   lastLogin      DateTime?
   loginCount     Int       @default(0)
+  isOnline       Boolean   @default(false)
+  lastActivity   DateTime?
 
   // New fields for supervisor profile
   dateOfBirth       String?

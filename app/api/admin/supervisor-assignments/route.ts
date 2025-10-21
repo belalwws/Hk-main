@@ -15,37 +15,44 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
     }
 
-    // Get all supervisors with their assignments
-    const supervisors = await prisma.supervisor.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            city: true,
-            profilePicture: true,
-            bio: true,
-            skills: true,
-            github: true,
-            linkedin: true,
-            portfolio: true,
-            university: true,
-            major: true,
-            graduationYear: true,
-            workExperience: true,
-            createdAt: true,
-            isActive: true
-          }
-        },
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            startDate: true,
-            endDate: true
+    // Get all users with supervisor role
+    const supervisorUsers = await prisma.user.findMany({
+      where: {
+        role: 'supervisor'
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        city: true,
+        profilePicture: true,
+        bio: true,
+        skills: true,
+        github: true,
+        linkedin: true,
+        portfolio: true,
+        university: true,
+        major: true,
+        graduationYear: true,
+        workExperience: true,
+        createdAt: true,
+        isActive: true,
+        lastLogin: true,
+        isOnline: true,
+        lastActivity: true,
+        loginCount: true,
+        supervisorAssignments: {
+          include: {
+            hackathon: {
+              select: {
+                id: true,
+                title: true,
+                status: true,
+                startDate: true,
+                endDate: true
+              }
+            }
           }
         }
       },
@@ -54,36 +61,51 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Group by user
-    const supervisorsByUser = supervisors.reduce((acc: Record<string, any>, supervisor: any) => {
-      const userId = supervisor.userId
-      if (!acc[userId]) {
-        acc[userId] = {
-          user: supervisor.user,
-          assignments: []
-        }
-      }
-      acc[userId].assignments.push({
-        id: supervisor.id,
-        hackathonId: supervisor.hackathonId,
-        hackathon: supervisor.hackathon,
-        department: supervisor.department,
-        permissions: supervisor.permissions,
-        isActive: supervisor.isActive,
-        assignedAt: supervisor.assignedAt
-      })
-      return acc
-    }, {} as Record<string, any>)
+    // Format the response
+    const supervisors = supervisorUsers.map(user => ({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        city: user.city,
+        profilePicture: user.profilePicture,
+        bio: user.bio,
+        skills: user.skills,
+        github: user.github,
+        linkedin: user.linkedin,
+        portfolio: user.portfolio,
+        university: user.university,
+        major: user.major,
+        graduationYear: user.graduationYear,
+        workExperience: user.workExperience,
+        createdAt: user.createdAt,
+        isActive: user.isActive,
+        lastLogin: user.lastLogin,
+        isOnline: user.isOnline,
+        lastActivity: user.lastActivity,
+        loginCount: user.loginCount
+      },
+      assignments: user.supervisorAssignments.map(assignment => ({
+        id: assignment.id,
+        hackathonId: assignment.hackathonId,
+        hackathon: assignment.hackathon,
+        department: assignment.department,
+        permissions: assignment.permissions,
+        isActive: assignment.isActive,
+        assignedAt: assignment.assignedAt
+      }))
+    }))
 
     return NextResponse.json({
-      supervisors: Object.values(supervisorsByUser)
+      supervisors
     })
 
   } catch (error) {
     console.error("Error fetching supervisor assignments:", error)
     console.error("Full error details:", JSON.stringify(error, null, 2))
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       error: "حدث خطأ في جلب تعيينات المشرفين",
       details: error instanceof Error ? error.message : String(error)
     }, { status: 500 })

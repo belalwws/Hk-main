@@ -285,6 +285,13 @@ export default function HackathonRegisterFormPage() {
 
     setSubmitting(true)
     try {
+      console.log('📤 Sending registration data:', {
+        formId: form.id,
+        data: formData,
+        email: formData.email,
+        name: formData.name
+      })
+
       const response = await fetch(`/api/hackathons/${hackathonId}/register-form`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

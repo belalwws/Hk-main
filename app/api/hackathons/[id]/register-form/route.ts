@@ -165,7 +165,9 @@ export async function POST(
     console.log('📝 Registration form submission:', {
       hackathonId: params.id,
       email: data?.email,
-      name: data?.name
+      name: data?.name,
+      allData: data,
+      dataKeys: Object.keys(data || {})
     })
 
     // Validate required data
@@ -173,14 +175,48 @@ export async function POST(
       return NextResponse.json({ error: 'بيانات النموذج مطلوبة' }, { status: 400 })
     }
 
+    // Extract name and email from data (support both direct fields and dynamic form fields)
+    let name = data.name
+    let email = data.email
+    let phone = data.phone
+
+    // If not found directly, search in all fields for email/name patterns
+    if (!email || !name) {
+      const dataKeys = Object.keys(data)
+      for (const key of dataKeys) {
+        const value = data[key]
+        if (typeof value === 'string') {
+          // Check if this looks like an email
+          if (!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            email = value
+          }
+          // Check if this looks like a name (not email, not phone, has spaces or Arabic chars)
+          if (!name && value.length > 2 && !/@/.test(value) && !/^\+?[0-9\s\-\(\)]+$/.test(value)) {
+            name = value
+          }
+          // Check if this looks like a phone
+          if (!phone && /^\+?[0-9\s\-\(\)]{10,}$/.test(value)) {
+            phone = value
+          }
+        }
+      }
+    }
+
+    console.log('📧 Extracted data:', { name, email, phone })
+
     // Basic validation for required fields
-    if (!data.name?.trim()) {
+    if (!name?.trim()) {
       return NextResponse.json({ error: 'الاسم مطلوب' }, { status: 400 })
     }
 
-    if (!data.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'البريد الإلكتروني غير صحيح' }, { status: 400 })
     }
+
+    // Update data object with extracted values
+    data.name = name
+    data.email = email
+    if (phone) data.phone = phone
 
     // ✅ STEP 1: Check for duplicate registration FIRST (before sending emails)
     console.log('🔍 Checking for duplicate registration...')

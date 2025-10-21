@@ -34,7 +34,10 @@ import {
   Image as ImageIcon,
   X,
   CreditCard,
-  Palette
+  Palette,
+  ArrowUp,
+  ArrowDown,
+  GripVertical
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -268,6 +271,28 @@ export default function HackathonRegistrationFormPage() {
       ...prev,
       fields: prev.fields.filter(field => field.id !== fieldId)
     }))
+  }
+
+  const moveFieldUp = (index: number) => {
+    if (index === 0) return
+    setForm(prev => {
+      const newFields = [...prev.fields]
+      const temp = newFields[index]
+      newFields[index] = newFields[index - 1]
+      newFields[index - 1] = temp
+      return { ...prev, fields: newFields }
+    })
+  }
+
+  const moveFieldDown = (index: number) => {
+    if (index === form.fields.length - 1) return
+    setForm(prev => {
+      const newFields = [...prev.fields]
+      const temp = newFields[index]
+      newFields[index] = newFields[index + 1]
+      newFields[index + 1] = temp
+      return { ...prev, fields: newFields }
+    })
   }
 
   const addOption = (fieldId: string) => {
@@ -740,21 +765,43 @@ export default function HackathonRegistrationFormPage() {
                 <div className="space-y-6">
                   {form.fields.map((field, index) => {
                     const FieldIcon = getFieldIcon(field.type)
-                    
+
                     return (
                       <div key={field.id} className="p-4 border rounded-lg bg-white">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2">
+                            <GripVertical className="w-5 h-5 text-gray-400" />
                             <FieldIcon className="w-5 h-5 text-[#01645e]" />
                             <span className="font-medium">حقل {index + 1}</span>
                           </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => removeField(field.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => moveFieldUp(index)}
+                              disabled={index === 0}
+                              title="تحريك لأعلى"
+                            >
+                              <ArrowUp className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => moveFieldDown(index)}
+                              disabled={index === form.fields.length - 1}
+                              title="تحريك لأسفل"
+                            >
+                              <ArrowDown className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeField(field.id)}
+                              title="حذف الحقل"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
