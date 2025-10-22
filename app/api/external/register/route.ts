@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import nodemailer from 'nodemailer'
 
 // CORS headers for external API access
 const corsHeaders = {
@@ -9,6 +10,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
   'Access-Control-Max-Age': '86400',
   'Access-Control-Allow-Credentials': 'false',
+}
+
+// Email configuration
+const transporter = nodemailer.createTransporter({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS
+  }
+})
+
+// Email template for registration confirmation
+function getRegistrationConfirmationEmail(participantName: string, hackathonTitle: string) {
+  return `
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; color: #333; direction: rtl; max-width: 600px; margin: 0 auto; background: white;">
+
+  <div style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 24px;">🎉 تم تأكيد التسجيل</h1>
+  </div>
+
+  <div style="padding: 30px;">
+    <p style="font-size: 16px; margin-bottom: 20px;">عزيزي/عزيزتي <strong>${participantName}</strong>،</p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">السلام عليكم ورحمة الله وبركاته،</p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      🎊 مرحباً بك في <strong>${hackathonTitle}</strong>!
+    </p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      تم تأكيد تسجيلك بنجاح في الهاكاثون. نحن متحمسون لمشاركتك معنا في هذه الرحلة المليئة بالإبداع والابتكار.
+    </p>
+
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #01645e; margin: 20px 0;">
+      <p style="margin: 0; font-size: 14px; color: #01645e;">
+        ✅ <strong>حالة التسجيل:</strong> مؤكد
+      </p>
+      <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">
+        سيتم التواصل معك قريباً بتفاصيل أكثر حول الهاكاثون
+      </p>
+    </div>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      استعد لتجربة مميزة مليئة بالتعلم، التطوير، والتواصل مع المبدعين من جميع أنحاء المملكة.
+    </p>
+
+    <p style="font-size: 16px; margin-top: 30px;">مع خالص التقدير،</p>
+    <p style="font-size: 16px; font-weight: bold; color: #01645e;">فريق ${hackathonTitle}</p>
+  </div>
+</div>`
 }
 
 // Handle OPTIONS request for CORS
@@ -160,6 +211,30 @@ export async function POST(request: NextRequest) {
     })
 
     console.log('✅ Participant registered successfully:', participant.id)
+
+    // Send confirmation email
+    try {
+      const hackathon = await prisma.hackathon.findUnique({
+        where: { id: hackathonId },
+        select: { title: true }
+      })
+
+      if (hackathon && participant.user.email) {
+        const emailHtml = getRegistrationConfirmationEmail(participant.user.name, hackathon.title)
+
+        await transporter.sendMail({
+          from: `"${hackathon.title}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`,
+          to: participant.user.email,
+          subject: `تأكيد التسجيل – ${hackathon.title}`,
+          html: emailHtml
+        })
+
+        console.log('📧 Confirmation email sent to:', participant.user.email)
+      }
+    } catch (emailError) {
+      console.error('⚠️ Failed to send confirmation email:', emailError)
+      // Don't fail the registration if email fails
+    }
 
     return NextResponse.json({
       success: true,
