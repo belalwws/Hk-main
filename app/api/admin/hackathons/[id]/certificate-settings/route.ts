@@ -83,6 +83,11 @@ export async function POST(
     const { id: hackathonId } = params
     const body = await request.json()
 
+    console.log('📦 Received certificate settings save request:', {
+      hackathonId,
+      body
+    })
+
     // Check if hackathon exists
     const hackathon = await prisma.hackathon.findUnique({
       where: { id: hackathonId }
@@ -101,11 +106,19 @@ export async function POST(
       type,
       updatedBy
     } = body
-    
+
     const certificateType = type || 'participant'
+
+    console.log('🔍 Extracted data:', {
+      certificateType,
+      certificateTemplate,
+      namePositionY,
+      namePositionX
+    })
 
     // Validate required fields
     if (namePositionY === undefined || namePositionX === undefined || !nameFont || !nameColor) {
+      console.log('❌ Validation failed: missing required fields')
       return NextResponse.json({ error: 'جميع الحقول مطلوبة' }, { status: 400 })
     }
 
@@ -123,9 +136,12 @@ export async function POST(
 
     // Save settings to database using unique key per hackathon and certificate type
     const settingsKey = `certificate_settings_${hackathonId}_${certificateType}`
-    
+
+    console.log('💾 Saving to database with key:', settingsKey)
+    console.log('📄 Settings data:', JSON.stringify(settingsData, null, 2))
+
     try {
-      await prisma.globalSettings.upsert({
+      const result = await prisma.globalSettings.upsert({
         where: { key: settingsKey },
         update: {
           value: settingsData,
@@ -138,8 +154,9 @@ export async function POST(
           updatedAt: new Date()
         }
       })
+      console.log('✅ Database upsert successful:', result)
     } catch (upsertError) {
-      console.error('Error upserting certificate settings:', upsertError)
+      console.error('❌ Error upserting certificate settings:', upsertError)
       return NextResponse.json({ error: 'خطأ في حفظ إعدادات الشهادة' }, { status: 500 })
     }
 
@@ -147,7 +164,8 @@ export async function POST(
 
     return NextResponse.json({
       message: 'تم حفظ إعدادات الشهادة بنجاح',
-      settings: settingsData
+      settings: settingsData,
+      key: settingsKey
     })
 
   } catch (error) {

@@ -51,7 +51,8 @@ export async function GET(
           include: {
             user: {
               select: {
-                name: true
+                name: true,
+                email: true
               }
             }
           }
@@ -106,7 +107,11 @@ export async function GET(
         ideaTitle: team.ideaTitle,
         ideaDescription: team.ideaDescription,
         participants: team.participants.map(p => ({
-          user: { name: p.user.name },
+          id: p.id,
+          user: {
+            name: p.user.name,
+            email: p.user.email
+          },
           teamRole: p.teamRole
         })),
         scores: team.scores.map(score => ({

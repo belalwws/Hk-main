@@ -128,8 +128,8 @@ export async function POST(
             date: new Date().toLocaleDateString('ar-SA')
           }
 
-          const certificateBuffer = await generateCertificateImage(certificateData, hackathonId)
-          const certificateFileName = `certificate-${participant.user.name.replace(/\s+/g, '-')}-${hackathon.title.replace(/\s+/g, '-')}.png`
+          const certificateBuffer = await generateCertificateImage(certificateData, hackathonId, 'participant')
+          const certificateFileName = `certificate-participant-${participant.user.name.replace(/\s+/g, '-')}-${hackathon.title.replace(/\s+/g, '-')}.png`
 
           const emailHtml = generateCertificateEmailWithAttachment(
             participant.user.name,
@@ -217,7 +217,7 @@ function generateCertificateEmailWithAttachment(
   isWinner: boolean,
   totalScore: number
 ): string {
-  const currentDate = new Date().toLocaleDateString('ar-SA')
+  const currentDate = new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return `
 <!DOCTYPE html>
@@ -225,76 +225,60 @@ function generateCertificateEmailWithAttachment(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شهادة تقدير - ${hackathonTitle}</title>
+    <title>شهادة مشاركة - ${hackathonTitle}</title>
 </head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 20px;">
-    <div style="max-width: 800px; margin: 0 auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.1);">
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
         <!-- Header -->
-        <div style="background: linear-gradient(135deg, #01645e 0%, #3ab666 50%, #c3e956 100%); color: white; padding: 40px; text-align: center;">
-            <h1 style="margin: 0; font-size: 32px; font-weight: bold;">
-                ${isWinner ? '🏆 تهانينا بالفوز!' : '🎉 شكراً لمشاركتك!'}
-            </h1>
-            <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">
-                ${hackathonTitle}
-            </p>
+        <div style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); padding: 40px 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">شهادة مشاركة</h1>
         </div>
 
         <!-- Content -->
-        <div style="padding: 40px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="color: #01645e; margin: 0 0 10px 0; font-size: 28px;">
-                    ${participantName}
-                </h2>
-                <p style="color: #8b7632; font-size: 16px; margin: 0;">
-                    عضو في فريق: <strong>${teamName}</strong>
-                </p>
+        <div style="padding: 40px 30px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">السادة المشاركون في ${hackathonTitle}،</p>
+
+            <p style="font-size: 16px; margin-bottom: 20px;">السلام عليكم ورحمة الله وبركاته،</p>
+
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                نتوجه إليك بخالص الشكر والتقدير على مشاركتك الفاعلة في ${hackathonTitle}، الذي أُقيم خلال الفترة من 21 إلى 23 أكتوبر 2025.
+            </p>
+
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                لقد كنت جزءًا مهمًا من رحلة ملهمة مليئة بالإبداع، التعاون، والرغبة الصادقة في إحداث أثر إيجابي في مجال الصحة النفسية.
+            </p>
+
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                يسعدنا أن نُرفق لك شهادة المشاركة تقديرًا لجهودك المتميزة، وأفكارك التي ساهمت في إثراء التجربة وإلهام الآخرين.
+            </p>
+
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                نؤمن أن هذه المشاركة ليست سوى بداية لمسارٍ مليء بالابتكار والعطاء.
+            </p>
+
+            <p style="font-size: 16px; margin-bottom: 30px;">
+                نتمنى لك دوام النجاح والإبداع، على أمل أن نراك في فعاليات قادمة بإذن الله.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #01645e;">
+                <p style="font-size: 14px; color: #01645e; margin: 0;">📎 الشهادة مرفقة مع هذا الإيميل</p>
             </div>
 
-            ${isWinner ? `
-            <div style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); padding: 25px; border-radius: 12px; text-align: center; margin: 25px 0; border: 2px solid #d4af37;">
-                <h3 style="margin: 0; color: #8b7632; font-size: 24px;">
-                    🏆 ${rank === 1 ? 'المركز الأول' : rank === 2 ? 'المركز الثاني' : 'المركز الثالث'}
-                </h3>
-                <p style="margin: 10px 0 0 0; color: #8b7632; font-size: 16px;">
-                    النتيجة النهائية: <strong>${totalScore} نقطة</strong>
-                </p>
-            </div>
-            ` : `
-            <div style="background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%); padding: 25px; border-radius: 12px; text-align: center; margin: 25px 0; border: 2px solid #3ab666;">
-                <h3 style="margin: 0; color: #01645e; font-size: 20px;">
-                    🎯 مشاركة متميزة
-                </h3>
-                <p style="margin: 10px 0 0 0; color: #01645e; font-size: 16px;">
-                    شكراً لك على جهودك وإبداعك في الهاكاثون
-                </p>
-            </div>
-            `}
+            <p style="font-size: 16px; margin-top: 30px;">مع خالص التقدير،</p>
+            <p style="font-size: 16px; font-weight: bold; color: #01645e;">فريق ${hackathonTitle}</p>
+        </div>
 
-            <!-- Certificate Attachment Notice -->
-            <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; text-align: center; margin: 25px 0; border: 2px solid #01645e;">
-                <h3 style="margin: 0 0 15px 0; color: #01645e; font-size: 20px;">
-                    📎 شهادتك مرفقة مع هذا الإيميل
-                </h3>
-                <p style="margin: 0; color: #8b7632; font-size: 16px; line-height: 1.6;">
-                    ستجد شهادة التقدير الخاصة بك مرفقة مع هذا الإيميل.<br>
-                    يمكنك تحميلها وطباعتها ومشاركتها مع الآخرين.
-                </p>
-                <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border: 1px solid #ddd;">
-                    <p style="margin: 0; color: #01645e; font-weight: bold;">
-                        📄 اسم الملف: certificate-${participantName.replace(/\s+/g, '-')}-${hackathonTitle.replace(/\s+/g, '-')}.png
-                    </p>
-                </div>
-            </div>
-
-            <!-- Message -->
-            <div style="text-align: center; margin: 30px 0;">
-                <p style="color: #8b7632; font-size: 16px; line-height: 1.8; margin: 0;">
-                    ${isWinner
-                        ? 'نفخر بإنجازك المتميز ونتطلع لرؤية المزيد من إبداعاتك في المستقبل.'
-                        : 'مشاركتك كانت قيمة ومؤثرة. نتطلع لرؤيتك في فعالياتنا القادمة.'
-                    }
-                </p>
-            </div>
+        <!-- Footer -->
+        <div style="background: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e9ecef;">
+            <p style="margin: 0; font-size: 12px; color: #6c757d;">
+                ${currentDate}
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+`
+}
 
             <!-- Stats -->
             <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 25px 0;">

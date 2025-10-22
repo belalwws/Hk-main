@@ -34,10 +34,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'معرف الهاكاثون مطلوب' }, { status: 400 })
     }
 
-    if (!certificateType || !['participant', 'judge', 'supervisor'].includes(certificateType)) {
+    if (!certificateType || !['participant', 'judge', 'expert', 'supervisor'].includes(certificateType)) {
       console.log('❌ Invalid certificate type:', certificateType)
       return NextResponse.json({ error: 'نوع الشهادة غير صحيح' }, { status: 400 })
     }
+
+    console.log('✅ Valid certificate type:', certificateType)
 
     console.log('📁 File details:', {
       name: file.name,
