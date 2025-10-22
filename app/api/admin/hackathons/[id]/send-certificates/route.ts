@@ -280,41 +280,6 @@ function generateCertificateEmailWithAttachment(
 `
 }
 
-            <!-- Stats -->
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 25px 0;">
-                <h4 style="margin: 0 0 15px 0; color: #01645e; text-align: center;">📊 إحصائيات مشاركتك</h4>
-                <div style="display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap;">
-                    <div style="margin: 10px;">
-                        <strong style="color: #01645e; font-size: 18px;">${teamName}</strong>
-                        <p style="margin: 5px 0 0 0; color: #8b7632; font-size: 14px;">اسم الفريق</p>
-                    </div>
-                    <div style="margin: 10px;">
-                        <strong style="color: #01645e; font-size: 18px;">${rank}</strong>
-                        <p style="margin: 5px 0 0 0; color: #8b7632; font-size: 14px;">الترتيب النهائي</p>
-                    </div>
-                    <div style="margin: 10px;">
-                        <strong style="color: #01645e; font-size: 18px;">${currentDate}</strong>
-                        <p style="margin: 5px 0 0 0; color: #8b7632; font-size: 14px;">تاريخ الشهادة</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
-            <p style="margin: 0; color: #8b7632; font-size: 14px;">
-                © 2024 هاكاثون الابتكار التقني. جميع الحقوق محفوظة.
-            </p>
-            <p style="margin: 5px 0 0 0; color: #8b7632; font-size: 12px;">
-                تم إرسال هذه الشهادة تلقائياً من منصة الهاكاثون
-            </p>
-        </div>
-    </div>
-</body>
-</html>
-  `
-}
-
 function generateCertificateEmail(
   participantName: string,
   hackathonTitle: string,
