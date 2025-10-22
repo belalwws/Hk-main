@@ -725,30 +725,34 @@ export default function SendCertificatesPage() {
   const getEmailTemplate = (recipientType: 'participant' | 'judge' | 'expert', recipientName: string, hackathonTitle: string) => {
     const templates = {
       participant: {
-        subject: `🎉 شهادة مشاركة – ${hackathonTitle}`,
+        subject: `شهادة مشاركة – ${hackathonTitle}`,
         content: `
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; color: #333; direction: rtl;">
-  <div style="background: linear-gradient(135deg, #01645e 0%, #3ab666 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 24px;">🎉 شهادة مشاركة</h1>
-  </div>
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; color: #333; direction: rtl; max-width: 600px; margin: 0 auto; background: white;">
 
-  <div style="padding: 30px; background: white;">
-    <p style="font-size: 18px; margin-bottom: 20px;">عزيزي/عزيزتي <strong>${recipientName}</strong>،</p>
+  <div style="padding: 30px;">
+    <p style="font-size: 16px; margin-bottom: 20px;">السادة المشاركون في ${hackathonTitle}،</p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">السلام عليكم ورحمة الله وبركاته،</p>
 
     <p style="font-size: 16px; margin-bottom: 20px;">
-      🎊 تهانينا! لقد شاركت بنجاح في <strong>${hackathonTitle}</strong>
+      نتوجه إليك بخالص الشكر والتقدير على مشاركتك الفاعلة في ${hackathonTitle}.
     </p>
 
     <p style="font-size: 16px; margin-bottom: 20px;">
-      نتوجه إليك بخالص الشكر والتقدير على مشاركتك الفاعلة والمتميزة.
-      لقد كنت جزءًا مهمًا من رحلة ملهمة مليئة بالإبداع والابتكار.
+      لقد كنت جزءًا مهمًا من رحلة ملهمة مليئة بالإبداع، التعاون، والرغبة الصادقة في إحداث أثر إيجابي.
     </p>
 
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #01645e; margin: 20px 0;">
-      <p style="margin: 0; font-size: 14px; color: #01645e;">
-        📎 <strong>شهادة المشاركة مرفقة مع هذا الإيميل</strong>
-      </p>
-    </div>
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      يسعدنا أن نُرفق لك شهادة المشاركة تقديرًا لجهودك المتميزة، وأفكارك التي ساهمت في إثراء التجربة وإلهام الآخرين.
+    </p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      نؤمن أن هذه المشاركة ليست سوى بداية لمسارٍ مليء بالابتكار والعطاء.
+    </p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      نتمنى لك دوام النجاح والإبداع، على أمل أن نراك في فعاليات قادمة بإذن الله.
+    </p>
 
     <p style="font-size: 16px; margin-top: 30px;">مع خالص التقدير والاحترام،</p>
     <p style="font-size: 16px; font-weight: bold; color: #01645e;">فريق ${hackathonTitle}</p>
@@ -756,64 +760,64 @@ export default function SendCertificatesPage() {
 </div>`
       },
       judge: {
-        subject: `🏆 شهادة تقدير – ${hackathonTitle}`,
+        subject: `شهادة تقدير – ${hackathonTitle}`,
         content: `
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; color: #333; direction: rtl;">
-  <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 24px;">🏆 شهادة تقدير</h1>
-  </div>
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; color: #333; direction: rtl; max-width: 600px; margin: 0 auto; background: white;">
 
-  <div style="padding: 30px; background: white;">
-    <p style="font-size: 18px; margin-bottom: 20px;">الأستاذ/ة المحترم/ة <strong>${recipientName}</strong>،</p>
+  <div style="padding: 30px;">
+    <p style="font-size: 16px; margin-bottom: 20px;">الأستاذ/ة المحترم/ة <strong>${recipientName}</strong>،</p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">السلام عليكم ورحمة الله وبركاته،</p>
 
     <p style="font-size: 16px; margin-bottom: 20px;">
-      🙏 يتقدم فريق <strong>${hackathonTitle}</strong> بجزيل الشكر والتقدير
+      يتقدم فريق ${hackathonTitle} بجزيل الشكر والتقدير لجهودكم المتميزة ومساهمتكم الفعّالة كعضو محترم في لجنة التحكيم.
     </p>
 
     <p style="font-size: 16px; margin-bottom: 20px;">
-      لجهودكم المتميزة ومساهمتكم الفعّالة كعضو محترم في لجنة التحكيم.
-      خبرتكم وحكمتكم كانت عاملاً أساسياً في إنجاح هذا الحدث المميز.
+      خبرتكم وحكمتكم كانت عاملاً أساسياً في إنجاح هذا الحدث المميز، وقد ساهمت توجيهاتكم في رفع مستوى المشاريع المشاركة.
     </p>
 
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #8b5cf6; margin: 20px 0;">
-      <p style="margin: 0; font-size: 14px; color: #8b5cf6;">
-        📎 <strong>شهادة التقدير مرفقة مع هذا الإيميل</strong>
-      </p>
-    </div>
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      يسعدنا أن نُرفق لك شهادة التقدير تقديرًا لجهودك القيّمة ومساهمتك في تحقيق أهداف الهاكاثون.
+    </p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      نتطلع إلى تعاونكم المستمر في فعالياتنا القادمة، ونقدر دعمكم المتواصل للمبدعين والمبتكرين.
+    </p>
 
     <p style="font-size: 16px; margin-top: 30px;">مع خالص الشكر والتقدير،</p>
-    <p style="font-size: 16px; font-weight: bold; color: #8b5cf6;">اللجنة التنظيمية لـ ${hackathonTitle}</p>
+    <p style="font-size: 16px; font-weight: bold; color: #01645e;">اللجنة التنظيمية لـ ${hackathonTitle}</p>
   </div>
 </div>`
       },
       expert: {
-        subject: `🌟 شهادة تقدير – ${hackathonTitle}`,
+        subject: `شهادة تقدير – ${hackathonTitle}`,
         content: `
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; color: #333; direction: rtl;">
-  <div style="background: linear-gradient(135deg, #0891b2 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 24px;">🌟 شهادة تقدير</h1>
-  </div>
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; color: #333; direction: rtl; max-width: 600px; margin: 0 auto; background: white;">
 
-  <div style="padding: 30px; background: white;">
-    <p style="font-size: 18px; margin-bottom: 20px;">الأستاذ/ة الخبير/ة <strong>${recipientName}</strong>،</p>
+  <div style="padding: 30px;">
+    <p style="font-size: 16px; margin-bottom: 20px;">الأستاذ/ة الخبير/ة <strong>${recipientName}</strong>،</p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">السلام عليكم ورحمة الله وبركاته،</p>
 
     <p style="font-size: 16px; margin-bottom: 20px;">
-      🌟 يتقدم فريق <strong>${hackathonTitle}</strong> بخالص الشكر والتقدير
+      يتقدم فريق ${hackathonTitle} بخالص الشكر والتقدير لجهودكم القيّمة ومساهمتكم الفعّالة كعضو مميز في لجنة الخبراء.
     </p>
 
     <p style="font-size: 16px; margin-bottom: 20px;">
-      لجهودكم القيّمة ومساهمتكم الفعّالة كعضو مميز في لجنة الخبراء.
-      معرفتكم العميقة وتوجيهاتكم الحكيمة أثرت المشاركين وأضافت قيمة حقيقية للحدث.
+      معرفتكم العميقة وتوجيهاتكم الحكيمة أثرت المشاركين وأضافت قيمة حقيقية للحدث، وساهمت في تطوير مهاراتهم وإلهامهم للإبداع.
     </p>
 
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #0891b2; margin: 20px 0;">
-      <p style="margin: 0; font-size: 14px; color: #0891b2;">
-        📎 <strong>شهادة التقدير مرفقة مع هذا الإيميل</strong>
-      </p>
-    </div>
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      يسعدنا أن نُرفق لك شهادة التقدير تقديرًا لخبرتك ومشاركتك الفعّالة في إنجاح هذا الحدث المميز.
+    </p>
+
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      نتطلع إلى استمرار تعاونكم معنا في المبادرات القادمة، ونقدر دعمكم للمواهب الشابة والمبدعة.
+    </p>
 
     <p style="font-size: 16px; margin-top: 30px;">مع خالص التقدير والاحترام،</p>
-    <p style="font-size: 16px; font-weight: bold; color: #0891b2;">اللجنة التنظيمية لـ ${hackathonTitle}</p>
+    <p style="font-size: 16px; font-weight: bold; color: #01645e;">اللجنة التنظيمية لـ ${hackathonTitle}</p>
   </div>
 </div>`
       }
