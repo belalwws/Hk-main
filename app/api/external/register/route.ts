@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import nodemailer from 'nodemailer'
 
 // CORS headers for external API access
 const corsHeaders = {
@@ -12,14 +11,17 @@ const corsHeaders = {
   'Access-Control-Allow-Credentials': 'false',
 }
 
-// Email configuration
-const transporter = nodemailer.createTransporter({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
-  }
-})
+// Lazy load nodemailer to avoid build-time errors
+async function getTransporter() {
+  const nodemailer = await import('nodemailer')
+  return nodemailer.default.createTransporter({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_PASS
+    }
+  })
+}
 
 // Email template for registration confirmation
 function getRegistrationConfirmationEmail(participantName: string, hackathonTitle: string) {
@@ -221,6 +223,7 @@ export async function POST(request: NextRequest) {
 
       if (hackathon && participant.user.email) {
         const emailHtml = getRegistrationConfirmationEmail(participant.user.name, hackathon.title)
+        const transporter = await getTransporter()
 
         await transporter.sendMail({
           from: `"${hackathon.title}" <${process.env.GMAIL_USER || 'racein668@gmail.com'}>`,
