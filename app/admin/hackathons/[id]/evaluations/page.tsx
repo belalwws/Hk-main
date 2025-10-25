@@ -36,6 +36,13 @@ interface EvaluationData {
       criterion: {
         name: string
       }
+      judge: {
+        user: {
+          name: string
+          email: string
+        }
+      }
+      createdAt: string
     }>
     totalScore: number
     averageScore: number
@@ -208,30 +215,37 @@ export default function EvaluationsPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   {/* Detailed Scores */}
-                  <div className="lg:w-96">
+                  <div className="flex-1">
                     <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
                       <h4 className="text-white font-semibold mb-3">تفاصيل التقييم</h4>
-                      <div className="space-y-2">
-                        {team.scores.map((score) => {
+                      <div className="space-y-3">
+                        {team.scores.map((score, idx) => {
                           // Convert score back to stars for display
                           const stars = (score.score / score.maxScore) * 5
                           return (
-                            <div key={score.criterionId} className="flex justify-between items-center">
-                              <span className="text-white/80 text-sm">{score.criterion.name}</span>
-                              <div className="flex items-center gap-2">
-                                <div className="flex">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star
-                                      key={star}
-                                      className={`w-3 h-3 ${
-                                        stars >= star ? 'text-yellow-400 fill-current' : 'text-white/30'
-                                      }`}
-                                    />
-                                  ))}
+                            <div key={`${score.criterionId}-${idx}`} className="bg-white/5 rounded-lg p-3 border border-white/10">
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <span className="text-white/90 text-sm font-medium">{score.criterion.name}</span>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[#c3e956] text-xs">👤 {score.judge.user.name}</span>
+                                  </div>
                                 </div>
-                                <span className="text-white text-sm font-semibold">
-                                  {score.score}/{score.maxScore}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star
+                                        key={star}
+                                        className={`w-3 h-3 ${
+                                          stars >= star ? 'text-yellow-400 fill-current' : 'text-white/30'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-white text-sm font-semibold">
+                                    {score.score}/{score.maxScore}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           )

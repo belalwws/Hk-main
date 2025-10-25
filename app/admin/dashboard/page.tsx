@@ -526,6 +526,48 @@ export default function AdminDashboard() {
                   </Card>
                 </Link>
               </div>
+
+              {/* Recent Hackathons - Quick Access to Evaluations */}
+              {stats?.recentHackathons && stats.recentHackathons.length > 0 && (
+                <Card className="border border-slate-200 mt-6">
+                  <CardHeader className="border-b border-slate-200 bg-white">
+                    <CardTitle className="text-lg font-semibold text-slate-900">
+                      الوصول السريع لتقييمات الهاكاثونات
+                    </CardTitle>
+                    <CardDescription className="text-slate-600">
+                      عرض نتائج التقييم لكل هاكاثون
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {stats.recentHackathons.slice(0, 4).map((hackathon) => (
+                        <div
+                          key={hackathon.id}
+                          className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-slate-300 hover:bg-slate-50 transition-all"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                              <Trophy className="w-5 h-5 text-slate-700" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-slate-900">{hackathon.title}</h4>
+                              <p className="text-sm text-slate-600">
+                                {hackathon.participantCount} مشارك
+                              </p>
+                            </div>
+                          </div>
+                          <Link href={`/admin/hackathons/${hackathon.id}/evaluations`}>
+                            <Button variant="outline" size="sm" className="border-slate-300 hover:bg-slate-900 hover:text-white">
+                              <BarChart3 className="w-4 h-4 ml-2" />
+                              التقييمات
+                            </Button>
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Communication Tab */}
