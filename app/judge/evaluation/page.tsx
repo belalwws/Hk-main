@@ -622,7 +622,7 @@ export default function JudgeEvaluation() {
                             {scores[currentCriterion.id]} من 5 نجوم
                           </div>
                           <div className="text-[#8b7632] text-lg">
-                            {scores[currentCriterion.id]} / {currentCriterion.maxScore} نقطة
+                            {(scores[currentCriterion.id] * currentCriterion.maxScore / 5).toFixed(0)} / {currentCriterion.maxScore} نقطة
                           </div>
                           <div className="flex items-center justify-center mt-2">
                             <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>

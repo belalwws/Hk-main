@@ -73,8 +73,15 @@ export async function GET(
       // Calculate scores for each team
       const teamsWithScores = allTeams.map(team => {
         const teamTotalScore = team.scores.reduce((sum, score) => sum + score.score, 0)
-        const teamAverageScore = team.scores.length > 0 ? teamTotalScore / team.scores.length : 0
-        
+
+        // Average score should be in stars (1-5) for display
+        const teamAverageScore = team.scores.length > 0
+          ? team.scores.reduce((sum, score) => {
+              const stars = (score.score / score.maxScore) * 5
+              return sum + stars
+            }, 0) / team.scores.length
+          : 0
+
         return {
           id: team.id,
           totalScore: teamTotalScore,

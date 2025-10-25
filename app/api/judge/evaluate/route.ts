@@ -70,14 +70,20 @@ export async function POST(request: NextRequest) {
     })
 
     // Create new scores
-    const scoreRecords = criteria.map(criterion => ({
-      judgeId: judge.id,
-      teamId: teamId,
-      hackathonId: hackathonId,
-      criterionId: criterion.id,
-      score: scores[criterion.id],
-      maxScore: 5 // Fixed max score for star rating
-    }))
+    // Convert star rating (1-5) to actual score based on criterion's maxScore
+    const scoreRecords = criteria.map(criterion => {
+      const starRating = scores[criterion.id] // 1-5 stars
+      const actualScore = Math.round((starRating / 5) * criterion.maxScore) // Convert to actual points
+
+      return {
+        judgeId: judge.id,
+        teamId: teamId,
+        hackathonId: hackathonId,
+        criterionId: criterion.id,
+        score: actualScore, // Store the actual score (e.g., 10 for 5 stars on a 10-point criterion)
+        maxScore: criterion.maxScore // Store the criterion's max score
+      }
+    })
 
     await prisma.score.createMany({
       data: scoreRecords

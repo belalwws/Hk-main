@@ -74,8 +74,15 @@ export async function POST(
     // Calculate team rankings
     const teamsWithScores = hackathon.teams.map(team => {
       const totalScore = team.scores.reduce((sum, score) => sum + score.score, 0)
-      const averageScore = team.scores.length > 0 ? totalScore / team.scores.length : 0
-      
+
+      // Average score should be in stars (1-5) for display
+      const averageScore = team.scores.length > 0
+        ? team.scores.reduce((sum, score) => {
+            const stars = (score.score / score.maxScore) * 5
+            return sum + stars
+          }, 0) / team.scores.length
+        : 0
+
       return {
         ...team,
         totalScore,

@@ -212,26 +212,30 @@ export default function EvaluationsPage({ params }: { params: Promise<{ id: stri
                     <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
                       <h4 className="text-white font-semibold mb-3">تفاصيل التقييم</h4>
                       <div className="space-y-2">
-                        {team.scores.map((score) => (
-                          <div key={score.criterionId} className="flex justify-between items-center">
-                            <span className="text-white/80 text-sm">{score.criterion.name}</span>
-                            <div className="flex items-center gap-2">
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    className={`w-3 h-3 ${
-                                      score.score >= star ? 'text-yellow-400 fill-current' : 'text-white/30'
-                                    }`}
-                                  />
-                                ))}
+                        {team.scores.map((score) => {
+                          // Convert score back to stars for display
+                          const stars = (score.score / score.maxScore) * 5
+                          return (
+                            <div key={score.criterionId} className="flex justify-between items-center">
+                              <span className="text-white/80 text-sm">{score.criterion.name}</span>
+                              <div className="flex items-center gap-2">
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      className={`w-3 h-3 ${
+                                        stars >= star ? 'text-yellow-400 fill-current' : 'text-white/30'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-white text-sm font-semibold">
+                                  {score.score}/{score.maxScore}
+                                </span>
                               </div>
-                              <span className="text-white text-sm font-semibold">
-                                {score.score}/{score.maxScore}
-                              </span>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                   </div>

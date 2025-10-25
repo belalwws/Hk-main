@@ -134,7 +134,11 @@ export async function GET(request: NextRequest) {
       ...team,
       memberCount: team.participants.length,
       averageScore: team.scores.length > 0
-        ? team.scores.reduce((sum, score) => sum + score.score, 0) / team.scores.length
+        ? team.scores.reduce((sum, score) => {
+            // Convert score back to stars: (score / maxScore) * 5
+            const stars = (score.score / score.maxScore) * 5
+            return sum + stars
+          }, 0) / team.scores.length
         : null,
       evaluationCount: team.scores.length
     }))
