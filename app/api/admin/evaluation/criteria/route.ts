@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'تعذر تهيئة قاعدة البيانات' }, { status: 500 })
     }
 
-    const criteria = await prismaClient.evaluationCriteria.findMany({
-      orderBy: { weight: 'desc' }
+    const criteria = await prismaClient.evaluationCriterion.findMany({
+      orderBy: { createdAt: 'asc' }
     })
 
     return NextResponse.json({ criteria })
@@ -67,13 +67,12 @@ export async function POST(request: NextRequest) {
       const createdCriteria = []
       
       for (const criteriaData of body.criteria) {
-        const criteria = await prismaClient.evaluationCriteria.create({
+        const criteria = await prismaClient.evaluationCriterion.create({
           data: {
             name: criteriaData.name,
             description: criteriaData.description || '',
-            weight: criteriaData.weight,
             maxScore: criteriaData.maxScore,
-            category: criteriaData.category
+            hackathonId: criteriaData.hackathonId
           }
         })
         createdCriteria.push(criteria)
@@ -86,21 +85,20 @@ export async function POST(request: NextRequest) {
     }
     
     // Handle single creation
-    const { name, description, weight, maxScore, category } = body
+    const { name, description, maxScore, hackathonId } = body
 
-    if (!name || !weight || !maxScore) {
-      return NextResponse.json({ 
-        error: 'يرجى ملء جميع الحقول المطلوبة' 
+    if (!name || !maxScore || !hackathonId) {
+      return NextResponse.json({
+        error: 'يرجى ملء جميع الحقول المطلوبة'
       }, { status: 400 })
     }
 
-    const criteria = await prismaClient.evaluationCriteria.create({
+    const criteria = await prismaClient.evaluationCriterion.create({
       data: {
         name,
         description: description || '',
-        weight,
         maxScore,
-        category: category || 'technical'
+        hackathonId
       }
     })
 
