@@ -1,262 +1,522 @@
-# 🚀 منصة هاكاثون الابتكار التقني
+# 🚀 HackPro - Professional Hackathon Management SaaS Platform# 🚀 منصة هاكاثون الابتكار التقني
 
-<div align="center">
 
-![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+
+<div align="center"><div align="center">
+
+
+
+**The Ultimate Multi-Tenant Hackathon Management Platform**![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
-![Prisma](https://img.shields.io/badge/Prisma-Latest-2D3748?style=for-the-badge&logo=prisma)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-336791?style=for-the-badge&logo=postgresql)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=for-the-badge&logo=tailwind-css)
+
+[![Next.js](https://img.shields.io/badge/Next.js-15.5-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)![Prisma](https://img.shields.io/badge/Prisma-Latest-2D3748?style=for-the-badge&logo=prisma)
+
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-336791?style=for-the-badge&logo=postgresql)
+
+[![Prisma](https://img.shields.io/badge/Prisma-6.15-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=for-the-badge&logo=tailwind-css)
+
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql)](https://neon.tech/)
 
 منصة متكاملة لإدارة وتنظيم الهاكاثونات التقنية
+
+🌐 [Live Demo](https://hackpro.cloud) • 📖 [Documentation](./DOCUMENTATION.md) • 🚀 [Get Started](#-getting-started)
 
 [🌐 Live Demo](https://clownfish-app-px9sc.ondigitalocean.app) | [📖 Documentation](./PROJECT_OVERVIEW.md) | [🔧 Technical Details](./TECHNICAL_SUMMARY.md)
 
 </div>
 
+</div>
+
 ---
+
+---
+
+## 🎯 About
 
 ## ✨ المميزات
 
-### 🎯 إدارة شاملة للهاكاثونات
-- ✅ إنشاء وإدارة هاكاثونات متعددة
-- ✅ نظام تسجيل مرن للمشاركين
-- ✅ إدارة الفرق والمشاريع
-- ✅ صفحات هبوط مخصصة لكل هاكاثون
+**HackPro** is a comprehensive SaaS platform for managing hackathons at scale. Built with **multi-tenancy** from the ground up, it enables organizations to:
 
-### 👥 نظام أدوار متقدم
+### 🎯 إدارة شاملة للهاكاثونات
+
+✅ Create & manage unlimited hackathons  - ✅ إنشاء وإدارة هاكاثونات متعددة
+
+✅ Handle thousands of participants efficiently  - ✅ نظام تسجيل مرن للمشاركين
+
+✅ Advanced judging with customizable criteria  - ✅ إدارة الفرق والمشاريع
+
+✅ Automated certificate generation  - ✅ صفحات هبوط مخصصة لكل هاكاثون
+
+✅ Real-time analytics & reporting  
+
+✅ Custom branding & landing pages  ### 👥 نظام أدوار متقدم
+
 - **Admin** - إدارة كاملة للمنصة
-- **Supervisor** - إشراف ومتابعة
+
+---- **Supervisor** - إشراف ومتابعة
+
 - **Judge** - تقييم المشاريع
-- **Expert** - تقديم الاستشارات
+
+## ✨ Key Features- **Expert** - تقديم الاستشارات
+
 - **Participant** - المشاركة والتنافس
 
-### 📊 نظام تقييم احترافي
-- ✅ معايير تقييم قابلة للتخصيص
-- ✅ توزيع المحكمين على الفرق
-- ✅ إدخال الدرجات في الوقت الفعلي
+### 🏢 Multi-Tenancy & Organizations
+
+- Isolated data per organization### 📊 نظام تقييم احترافي
+
+- Custom branding (colors, logos, domains)- ✅ معايير تقييم قابلة للتخصيص
+
+- Flexible pricing plans (Free → Enterprise)- ✅ توزيع المحكمين على الفرق
+
+- Usage tracking & limit enforcement- ✅ إدخال الدرجات في الوقت الفعلي
+
 - ✅ حساب النتائج تلقائياً
-- ✅ لقطات للنتائج (snapshots)
 
-### 📧 نظام إيميلات متطور
-- ✅ قوالب إيميلات قابلة للتخصيص
-- ✅ متغيرات ديناميكية
+### 👥 User Management- ✅ لقطات للنتائج (snapshots)
+
+- Role-based access (Admin, Judge, Expert, Supervisor, Participant)
+
+- Team collaboration with permissions### 📧 نظام إيميلات متطور
+
+- SSO ready (Google/Microsoft)- ✅ قوالب إيميلات قابلة للتخصيص
+
+- 2FA support- ✅ متغيرات ديناميكية
+
 - ✅ إرفاق ملفات من Cloudinary
-- ✅ إرسال جماعي مع rate limiting
-- ✅ محرر نصوص غني (TipTap)
 
-### 🎓 توليد الشهادات
-- ✅ تصميم شهادات مخصص
-- ✅ توليد تلقائي بأسماء المشاركين
+### 🎯 Hackathon Management- ✅ إرسال جماعي مع rate limiting
+
+- Dynamic registration forms- ✅ محرر نصوص غني (TipTap)
+
+- Team formation & management
+
+- Project submissions (Cloudinary)### 🎓 توليد الشهادات
+
+- Live leaderboards- ✅ تصميم شهادات مخصص
+
+- Automated certificates- ✅ توليد تلقائي بأسماء المشاركين
+
 - ✅ إرسال عبر البريد الإلكتروني
-- ✅ تحميل مباشر
 
-### 📱 واجهة مستخدم حديثة
-- ✅ تصميم متجاوب (Responsive)
-- ✅ دعم اللغة العربية (RTL)
+### ⚖️ Judging System- ✅ تحميل مباشر
+
+- Custom evaluation criteria
+
+- Star ratings (1-5)### 📱 واجهة مستخدم حديثة
+
+- Real-time score aggregation- ✅ تصميم متجاوب (Responsive)
+
+- Judge dashboard- ✅ دعم اللغة العربية (RTL)
+
 - ✅ مكونات UI من shadcn/ui
-- ✅ رسوميات 3D (Three.js)
-- ✅ تأثيرات حركية (Framer Motion)
 
----
+### 📊 Analytics- ✅ رسوميات 3D (Three.js)
+
+- Comprehensive dashboards- ✅ تأثيرات حركية (Framer Motion)
+
+- Participant statistics
+
+- Performance metrics---
+
+- Excel/CSV exports
 
 ## 🛠️ التقنيات المستخدمة
 
-### Frontend
-```
-Next.js 15 (App Router)
-React 19
-TypeScript 5
-Tailwind CSS 3
-shadcn/ui
-Framer Motion
-Three.js
-```
-
-### Backend
-```
-Next.js API Routes
-Prisma ORM
-PostgreSQL (Neon)
-JWT Authentication
-Nodemailer
-Cloudinary
-```
-
-### Tools & Libraries
-```
-React Hook Form + Zod
-date-fns
-xlsx (Excel export)
-canvas (Certificate generation)
-bcryptjs (Password hashing)
-```
-
 ---
+
+### Frontend
+
+## 🛠 Tech Stack```
+
+Next.js 15 (App Router)
+
+| Category | Technology |React 19
+
+|----------|------------|TypeScript 5
+
+| **Framework** | Next.js 15.5 (App Router) |Tailwind CSS 3
+
+| **Language** | TypeScript 5.0 |shadcn/ui
+
+| **Database** | PostgreSQL (Neon) |Framer Motion
+
+| **ORM** | Prisma 6.15 |Three.js
+
+| **Auth** | Jose (JWT) |```
+
+| **Styling** | Tailwind CSS 3.4 |
+
+| **UI** | Radix UI + shadcn/ui |### Backend
+
+| **Email** | Nodemailer + SendGrid |```
+
+| **Storage** | Cloudinary |Next.js API Routes
+
+| **PDF** | Canvas |Prisma ORM
+
+PostgreSQL (Neon)
+
+---JWT Authentication
+
+Nodemailer
+
+## 🚀 Getting StartedCloudinary
+
+```
+
+### Prerequisites
+
+- Node.js 18+### Tools & Libraries
+
+- PostgreSQL (or Neon account)```
+
+- Cloudinary accountReact Hook Form + Zod
+
+- SMTP credentialsdate-fns
+
+xlsx (Excel export)
+
+### Installationcanvas (Certificate generation)
+
+bcryptjs (Password hashing)
+
+```bash```
+
+# 1. Clone repository
+
+git clone https://github.com/belalwws/hackpro-saas.git---
+
+cd hackpro-saas
 
 ## 🚀 البدء السريع
 
-### المتطلبات
+# 2. Install dependencies
+
+npm install### المتطلبات
+
 - Node.js 18+
-- npm أو yarn
-- PostgreSQL database (أو Neon account)
-- Cloudinary account
+
+# 3. Configure environment- npm أو yarn
+
+cp .env.example .env- PostgreSQL database (أو Neon account)
+
+# Edit .env with your credentials- Cloudinary account
+
 - Gmail account (للإيميلات)
 
-### التثبيت
+# 4. Setup database
 
-```bash
-# 1. استنساخ المشروع
-git clone https://github.com/your-username/Hk-main.git
-cd Hk-main
+npx prisma generate### التثبيت
 
-# 2. تثبيت المكتبات
-npm install
-
-# 3. إعداد ملف .env
-cp .env.example .env
-# قم بتعديل المتغيرات البيئية
-
-# 4. إعداد قاعدة البيانات
-npx prisma generate
 npx prisma db push
 
-# 5. تشغيل السيرفر
+```bash
+
+# 5. Run development server# 1. استنساخ المشروع
+
+npm run devgit clone https://github.com/your-username/Hk-main.git
+
+cd Hk-main
+
+# 6. Open browser
+
+# http://localhost:3000# 2. تثبيت المكتبات
+
+```npm install
+
+
+
+### Default Admin# 3. إعداد ملف .env
+
+- Email: `admin@hackathon.gov.sa`cp .env.example .env
+
+- Password: `admin123`# قم بتعديل المتغيرات البيئية
+
+
+
+⚠️ Change in production!# 4. إعداد قاعدة البيانات
+
+npx prisma generate
+
+---npx prisma db push
+
+
+
+## 📁 Project Structure# 5. تشغيل السيرفر
+
 npm run dev
-```
 
-افتح المتصفح على [http://localhost:3000](http://localhost:3000)
+``````
 
----
+hackpro-saas/
 
-## ⚙️ المتغيرات البيئية
+├── app/                    # Next.js App Routerافتح المتصفح على [http://localhost:3000](http://localhost:3000)
 
-أنشئ ملف `.env` في المجلد الرئيسي:
+│   ├── api/                # API Routes
 
-```env
-# Database
-DATABASE_URL="postgresql://user:password@host:5432/database"
+│   │   ├── organization/   # Multi-tenancy---
 
-# Authentication
-JWT_SECRET="your-super-secret-jwt-key"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-nextauth-secret"
+│   │   ├── hackathons/     # Hackathon management
 
-# Email (Gmail)
-GMAIL_USER="your-email@gmail.com"
-GMAIL_PASS="your-app-password"
-MAIL_FROM="Platform Name <your-email@gmail.com>"
+│   │   └── ...## ⚙️ المتغيرات البيئية
 
-# Cloudinary
-CLOUDINARY_CLOUD_NAME="your-cloud-name"
-CLOUDINARY_API_KEY="your-api-key"
-CLOUDINARY_API_SECRET="your-api-secret"
+│   ├── admin/              # Admin dashboard
 
-# Application
-NODE_ENV="development"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
+│   ├── saas/               # Landing pageأنشئ ملف `.env` في المجلد الرئيسي:
 
----
-
-## 📁 هيكل المشروع
-
-```
-Hk-main/
-├── app/                    # Next.js App Router
-│   ├── api/               # API Routes
-│   ├── admin/             # Admin Dashboard
-│   ├── supervisor/        # Supervisor Dashboard
-│   ├── judge/             # Judge Dashboard
-│   ├── participant/       # Participant Dashboard
-│   └── expert/            # Expert Dashboard
-├── components/            # React Components
-│   ├── ui/               # shadcn/ui Components
 │   └── ...
-├── lib/                   # Utility Libraries
-│   ├── prisma.ts         # Prisma Client
-│   ├── auth.ts           # Authentication
-│   ├── cloudinary.ts     # File Upload
-│   └── mailer.ts         # Email Service
+
+├── components/             # React components```env
+
+│   ├── ui/                 # shadcn/ui# Database
+
+│   └── ...DATABASE_URL="postgresql://user:password@host:5432/database"
+
+├── lib/                    # Utilities
+
+│   ├── multi-tenancy.ts    # MT utilities# Authentication
+
+│   ├── auth.ts             # AuthenticationJWT_SECRET="your-super-secret-jwt-key"
+
+│   └── ...NEXTAUTH_URL="http://localhost:3000"
+
+├── hooks/                  # Custom hooksNEXTAUTH_SECRET="your-nextauth-secret"
+
+├── prisma/                 # Database schema
+
+└── ...# Email (Gmail)
+
+```GMAIL_USER="your-email@gmail.com"
+
+GMAIL_PASS="your-app-password"
+
+---MAIL_FROM="Platform Name <your-email@gmail.com>"
+
+
+
+## 🏗 Multi-Tenancy Architecture# Cloudinary
+
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+
+```typescriptCLOUDINARY_API_KEY="your-api-key"
+
+// Organization modelCLOUDINARY_API_SECRET="your-api-secret"
+
+model Organization {
+
+  id        String @id# Application
+
+  name      StringNODE_ENV="development"
+
+  slug      String @uniqueNEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+  plan      Plan   @default(free)```
+
+  
+
+  hackathons Hackathon[]---
+
+  users      OrganizationUser[]
+
+}## 📁 هيكل المشروع
+
+
+
+// Every hackathon belongs to an organization```
+
+model Hackathon {Hk-main/
+
+  id             String @id├── app/                    # Next.js App Router
+
+  organizationId String  // Tenant isolation│   ├── api/               # API Routes
+
+  title          String│   ├── admin/             # Admin Dashboard
+
+  // ...│   ├── supervisor/        # Supervisor Dashboard
+
+  │   ├── judge/             # Judge Dashboard
+
+  organization Organization @relation(...)│   ├── participant/       # Participant Dashboard
+
+}│   └── expert/            # Expert Dashboard
+
+```├── components/            # React Components
+
+│   ├── ui/               # shadcn/ui Components
+
+**Usage Limits** per plan:│   └── ...
+
+```typescript├── lib/                   # Utility Libraries
+
+free:         1 hackathon,  50 participants│   ├── prisma.ts         # Prisma Client
+
+professional: 10 hackathons, unlimited participants│   ├── auth.ts           # Authentication
+
+enterprise:   unlimited everything│   ├── cloudinary.ts     # File Upload
+
+```│   └── mailer.ts         # Email Service
+
 ├── prisma/               # Database Schema
-├── scripts/              # Utility Scripts
+
+---├── scripts/              # Utility Scripts
+
 ├── public/               # Static Files
-└── schema.prisma         # Prisma Schema
+
+## 📡 API Overview└── schema.prisma         # Prisma Schema
+
 ```
 
----
+### Authentication
 
-## 🎯 الاستخدام
+```bash---
 
-### إنشاء حساب مدير
+Cookie: auth-token=<JWT>
+
+```## 🎯 الاستخدام
+
+
+
+### Endpoints### إنشاء حساب مدير
 
 ```bash
-npm run create-admin
-```
+
+# Organizations```bash
+
+GET    /api/organization/currentnpm run create-admin
+
+POST   /api/organization/switch```
+
+GET    /api/organization/usage
 
 ### اختبار الاتصال بقاعدة البيانات
 
-```bash
-npm run db:test
-```
+# Hackathons
 
-### نسخ احتياطي لقاعدة البيانات
+GET    /api/hackathons```bash
 
-```bash
+POST   /api/hackathonsnpm run db:test
+
+GET    /api/hackathons/:id```
+
+
+
+# Participants### نسخ احتياطي لقاعدة البيانات
+
+POST   /api/participants
+
+GET    /api/participants/:id```bash
+
 node scripts/backup-database.js
-```
 
-### استعادة قاعدة البيانات
+# Judges```
+
+POST   /api/judges/invite
+
+POST   /api/scores### استعادة قاعدة البيانات
+
+```
 
 ```bash
-node scripts/restore-database.js
+
+---node scripts/restore-database.js
+
 ```
+
+## 🌐 Deployment
 
 ---
 
-## 📚 الوثائق
+### Recommended
 
-- [📋 نظرة عامة على المشروع](./PROJECT_OVERVIEW.md)
-- [🔧 الملخص التقني](./TECHNICAL_SUMMARY.md)
+- **Hosting**: Vercel / DigitalOcean## 📚 الوثائق
+
+- **Database**: Neon (Serverless Postgres)
+
+- **Storage**: Cloudinary- [📋 نظرة عامة على المشروع](./PROJECT_OVERVIEW.md)
+
+- **Email**: SendGrid- [🔧 الملخص التقني](./TECHNICAL_SUMMARY.md)
+
 - [🗄️ Database Schema](./schema.prisma)
 
----
+### Vercel (One-Click)
 
-## 🔐 الأمان
+1. Push to GitHub---
+
+2. Import in Vercel
+
+3. Set env variables## 🔐 الأمان
+
+4. Deploy 🎉
 
 - ✅ JWT-based authentication
-- ✅ Role-based access control (RBAC)
+
+---- ✅ Role-based access control (RBAC)
+
 - ✅ Password hashing (bcryptjs)
-- ✅ Secure httpOnly cookies
+
+## 🤝 Contributing- ✅ Secure httpOnly cookies
+
 - ✅ Rate limiting
-- ✅ Input validation (Zod)
-- ✅ SQL injection protection (Prisma)
 
----
+1. Fork the repo- ✅ Input validation (Zod)
 
-## 🚀 النشر
+2. Create branch (`feature/amazing`)- ✅ SQL injection protection (Prisma)
 
-### Digital Ocean
+3. Commit changes
 
-المشروع مُعد للنشر على Digital Ocean App Platform:
+4. Push & open PR---
 
-1. Push الكود على GitHub
+
+
+---## 🚀 النشر
+
+
+
+## 📝 License### Digital Ocean
+
+
+
+MIT License - see [LICENSE](LICENSE)المشروع مُعد للنشر على Digital Ocean App Platform:
+
+
+
+---1. Push الكود على GitHub
+
 2. ربط المشروع بـ Digital Ocean
-3. إعداد المتغيرات البيئية
+
+## 👨‍💻 Author3. إعداد المتغيرات البيئية
+
 4. Auto-deploy عند كل push
 
-### متغيرات البيئة المطلوبة
+**Belal**  
 
-تأكد من إضافة جميع المتغيرات في Digital Ocean Dashboard:
+GitHub: [@belalwws](https://github.com/belalwws)### متغيرات البيئة المطلوبة
+
+
+
+---تأكد من إضافة جميع المتغيرات في Digital Ocean Dashboard:
+
 - `DATABASE_URL`
-- `JWT_SECRET`
+
+<div align="center">- `JWT_SECRET`
+
 - `NEXTAUTH_URL`
-- `NEXTAUTH_SECRET`
+
+**Made with ❤️ for the hackathon community**- `NEXTAUTH_SECRET`
+
 - `GMAIL_USER`
-- `GMAIL_PASS`
+
+⭐ Star us on GitHub!- `GMAIL_PASS`
+
 - `CLOUDINARY_*`
 
+[Report Bug](https://github.com/belalwws/hackpro-saas/issues) • [Request Feature](https://github.com/belalwws/hackpro-saas/issues)
+
 ---
+
+</div>
 
 ## 🤝 المساهمة
 

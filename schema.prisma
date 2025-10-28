@@ -10,9 +10,246 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ========================================
+// MULTI-TENANCY & SAAS MODELS
+// ========================================
+
+// Organization model - Multi-tenancy core entity
+model Organization {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  logo              String?
+  primaryColor      String   @default("#01645e")
+  secondaryColor    String   @default("#3ab666")
+  accentColor       String   @default("#c3e956")
+  domain            String?  @unique // Custom domain
+  plan              Plan     @default(free)
+  status            OrgStatus @default(active)
+  
+  // Plan Limits
+  maxHackathons     Int      @default(1)
+  maxUsers          Int      @default(10)
+  maxParticipants   Int      @default(50)
+  maxStorage        BigInt   @default(1073741824) // 1GB in bytes
+  maxEmailsPerMonth Int      @default(100)
+  
+  // Billing Information
+  billingEmail      String?
+  billingName       String?
+  billingAddress    String?
+  taxId             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  users             OrganizationUser[]
+  hackathons        Hackathon[]
+  subscription      Subscription?
+  usageMetrics      UsageMetrics[]
+  customDomains     CustomDomain[]
+  apiKeys           ApiKey[]
+  auditLogs         AuditLog[]
+  
+  @@map("organizations")
+}
+
+enum Plan {
+  free
+  starter
+  professional
+  enterprise
+}
+
+enum OrgStatus {
+  active
+  suspended
+  cancelled
+  trial
+}
+
+// OrganizationUser - Many-to-Many relationship between Users and Organizations
+model OrganizationUser {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           OrgRole  @default(member)
+  isOwner        Boolean  @default(false)
+  permissions    Json?    // Custom permissions
+  joinedAt       DateTime @default(now())
+  
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, organizationId])
+  @@map("organization_users")
+}
+
+enum OrgRole {
+  owner
+  admin
+  member
+  viewer
+}
+
+// Subscription model - Stripe integration
+model Subscription {
+  id                   String   @id @default(cuid())
+  organizationId       String   @unique
+  
+  // Stripe IDs
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  stripePriceId        String?
+  
+  // Subscription details
+  plan                 Plan
+  status               SubscriptionStatus
+  billingInterval      BillingInterval @default(monthly)
+  
+  // Period
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean  @default(false)
+  canceledAt           DateTime?
+  
+  // Trial
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  
+  // Metadata
+  metadata             Json?
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoices     Invoice[]
+  
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  past_due
+  canceled
+  unpaid
+}
+
+enum BillingInterval {
+  monthly
+  yearly
+}
+
+// Invoice model
+model Invoice {
+  id              String   @id @default(cuid())
+  subscriptionId  String
+  stripeInvoiceId String?  @unique
+  
+  amount          Int      // in cents
+  currency        String   @default("usd")
+  status          String
+  pdfUrl          String?
+  hostedUrl       String?
+  
+  createdAt       DateTime @default(now())
+  
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  @@map("invoices")
+}
+
+// UsageMetrics model - Track organization usage
+model UsageMetrics {
+  id             String   @id @default(cuid())
+  organizationId String
+  period         DateTime // Start of billing period (first day of month)
+  
+  // Usage Counts
+  hackathonsUsed     Int @default(0)
+  usersUsed          Int @default(0)
+  participantsUsed   Int @default(0)
+  emailsSent         Int @default(0)
+  storageUsed        BigInt @default(0) // in bytes
+  apiCallsMade       Int @default(0)
+  
+  // Detailed tracking (JSON)
+  hackathonsByStatus Json? // {open: 2, closed: 3, draft: 1}
+  emailsByType       Json? // {invitation: 50, certificate: 20}
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@unique([organizationId, period])
+  @@map("usage_metrics")
+}
+
+// CustomDomain model
+model CustomDomain {
+  id               String   @id @default(cuid())
+  organizationId   String
+  domain           String   @unique
+  verified         Boolean  @default(false)
+  verificationCode String   @unique
+  sslStatus        String   @default("pending") // pending, active, failed
+  createdAt        DateTime @default(now())
+  verifiedAt       DateTime?
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@map("custom_domains")
+}
+
+// ApiKey model - For developer API access
+model ApiKey {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  key            String   @unique
+  secret         String
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  permissions    Json     // ['read:hackathons', 'write:participants', ...]
+  
+  createdAt DateTime @default(now())
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@map("api_keys")
+}
+
+// AuditLog model - Track all important actions
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  action         String   // 'hackathon.created', 'user.deleted', etc
+  resource       String   // 'hackathon', 'user', etc
+  resourceId     String?
+  changes        Json?    // Before/after changes
+  ip             String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@map("audit_logs")
+}
+
+// ========================================
+// CORE MODELS (UPDATED WITH MULTI-TENANCY)
+// ========================================
+
 // Hackathon model - Core entity for managing multiple hackathons
 model Hackathon {
   id                   String          @id @default(cuid())
+  organizationId       String          // MULTI-TENANCY: Link to organization
   title                String
   description          String?
   requirements         Json? // Array of requirements
@@ -58,6 +295,7 @@ model Hackathon {
   updatedAt DateTime @updatedAt
 
   // Relations
+  organization       Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   participants       Participant[]
   teams              Team[]
   judges             Judge[]
@@ -125,6 +363,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
+  organizations         OrganizationUser[] // MULTI-TENANCY: User can belong to multiple organizations
   participations        Participant[]
   judgeAssignments      Judge[]
   adminActions          Admin[]
