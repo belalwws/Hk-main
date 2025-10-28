@@ -15,21 +15,30 @@ export async function GET(request: NextRequest) {
     }
 
     const invitations = await prisma.supervisorInvitation.findMany({
-      include: {
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            status: true
-          }
-        }
-      },
       orderBy: {
         createdAt: 'desc'
       }
     })
 
-    return NextResponse.json({ invitations })
+    // Get hackathon details for each invitation that has hackathonId
+    const invitationsWithHackathons = await Promise.all(
+      invitations.map(async (invitation) => {
+        if (invitation.hackathonId) {
+          const hackathon = await prisma.hackathon.findUnique({
+            where: { id: invitation.hackathonId },
+            select: {
+              id: true,
+              title: true,
+              status: true
+            }
+          })
+          return { ...invitation, hackathon }
+        }
+        return { ...invitation, hackathon: null }
+      })
+    )
+
+    return NextResponse.json({ invitations: invitationsWithHackathons })
 
   } catch (error) {
     console.error("Error fetching supervisor invitations:", error)
@@ -86,6 +95,10 @@ export async function POST(request: NextRequest) {
     // Generate unique token
     const invitationToken = crypto.randomBytes(32).toString('hex')
 
+    // Get expiration date (7 days from now)
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + 7)
+
     // Create invitation
     const invitation = await prisma.supervisorInvitation.create({
       data: {
@@ -95,18 +108,24 @@ export async function POST(request: NextRequest) {
         department: department || null,
         permissions: permissions || null,
         token: invitationToken,
-        status: 'pending'
-      },
-      include: {
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            status: true
-          }
-        }
+        status: 'pending',
+        invitedBy: payload.userId, // إضافة معرف المدير الذي أرسل الدعوة
+        expiresAt: expiresAt
       }
     })
+
+    // Get hackathon details if hackathonId is provided
+    let hackathonDetails = null
+    if (hackathonId) {
+      hackathonDetails = await prisma.hackathon.findUnique({
+        where: { id: hackathonId },
+        select: {
+          id: true,
+          title: true,
+          status: true
+        }
+      })
+    }
 
     // TODO: Send invitation email
     const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/supervisor/accept-invitation?token=${invitationToken}`
@@ -116,7 +135,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: 'تم إرسال الدعوة بنجاح',
-      invitation,
+      invitation: {
+        ...invitation,
+        hackathon: hackathonDetails
+      },
       invitationUrl // For testing
     })
 

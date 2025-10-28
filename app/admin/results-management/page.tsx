@@ -748,13 +748,6 @@ export default function ResultsManagement() {
                             >
                               {team.teamName}
                             </motion.h3>
-                            <motion.p
-                              className="text-2xl text-gray-700 mb-4 font-semibold"
-                              animate={{ opacity: [0.7, 1, 0.7] }}
-                              transition={{ duration: 1.5, repeat: Infinity }}
-                            >
-                              النتيجة: {team.score}
-                            </motion.p>
                             <p className="text-xl text-gray-600">عدد الأعضاء: {team.members}</p>
                           </div>
                         </motion.div>
